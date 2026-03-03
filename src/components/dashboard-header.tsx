@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { PageProgressBar } from "./page-progress-bar";
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 
 export function DashboardHeader() {
     const [pendingCount, setPendingCount] = useState(0);
@@ -49,7 +49,9 @@ export function DashboardHeader() {
 
     return (
         <>
-            <PageProgressBar />
+            <Suspense fallback={null}>
+                <PageProgressBar />
+            </Suspense>
             <header className="h-16 border-b border-border/50 bg-background/80 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-10">
                 <div className="flex items-center gap-4 md:hidden">
                     <Button variant="ghost" size="icon">

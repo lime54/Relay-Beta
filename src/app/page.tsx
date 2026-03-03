@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight, Shield, CheckCircle, Users, TrendingUp } from "lucide-react"
 import HeroSection from "@/components/ui/glassmorphism-trust-hero"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
+import Navbar from "@/components/navbar"
 
 export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen">
+      <Navbar />
       {/* Hero Section */}
       <section>
         <HeroSection />

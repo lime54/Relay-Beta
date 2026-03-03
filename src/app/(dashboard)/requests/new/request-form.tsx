@@ -67,7 +67,7 @@ export function RequestForm({
                     description: result.error
                 });
             }
-        } catch (err: any) {
+        } catch (_err) {
             toast.error("An unexpected error occurred.");
         } finally {
             setIsSubmitting(false);

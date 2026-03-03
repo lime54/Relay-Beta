@@ -7,9 +7,7 @@ import {
     LayoutDashboard,
     User,
     MessageSquare,
-    Settings,
     LogOut,
-    ChevronRight,
     ShieldCheck,
     TrendingUp,
     Users

@@ -124,8 +124,8 @@ export default async function RequestsPage() {
                                     </div>
                                 ) : (
                                     <div className="divide-y divide-slate-100">
-                                        {sentRequests.map((req: any) => {
-                                            const acceptance = req.responses?.find((r: any) => r.response_type === 'accept');
+                                        {sentRequests.map((req) => {
+                                            const acceptance = (req as any).responses?.find((r: { response_type: string }) => r.response_type === 'accept');
                                             const responder = acceptance?.users;
 
                                             return (

@@ -1,0 +1,56 @@
+
+> relay-platform@0.1.0 build
+> next build
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/maxlee/package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * /Users/maxlee/Downloads/relay-main/package-lock.json
+
+   ▲ Next.js 15.5.9
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 1782ms
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/17) ...
+   Generating static pages (4/17) 
+   Generating static pages (8/17) 
+   Generating static pages (12/17) 
+ ✓ Generating static pages (17/17)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                    6.88 kB         145 kB
+├ ○ /_not-found                            990 B         103 kB
+├ ƒ /auth/callback                         136 B         102 kB
+├ ƒ /auth/signout                          136 B         102 kB
+├ ○ /dashboard                           5.24 kB         164 kB
+├ ○ /demo                                  167 B         106 kB
+├ ƒ /login                               1.77 kB         123 kB
+├ ƒ /network                             4.51 kB         175 kB
+├ ƒ /profile                               141 B         186 kB
+├ ƒ /profile/[id]                          141 B         186 kB
+├ ƒ /profile/verify                        136 B         102 kB
+├ ƒ /requests                              161 B         106 kB
+├ ƒ /requests/[id]                       5.92 kB         119 kB
+├ ○ /requests/new                          136 B         102 kB
+├ ƒ /signup                              2.71 kB         124 kB
+├ ○ /signup/check-email                    167 B         106 kB
+└ ○ /signup/confirmed                      167 B         106 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/255-cb395327542b56ef.js       45.9 kB
+  ├ chunks/4bd1b696-c023c6e3521b1417.js  54.2 kB
+  └ other shared chunks (total)          1.92 kB
+
+
+ƒ Middleware                             80.4 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

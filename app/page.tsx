@@ -6,6 +6,8 @@ import HeroSection from "@/components/ui/glassmorphism-trust-hero"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
 import Navbar from "@/components/navbar"
 
+export const dynamic = "force-dynamic";
+
 export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen">

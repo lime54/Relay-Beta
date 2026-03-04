@@ -6,8 +6,14 @@ import { Button } from "@/components/ui/button"
 import { User, Menu } from 'lucide-react'
 
 export default async function Navbar() {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    let user = null;
+    try {
+        const supabase = await createClient()
+        const { data: { user: authUser } } = await supabase.auth.getUser()
+        user = authUser;
+    } catch (e) {
+        console.error("Navbar Supabase Error:", e);
+    }
 
     return (
         <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">

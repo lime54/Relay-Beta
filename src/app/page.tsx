@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, Users, Trophy, ArrowRight, Star, Quote } from 'lucide-react'
-import { AnimatedHero } from "@/components/ui/animated-hero"
+import { Hero as AnimatedHero } from "@/components/ui/animated-hero"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
 import Navbar from "@/components/navbar"
 

@@ -18,17 +18,23 @@ export const metadata: Metadata = {
   description: "Connect with verified student-athletes and alumni for career advice.",
 };
 
+import { Suspense } from "react";
+import { PageProgressBar } from "@/components/page-progress-bar";
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <body
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background flex flex-col`}
       >
+        <Suspense fallback={null}>
+          <PageProgressBar />
+        </Suspense>
         {children}
         <Toaster />
       </body>

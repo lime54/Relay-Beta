@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   /* Brand Colors - Navy/Blue/Teal */
   --background: #f8fafc;
@@ -72,6 +76,15 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Enhanced hover for interactive elements */
+a, button {
+  @apply transition-all duration-200;
+}
+
+.nav-link-hover {
+  @apply relative after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 after:bg-secondary after:transition-all hover:after:w-full;
 }
 
 /* ============================================

@@ -1,7 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "../lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { User, Menu } from 'lucide-react'
 

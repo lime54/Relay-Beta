@@ -5,7 +5,7 @@ import { createClient } from "../lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { User, Menu } from 'lucide-react'
 
-export default async function Navbar() {
+export default async function Navbar({ transparent = false }: { transparent?: boolean } = {}) {
     let user = null;
     try {
         const supabase = await createClient()
@@ -16,7 +16,9 @@ export default async function Navbar() {
     }
 
     return (
-        <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <nav className={transparent
+            ? "absolute w-full z-50 bg-transparent border-none top-0"
+            : "border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50"}>
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                 <Link href={user ? "/dashboard" : "/"} className="font-bold text-xl text-primary flex items-center gap-2 transition-base hover:opacity-80">
                     <Image
@@ -49,10 +51,10 @@ export default async function Navbar() {
                     ) : (
                         <>
                             <Link href="/login">
-                                <Button variant="ghost">Login</Button>
+                                <Button variant="ghost" className="text-muted-foreground hover:text-foreground">Login</Button>
                             </Link>
                             <Link href="/signup">
-                                <Button variant="secondary">Join the Team</Button>
+                                <Button className="bg-[#009ef7] hover:bg-[#0089d6] text-white rounded-md px-6 font-medium">Join the Team</Button>
                             </Link>
                         </>
                     )}

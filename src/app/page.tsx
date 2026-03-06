@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, Users, Trophy, ArrowRight, Star, Quote } from 'lucide-react'
-import { Hero as AnimatedHero } from "@/components/ui/animated-hero"
+import AnimatedHero from "@/components/ui/glassmorphism-trust-hero"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
 import Navbar from "@/components/navbar"
 
@@ -13,11 +13,9 @@ export default function LandingPage() {
       <Navbar />
 
       <main className="flex-grow">
-        {/* Hero Section */}
-        <section className="relative overflow-hidden pt-16 pb-24 md:pt-24 md:pb-32">
-          <div className="container px-4 mx-auto relative z-10">
-            <AnimatedHero />
-          </div>
+        {/* Full-bleed Hero Section */}
+        <section className="relative w-full min-h-screen">
+          <AnimatedHero />
         </section>
 
         {/* Social Proof / Stats */}

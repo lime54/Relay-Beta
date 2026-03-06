@@ -36,7 +36,7 @@ const StatItem = ({ value, label }: { value: string; label: string }) => (
 // --- MAIN COMPONENT ---
 export default function HeroSection() {
     return (
-        <div className="relative w-full bg-zinc-950 text-white overflow-hidden font-sans">
+        <div className="relative w-full min-h-screen flex items-center bg-zinc-950 text-white overflow-hidden font-sans">
             {/* 
         SCOPED ANIMATIONS 
       */}
@@ -72,7 +72,7 @@ export default function HeroSection() {
                 }}
             />
 
-            <div className="relative z-10 mx-auto max-w-7xl px-4 pt-24 pb-12 sm:px-6 md:pt-32 md:pb-20 lg:px-8">
+            <div className="relative z-10 w-full mx-auto max-w-7xl px-4 pt-24 pb-12 sm:px-6 md:pt-32 md:pb-20 lg:px-8">
                 <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-8 items-start">
 
                     {/* --- LEFT COLUMN --- */}
@@ -90,14 +90,14 @@ export default function HeroSection() {
 
                         {/* Heading */}
                         <h1
-                            className="animate-fade-in delay-200 text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-serif tracking-tighter leading-[0.9]"
+                            className="animate-fade-in delay-200 text-5xl sm:text-6xl lg:text-7xl xl:text-[5.5rem] font-sans font-extrabold tracking-tight leading-[0.9]"
                             style={{
                                 maskImage: "linear-gradient(180deg, black 0%, black 80%, transparent 100%)",
                                 WebkitMaskImage: "linear-gradient(180deg, black 0%, black 80%, transparent 100%)"
                             }}
                         >
-                            Where student-athletes meet to<br />
-                            <span className="bg-gradient-to-r from-[#ffcd75] via-[#ff9f0a] to-[#ffcd75] bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(255,205,117,0.4)] font-sans font-bold">
+                            Where student-<br />athletes meet to<br />
+                            <span className="bg-gradient-to-r from-[#ffcd75] via-[#ff9f0a] to-[#ffcd75] bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(255,205,117,0.4)] font-sans font-extrabold">
                                 network
                             </span>
                         </h1>
@@ -125,7 +125,7 @@ export default function HeroSection() {
                     <div className="lg:col-span-5 space-y-6 lg:mt-12">
 
                         {/* Stats Card */}
-                        <div className="animate-fade-in delay-500 relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl">
+                        <div className="animate-fade-in delay-500 relative overflow-hidden rounded-[2rem] border border-white/5 bg-zinc-950/60 p-8 backdrop-blur-2xl shadow-2xl">
                             {/* Card Glow Effect */}
                             <div className="absolute top-0 right-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-white/5 blur-3xl pointer-events-none" />
 
@@ -180,7 +180,7 @@ export default function HeroSection() {
                         </div>
 
                         {/* Marquee Card */}
-                        <div className="animate-fade-in delay-500 relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 py-8 backdrop-blur-xl">
+                        <div className="animate-fade-in delay-500 relative overflow-hidden rounded-[2rem] border border-white/5 bg-zinc-950/60 py-8 backdrop-blur-2xl shadow-2xl mt-6">
                             <h3 className="mb-6 px-8 text-sm font-medium text-zinc-400">Connect with dedicated student-athletes</h3>
 
                             <div

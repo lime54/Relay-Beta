@@ -65,7 +65,7 @@ export default function HeroSection() {
 
             {/* Background Image with Gradient Mask */}
             <div
-                className="absolute inset-0 z-0 bg-[url(/hero-sports.png)] bg-cover bg-center opacity-40"
+                className="absolute inset-0 z-0 bg-[url(/hero-fencing-rowing.png)] bg-cover bg-center opacity-40"
                 style={{
                     maskImage: "linear-gradient(180deg, transparent, black 0%, black 70%, transparent)",
                     WebkitMaskImage: "linear-gradient(180deg, transparent, black 0%, black 70%, transparent)",
@@ -80,8 +80,8 @@ export default function HeroSection() {
 
                         {/* Badge */}
                         <div className="animate-fade-in delay-100">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 backdrop-blur-md transition-colors hover:bg-white/10">
-                                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 backdrop-blur-md transition-colors hover:bg-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-200 flex items-center gap-2">
                                     For Athletes, By Athletes
                                     <Users className="w-3.5 h-3.5 text-blue-400" />
                                 </span>
@@ -90,23 +90,21 @@ export default function HeroSection() {
 
                         {/* Heading */}
                         <h1
-                            className="animate-fade-in delay-200 text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-medium tracking-tighter leading-[0.9]"
+                            className="animate-fade-in delay-200 text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-serif tracking-tighter leading-[0.9]"
                             style={{
                                 maskImage: "linear-gradient(180deg, black 0%, black 80%, transparent 100%)",
                                 WebkitMaskImage: "linear-gradient(180deg, black 0%, black 80%, transparent 100%)"
                             }}
                         >
                             Where student-athletes meet to<br />
-                            <span className="bg-gradient-to-r from-[#ffcd75] via-[#ff9f0a] to-[#ffcd75] bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(255,205,117,0.4)] font-bold">
+                            <span className="bg-gradient-to-r from-[#ffcd75] via-[#ff9f0a] to-[#ffcd75] bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(255,205,117,0.4)] font-sans font-bold">
                                 network
                             </span>
                         </h1>
 
                         {/* Description */}
-                        <p className="animate-fade-in delay-300 max-w-xl text-lg text-zinc-400 leading-relaxed">
-                            Relay is a private network for student-athletes and alumni across the collegiate D1, D2, and D3 levels.
-                            Connect with people who understand the athlete experience and turn those connections into
-                            real career advice and opportunities. A verified community built on shared experience.
+                        <p className="animate-fade-in delay-300 max-w-xl text-lg text-zinc-300 font-sans leading-relaxed">
+                            Relay is a private network for student-athletes and alumni across the D1, D2, and D3 levels. Connect with people who understand the athlete experience and turn those connections into career advice and opportunities. A verified community built on shared experience.
                         </p>
 
                         {/* CTA Buttons */}

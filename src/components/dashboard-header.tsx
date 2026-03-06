@@ -6,9 +6,8 @@ import { Search, Bell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-import { PageProgressBar } from "./page-progress-bar";
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState } from "react";
 
 export function DashboardHeader() {
     const [pendingCount, setPendingCount] = useState(0);

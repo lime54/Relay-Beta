@@ -174,8 +174,7 @@ export default function LandingPage() {
         <div className="container px-4 mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="flex items-center gap-2">
-              <img src="/relay-logo.png" alt="Relay" className="h-8 w-auto invert" />
-              <span className="text-xl font-bold">RELAY</span>
+              <img src="/relay-logo.png" alt="Relay" className="h-8 w-auto" />
             </div>
             <div className="flex gap-8 text-sm text-muted-foreground">
               <Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link>

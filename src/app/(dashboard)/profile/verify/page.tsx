@@ -1,14 +1,16 @@
 import { submitVerification } from './actions'
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
+import { SubmitButton } from "@/components/submit-button"
 
-export default async function VerifyPage() {
+export default async function VerifyPage({ searchParams }: { searchParams: Promise<{ error?: string; message?: string }> }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/login')
+
+    const params = await searchParams
 
     return (
         <div className="container mx-auto p-4 max-w-xl">
@@ -18,6 +20,16 @@ export default async function VerifyPage() {
                     <p className="text-sm text-muted-foreground">Verification builds trust. Please provide details about your athletic career.</p>
                 </CardHeader>
                 <CardContent>
+                    {params.error && (
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-md">
+                            {params.error}
+                        </div>
+                    )}
+                    {params.message && (
+                        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-md">
+                            {params.message}
+                        </div>
+                    )}
                     <form action={submitVerification} className="space-y-6">
 
                         <div className="space-y-2">
@@ -60,7 +72,7 @@ export default async function VerifyPage() {
                             <p className="text-xs text-muted-foreground">If uploading, please upload to a host and paste link here (Demo).</p>
                         </div>
 
-                        <Button type="submit" className="w-full">Submit for Review</Button>
+                        <SubmitButton className="w-full" loadingText="Submitting...">Submit for Review</SubmitButton>
                     </form>
                 </CardContent>
             </Card>

@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { refineRequestDraft, submitRequest } from "./actions";
-import { Wand2, Send, Clock, Sparkles } from "lucide-react";
+import { Wand2, Send, Clock, Sparkles, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,7 @@ export function RequestForm({
     const [offer, setOffer] = useState("");
     const [isRefining, setIsRefining] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
 
     const handleRefine = async () => {
         if (!context && !offer) {
@@ -57,11 +58,11 @@ export function RequestForm({
         try {
             const result = await submitRequest(formData);
             if (result.success) {
+                setIsSuccess(true);
                 toast.success("Request sent successfully!", {
-                    description: `We'll let you know when ${recipient?.name.split(" ")[0] || "they"
-                        } responds.`,
+                    description: "Your request has been sent and it'll be in the other person's inbox.",
                 });
-                if (onSuccess) onSuccess();
+                // We let the user view the inline success state instead of immediately closing
             } else {
                 toast.error("Failed to send request", {
                     description: result.error
@@ -73,6 +74,23 @@ export function RequestForm({
             setIsSubmitting(false);
         }
     };
+
+    if (isSuccess) {
+        return (
+            <div className="flex flex-col items-center justify-center py-12 text-center space-y-4 animate-in fade-in zoom-in duration-300">
+                <div className="h-20 w-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4 shadow-sm">
+                    <CheckCircle className="h-10 w-10" />
+                </div>
+                <h3 className="text-2xl font-bold tracking-tight">Request Sent Successfully!</h3>
+                <p className="text-muted-foreground max-w-sm text-sm">
+                    Your request has been sent and it&apos;ll be in the other person&apos;s inbox. You can check its status anytime in your requests dashboard.
+                </p>
+                <Button onClick={() => onSuccess && onSuccess()} className="mt-6 w-full max-w-[200px] h-12 rounded-xl text-md">
+                    Done
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <form action={handleSubmit} className="space-y-8">
@@ -184,10 +202,13 @@ export function RequestForm({
                 <Button
                     className="flex-2 h-14 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-xl shadow-primary/20 gap-2 min-w-[200px]"
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isRefining}
                 >
                     {isSubmitting ? (
-                        "Sending..."
+                        <>
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            Sending...
+                        </>
                     ) : (
                         <>
                             <Send className="h-5 w-5" />

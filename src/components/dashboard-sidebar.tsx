@@ -45,10 +45,7 @@ export function DashboardSidebar() {
         <div className="flex flex-col h-full bg-card border-r border-border/50 w-64 hidden md:flex">
             <div className="p-6">
                 <Link href="/" className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                        <TrendingUp className="w-5 h-5 text-primary-foreground" />
-                    </div>
-                    <span className="font-bold text-xl tracking-tight">Relay</span>
+                    <img src="/relay-logo.png" alt="Relay" className="h-8 w-auto" />
                 </Link>
             </div>
 
@@ -84,19 +81,21 @@ export function DashboardSidebar() {
             </nav>
 
             <div className="p-4 mt-auto border-t border-border/50">
-                <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    className="bg-muted/50 rounded-2xl p-4 mb-4 border border-transparent hover:border-secondary/20 transition-colors cursor-pointer"
-                >
-                    <div className="flex items-center gap-2 mb-2">
-                        <ShieldCheck className="w-4 h-4 text-secondary" />
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Verification</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-3">Complete your profile to unlock all features.</p>
-                    <Button size="sm" className="w-full text-xs h-8" variant="secondary">
-                        Verify Now
-                    </Button>
-                </motion.div>
+                <Link href="/profile/verify" className="block mb-4">
+                    <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        className="bg-muted/50 rounded-2xl p-4 border border-transparent hover:border-secondary/20 transition-colors cursor-pointer"
+                    >
+                        <div className="flex items-center gap-2 mb-2">
+                            <ShieldCheck className="w-4 h-4 text-secondary" />
+                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Verification</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-3">Complete your profile to unlock all features.</p>
+                        <Button size="sm" className="w-full text-xs h-8" variant="secondary">
+                            Verify Now
+                        </Button>
+                    </motion.div>
+                </Link>
 
                 <Link
                     href="/auth/signout"

@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight } from 'lucide-react'
+import { CheckCircle, Users, Trophy, ArrowRight } from 'lucide-react'
 import AnimatedHero from "@/components/ui/glassmorphism-trust-hero"
 import { GlowingFeatures } from "@/components/ui/glowing-features"
 import Navbar from "@/components/navbar"
@@ -55,7 +55,6 @@ export default function LandingPage() {
             <GlowingFeatures />
           </div>
         </section>
-
 
 
         {/* CTA Section */}

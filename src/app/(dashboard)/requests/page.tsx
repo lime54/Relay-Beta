@@ -18,7 +18,7 @@ export default async function RequestsPage() {
     const { data: currentUserProfile } = await supabase
         .from('athlete_profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single()
 
     // Fetch requests I sent (My Plays)

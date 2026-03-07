@@ -23,7 +23,7 @@ export async function submitRequest(formData: FormData) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) throw new Error("Unauthorized");
+    if (!user) return { success: false, error: "Not authenticated" };
 
     const recipientId = formData.get('recipient_id') as string;
     const type = formData.get('type') as string;

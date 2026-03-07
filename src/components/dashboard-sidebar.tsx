@@ -9,7 +9,6 @@ import {
     MessageSquare,
     LogOut,
     ShieldCheck,
-    TrendingUp,
     Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -97,13 +96,15 @@ export function DashboardSidebar() {
                     </motion.div>
                 </Link>
 
-                <Link
-                    href="/auth/signout"
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-all duration-200"
-                >
-                    <LogOut className="w-5 h-5" />
-                    Sign Out
-                </Link>
+                <form action="/auth/signout" method="post">
+                    <button
+                        type="submit"
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-all duration-200 w-full"
+                    >
+                        <LogOut className="w-5 h-5" />
+                        Sign Out
+                    </button>
+                </form>
             </div>
         </div>
     );

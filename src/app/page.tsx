@@ -1,8 +1,8 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, Users, Trophy, ArrowRight, Star, Quote } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import AnimatedHero from "@/components/ui/glassmorphism-trust-hero"
-import { GlowingEffect } from "@/components/ui/glowing-effect"
+import { GlowingFeatures } from "@/components/ui/glowing-features"
 import Navbar from "@/components/navbar"
 
 export const dynamic = "force-dynamic";
@@ -42,104 +42,21 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Problem/Solution Section */}
+        {/* Features / Glowing Grid Section */}
         <section className="py-24 bg-background">
           <div className="container px-4 mx-auto">
             <div className="max-w-3xl mx-auto text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">Transitioning is hard. We make it easier.</h2>
-              <p className="text-xl text-muted-foreground">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6 font-serif">Transitioning is hard. We make it easier.</h2>
+              <p className="text-xl text-muted-foreground font-sans">
                 Only 2% of student-athletes go pro. For the other 98%, Relay provides the network and resources needed to launch a successful career.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="p-8 rounded-2xl bg-card border border-border hover:shadow-lg transition-shadow">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
-                  <CheckCircle className="text-primary w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">Verified Profiles</h3>
-                <p className="text-muted-foreground">
-                  Every user is verified via their university email or specialized athletic credentials.
-                </p>
-              </div>
-              <div className="p-8 rounded-2xl bg-card border border-border hover:shadow-lg transition-shadow">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
-                  <Users className="text-primary w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">Targeted Networking</h3>
-                <p className="text-muted-foreground">
-                  Connect specifically with alumni who played your sport or share your professional interests.
-                </p>
-              </div>
-              <div className="p-8 rounded-2xl bg-card border border-border hover:shadow-lg transition-shadow">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
-                  <Trophy className="text-primary w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">Exclusive Resources</h3>
-                <p className="text-muted-foreground">
-                  Access career guides, interview prep, and job postings curated specifically for the athlete mindset.
-                </p>
-              </div>
-            </div>
+            <GlowingFeatures />
           </div>
         </section>
 
-        {/* Features / Glowing Effect */}
-        <section className="py-24 bg-muted/30 overflow-hidden">
-          <div className="container px-4 mx-auto">
-            <div className="flex flex-col md:flex-row gap-12 items-center">
-              <div className="md:w-1/2">
-                <h2 className="text-3xl md:text-4xl font-bold mb-6 italic tracking-tight">THE ATHLETE ADVANTAGE</h2>
-                <p className="text-lg text-muted-foreground mb-8">
-                  Relay is built on the belief that the discipline, teamwork, and resilience learned on the field are invaluable assets in the boardroom. We help you translate those skills for employers.
-                </p>
-                <div className="space-y-4">
-                  {[
-                    "Direct access to hiring managers who value athletic backgrounds",
-                    "Mentorship programs with successful former student-athletes",
-                    "Resume templates designed to highlight transferrable skills",
-                    "Weekly networking events and career fairs"
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <div className="mt-1 bg-primary/20 rounded-full p-1">
-                        <CheckCircle className="w-4 h-4 text-primary" />
-                      </div>
-                      <span className="font-medium">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="md:w-1/2 relative h-[500px] w-full max-w-[500px] mx-auto">
-                <GlowingEffect
-                  spread={40}
-                  glow={true}
-                  disabled={false}
-                  proximity={64}
-                  inactiveZone={0.01}
-                />
-                <div className="absolute inset-4 rounded-3xl bg-black overflow-hidden border border-white/10 flex items-center justify-center">
-                  <img
-                    src="/hero-sports.png"
-                    alt="Athlete Success"
-                    className="w-full h-full object-cover opacity-80"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-                  <div className="absolute bottom-6 left-6 right-6">
-                    <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
-                      <div className="flex gap-1 mb-2">
-                        {[1, 2, 3, 4, 5].map(s => <Star key={s} className="w-4 h-4 fill-primary text-primary" />)}
-                      </div>
-                      <p className="text-sm text-white/90 italic mb-2">
-                        "Relay was the difference between sending 100 cold resumes and having 3 interviews in my first week. The athlete network is incredibly powerful."
-                      </p>
-                      <div className="text-xs font-bold text-white">JORDAN WELLS, FORMER D1 TRACK & FIELD</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+
 
         {/* CTA Section */}
         <section className="py-24 bg-primary text-primary-foreground relative overflow-hidden">

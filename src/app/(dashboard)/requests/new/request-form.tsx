@@ -7,10 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { refineRequestDraft, submitRequest } from "./actions";
-import { Wand2, Send, Clock, Sparkles, Loader2, CheckCircle } from "lucide-react";
+import { Wand2, Send, Clock, Sparkles, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 interface Recipient {
     id: string;
@@ -33,6 +35,26 @@ export function RequestForm({
     const [isRefining, setIsRefining] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [isVerified, setIsVerified] = useState(true); // Default to true while loading
+    const supabase = createClient();
+
+    useEffect(() => {
+        async function checkVerification() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { data: profile } = await supabase
+                .from('athlete_profiles')
+                .select('verification_status')
+                .eq('user_id', user.id)
+                .single();
+
+            if (profile) {
+                setIsVerified(profile.verification_status === 'verified');
+            }
+        }
+        checkVerification();
+    }, [supabase]);
 
     const handleRefine = async () => {
         if (!context && !offer) {
@@ -120,6 +142,18 @@ export function RequestForm({
                 </div>
             )}
 
+            {!isVerified && (
+                <div className="flex items-start gap-4 p-4 rounded-2xl bg-amber-50 border border-amber-100 text-amber-800">
+                    <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                        <p className="text-sm font-bold">Unverified Profile</p>
+                        <p className="text-xs leading-relaxed">
+                            Unverified profiles have much harder of a time connecting with others. Consider verifying your profile to build trust.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                     <label className="text-sm font-bold flex items-center gap-2">
@@ -143,8 +177,9 @@ export function RequestForm({
                     <Select name="time_commitment" required className="rounded-2xl h-12 bg-muted/20 border-border/50">
                         <option value="">Select duration...</option>
                         <option value="15min">15 min Coffee Chat</option>
-                        <option value="30min">30 min Deep Dive</option>
-                        <option value="email">Quick Email Chat</option>
+                        <option value="30min_call">30 min Call</option>
+                        <option value="30min_coffee">30 min Coffee Chat</option>
+                        <option value="mentorship">Ongoing Mentorship</option>
                         <option value="review">Resume Review</option>
                     </Select>
                 </div>

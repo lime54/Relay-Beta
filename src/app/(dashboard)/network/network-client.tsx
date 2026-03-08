@@ -107,7 +107,7 @@ export default function NetworkClient({ realUsers }: NetworkClientProps) {
 
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="space-y-4 max-w-xl text-center md:text-left">
-                        <Badge variant="outline" className="border-secondary/30 bg-secondary/10 text-secondary-foreground backdrop-blur-sm px-4 py-1">
+                        <Badge variant="outline" className="border-secondary/30 bg-secondary/10 text-secondary backdrop-blur-sm px-4 py-1">
                             Marketplace Beta
                         </Badge>
                         <h1 className="text-4xl md:text-5xl font-bold tracking-tight">

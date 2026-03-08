@@ -13,9 +13,9 @@ html {
   /* Slate 50 */
   /* Slate 900 */
 
-  --primary: oklch(0.2 0.05 260);
-  /* Slate 900 / Navy */
-  --primary-foreground: oklch(0.98 0.01 260);
+  --primary: oklch(0.32 0.12 260);
+  /* Brand Navy/Blue - more vivid */
+  --primary-foreground: oklch(0.99 0.01 260);
 
   --secondary: oklch(0.7 0.18 245);
   /* Sky 500 / Blue */
@@ -25,9 +25,9 @@ html {
   /* Teal 500 */
   --accent-foreground: oklch(1 0 0);
 
-  --muted: oklch(0.95 0.05 260);
-  /* Light Blue Gray */
-  --muted-foreground: oklch(0.4 0.05 260);
+  --muted: oklch(0.92 0.08 260);
+  /* Distinct Light Blue Gray */
+  --muted-foreground: oklch(0.4 0.1 260);
   /* Slate 500 */
 
   --card: oklch(1 0 0);

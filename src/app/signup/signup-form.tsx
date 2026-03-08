@@ -70,9 +70,30 @@ export default function SignupForm() {
                     defaultValue=""
                 >
                     <option value="" disabled>Select your sport</option>
-                    <option value="Squash">Squash</option>
-                    <option value="Tennis">Tennis</option>
+                    <option value="Baseball">Baseball</option>
+                    <option value="Basketball">Basketball</option>
+                    <option value="Cross Country">Cross Country</option>
+                    <option value="Fencing">Fencing</option>
+                    <option value="Field Hockey">Field Hockey</option>
+                    <option value="Football">Football</option>
                     <option value="Golf">Golf</option>
+                    <option value="Gymnastics">Gymnastics</option>
+                    <option value="Ice Hockey">Ice Hockey</option>
+                    <option value="Lacrosse">Lacrosse</option>
+                    <option value="Rowing">Rowing</option>
+                    <option value="Rugby">Rugby</option>
+                    <option value="Sailing">Sailing</option>
+                    <option value="Skiing">Skiing</option>
+                    <option value="Soccer">Soccer</option>
+                    <option value="Softball">Softball</option>
+                    <option value="Squash">Squash</option>
+                    <option value="Swimming & Diving">Swimming &amp; Diving</option>
+                    <option value="Tennis">Tennis</option>
+                    <option value="Track & Field">Track &amp; Field</option>
+                    <option value="Volleyball">Volleyball</option>
+                    <option value="Water Polo">Water Polo</option>
+                    <option value="Wrestling">Wrestling</option>
+                    <option value="Other">Other</option>
                 </select>
             </div>
             <div className="space-y-2">

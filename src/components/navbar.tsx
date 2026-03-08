@@ -3,7 +3,8 @@ import Image from "next/image"
 
 import { createClient } from "../lib/supabase/server"
 import { Button } from "@/components/ui/button"
-import { User, Menu } from 'lucide-react'
+import { User } from 'lucide-react'
+import { MobileNav } from "@/components/mobile-nav"
 
 export default async function Navbar({ transparent = false }: { transparent?: boolean } = {}) {
     let user = null;
@@ -60,12 +61,9 @@ export default async function Navbar({ transparent = false }: { transparent?: bo
                     )}
                 </div>
 
-                {/* Mobile Menu Button */}
-                <button className="md:hidden p-2 hover:bg-muted rounded-md transition-base">
-                    <Menu size={24} />
-                </button>
+                {/* Mobile Menu */}
+                <MobileNav isLoggedIn={!!user} />
             </div>
         </nav>
     )
 }
-

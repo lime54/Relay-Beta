@@ -11,12 +11,33 @@ import { useEffect, useState } from "react";
 
 export function DashboardHeader() {
     const [pendingCount, setPendingCount] = useState(0);
+    const [userName, setUserName] = useState("Athlete");
+    const [userInitials, setUserInitials] = useState("AT");
+    const [userAvatar, setUserAvatar] = useState("");
     const supabase = createClient();
 
     useEffect(() => {
-        async function getInitialCount() {
+        async function getInitialData() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
+
+            // Set user name from metadata or email
+            const name = user.user_metadata?.name || user.email?.split('@')[0] || 'Athlete';
+            setUserName(name);
+            setUserInitials(
+                name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+            );
+
+            // Try to get avatar from athlete_profiles
+            const { data: profile } = await supabase
+                .from('athlete_profiles')
+                .select('avatar_url')
+                .eq('user_id', user.id)
+                .single();
+
+            if (profile?.avatar_url) {
+                setUserAvatar(profile.avatar_url);
+            }
 
             const { count } = await supabase
                 .from('requests')
@@ -27,7 +48,7 @@ export function DashboardHeader() {
             if (count !== null) setPendingCount(count);
         }
 
-        getInitialCount();
+        getInitialData();
 
         // Subscribe to changes (optional for real-time, but good for MVP)
         const channel = supabase
@@ -37,7 +58,7 @@ export function DashboardHeader() {
                 schema: 'public',
                 table: 'requests'
             }, () => {
-                getInitialCount();
+                getInitialData();
             })
             .subscribe();
 
@@ -79,13 +100,13 @@ export function DashboardHeader() {
 
                 <Link href="/profile" className="flex items-center gap-3 pl-2 group">
                     <div className="hidden md:block text-right">
-                        <p className="text-sm font-semibold leading-none group-hover:text-secondary transition-colors">Athlete</p>
+                        <p className="text-sm font-semibold leading-none group-hover:text-secondary transition-colors">{userName}</p>
                         <p className="text-xs text-muted-foreground group-hover:text-secondary/80 transition-colors">View Profile</p>
                     </div>
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                         <Avatar className="h-9 w-9 border-2 border-secondary/20 cursor-pointer group-hover:border-secondary/50 transition-colors">
-                            <AvatarImage src="" />
-                            <AvatarFallback className="bg-secondary/10 text-secondary font-bold text-xs">AT</AvatarFallback>
+                            <AvatarImage src={userAvatar} />
+                            <AvatarFallback className="bg-secondary/10 text-secondary font-bold text-xs">{userInitials}</AvatarFallback>
                         </Avatar>
                     </motion.div>
                 </Link>

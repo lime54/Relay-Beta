@@ -76,7 +76,7 @@ export default function LandingPage() {
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="h-14 px-8 text-lg rounded-full bg-transparent border-white hover:bg-white/10" asChild>
-                <Link href="/auth">Member Login</Link>
+                <Link href="/login">Member Login</Link>
               </Button>
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function LandingPage() {
               <Link href="#" className="hover:text-primary transition-colors">Contact Us</Link>
             </div>
             <div className="text-sm text-muted-foreground">
-              © 2024 Relay verified athlete Network. All rights reserved.
+              © 2025 Relay Verified Athlete Network. All rights reserved.
             </div>
           </div>
         </div>

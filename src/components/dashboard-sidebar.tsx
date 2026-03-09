@@ -37,11 +37,11 @@ const navItems = [
     },
 ];
 
-export function DashboardSidebar() {
+export function DashboardSidebar({ className }: { className?: string }) {
     const pathname = usePathname();
 
     return (
-        <div className="flex flex-col h-full bg-card border-r border-border/50 w-64 hidden md:flex">
+        <div className={cn("flex flex-col h-full bg-card border-r border-border/50 w-64", className, "hidden md:flex flex")}>
             <div className="p-6">
                 <Link href="/" className="flex items-center gap-2">
                     <img src="/relay-logo.png" alt="Relay" className="h-8 w-auto" />

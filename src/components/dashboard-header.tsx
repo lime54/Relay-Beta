@@ -5,6 +5,12 @@ import Link from "next/link";
 import { Search, Bell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+    Sheet,
+    SheetContent,
+    SheetTrigger,
+} from "@/components/ui/sheet";
+import { DashboardSidebar } from "./dashboard-sidebar";
 
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
@@ -70,9 +76,16 @@ export function DashboardHeader() {
     return (
         <header className="h-16 border-b border-border/50 bg-background/80 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-10">
             <div className="flex items-center gap-4 md:hidden">
-                <Button variant="ghost" size="icon">
-                    <Menu className="w-5 h-5" />
-                </Button>
+                <Sheet>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <Menu className="w-5 h-5" />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="p-0 w-64 border-r-0">
+                        <DashboardSidebar className="border-r-0" />
+                    </SheetContent>
+                </Sheet>
                 <span className="font-bold text-lg">Relay</span>
             </div>
 

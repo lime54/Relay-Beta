@@ -146,10 +146,14 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                             </CardHeader>
                             <CardContent className="space-y-4 pt-4">
                                 {data.recentRequests.length === 0 ? (
-                                    <div className="text-center py-8 text-muted-foreground">
-                                        <p className="mb-4">No requests yet. Start connecting!</p>
+                                    <div className="text-center py-12 bg-muted/20 rounded-2xl border border-dashed border-border/60">
+                                        <div className="h-12 w-12 bg-background rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                                            <Target className="h-6 w-6 text-muted-foreground/40" />
+                                        </div>
+                                        <h4 className="text-sm font-semibold mb-1">No requests yet</h4>
+                                        <p className="text-xs text-muted-foreground mb-6 max-w-[200px] mx-auto">Start connecting with athletes to build your huddle.</p>
                                         <Link href="/network">
-                                            <Button variant="outline" size="sm">Browse Network</Button>
+                                            <Button variant="secondary" size="sm" className="rounded-full px-6">Explore Local Athletes</Button>
                                         </Link>
                                     </div>
                                 ) : (

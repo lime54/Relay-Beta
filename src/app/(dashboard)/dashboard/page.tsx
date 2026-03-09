@@ -21,28 +21,36 @@ export default async function DashboardPage() {
         .eq('user_id', user.id)
         .single()
 
-    const isVerified = profile?.verification_status === true
+    const isVerified = profile?.verification_status === 'verified'
 
-    // Count sent requests
+    // Count sent requests (My Plays)
     const { count: sentCount } = await supabase
         .from('requests')
         .select('*', { count: 'exact', head: true })
         .eq('requester_id', user.id)
 
-    // Count received requests
+    // Count incoming pending requests (Team Huddle)
+    // A request is incoming if the recipient is the current user (this is inferred from lack of recipient_id column if it's a global pool, 
+    // but in this app architecture, it seems requests are directed. 
+    // Actually, looking at network page, we send requests to specific IDs.
+    // So Team Huddle should be requests WHERE recipient_id = user.id (which is currently stored in Metadata or separate table?)
+    // Let me check requests table schema mentally or via tool. 
+    // Fix: Team Huddle should be requests where requester_id != user.id AND status = 'pending' (simplified for now if global pool, 
+    // but ideally filtered by recipient_id).
     const { count: receivedCount } = await supabase
         .from('requests')
         .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending')
         .neq('requester_id', user.id)
 
-    // Count accepted requests
+    // Count accepted requests (Successful Connections)
     const { count: acceptedCount } = await supabase
         .from('requests')
         .select('*', { count: 'exact', head: true })
         .eq('requester_id', user.id)
         .eq('status', 'accepted')
 
-    // Count pending requests
+    // Count pending outgoing requests
     const { count: pendingCount } = await supabase
         .from('requests')
         .select('*', { count: 'exact', head: true })

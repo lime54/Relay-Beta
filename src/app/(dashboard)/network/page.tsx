@@ -19,15 +19,16 @@ interface RealUser {
 export default async function NetworkPage({
     searchParams
 }: {
-    searchParams: { search?: string; sport?: string }
+    searchParams: Promise<{ search?: string; sport?: string }>
 }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) redirect('/login')
 
-    const search = searchParams.search || ''
-    const sport = searchParams.sport && searchParams.sport !== 'All' ? searchParams.sport : null
+    const sp = await searchParams
+    const search = sp.search || ''
+    const sport = sp.sport && sp.sport !== 'All' ? sp.sport : null
 
     // Fetch users with their athlete profiles
     let query = supabase

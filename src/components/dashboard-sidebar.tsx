@@ -31,6 +31,11 @@ const navItems = [
         icon: Users,
     },
     {
+        title: "Messages",
+        href: "/messages",
+        icon: MessageSquare,
+    },
+    {
         title: "Profile",
         href: "/profile",
         icon: User,

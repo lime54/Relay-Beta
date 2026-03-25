@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { resend } from '@/lib/resend'
 
 export async function login(formData: FormData) {
     const supabase = await createClient()
@@ -51,7 +52,7 @@ export async function signup(formData: FormData) {
     // Get the origin for the email redirect URL
     const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -72,6 +73,25 @@ export async function signup(formData: FormData) {
     }
 
     console.log('Sign up successful for:', email)
+
+    // Option 1: Send a custom verification email via Resend
+    // This assumes Supabase is configured to NOT send the default confirmation email,
+    // or you are using Resend as a custom SMTP provider in Supabase.
+    // We will attempt to send one explicitly if an API key is present.
+    if (process.env.RESEND_API_KEY) {
+        try {
+            // Send a welcome email via Resend
+            await resend.emails.send({
+                from: 'onboarding@resend.dev', // We will use Resend's testing domain for now
+                to: email,
+                subject: 'Welcome to Relay!',
+                html: '<p>Thanks for joining the team!</p>'
+            });
+            console.log('Welcome email sent via Resend successfully.');
+        } catch (e) {
+            console.error('Error with Resend integration:', e);
+        }
+    }
 
     // Redirect to check-email page instead of login
     redirect('/signup/check-email')

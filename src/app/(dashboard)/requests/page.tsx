@@ -154,9 +154,9 @@ export default async function RequestsPage() {
                                                                     <p className="text-[11px] font-bold text-green-900 truncate">{responder.name}</p>
                                                                     <p className="text-[9px] text-green-700 truncate">{responder.athlete_profiles?.school}</p>
                                                                 </div>
-                                                                <Link href={`/profile/${acceptance.responder_id}`}>
-                                                                    <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-green-700 hover:text-green-800 hover:bg-green-100">
-                                                                        Contact
+                                                                <Link href={`/messages?id=${req.id}`}>
+                                                                    <Button size="sm" variant="secondary" className="h-7 px-3 text-[10px] bg-green-600 hover:bg-green-700 text-white border-0">
+                                                                        Message
                                                                     </Button>
                                                                 </Link>
                                                             </div>

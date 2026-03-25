@@ -104,7 +104,7 @@ export default function HeroSection() {
 
                         {/* Description */}
                         <p className="animate-fade-in delay-300 max-w-xl text-lg text-zinc-300 font-sans leading-relaxed">
-                            Relay is a private network for student-athletes and alumni across the D1, D2, and D3 levels. Connect with people who understand the athlete experience and turn those connections into career advice and opportunities. A verified community built on shared experience.
+                            Relay is a private network for student-athletes and alumni across the collegiate D1, D2, and D3 levels. Connect with people who understand the athlete experience and turn those connections into career advice and opportunities. A verified community built on shared experience.
                         </p>
 
                         {/* CTA Buttons */}

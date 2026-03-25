@@ -16,17 +16,30 @@ interface RealUser {
     isPlaceholder: false
 }
 
-export default async function NetworkPage() {
+export default async function NetworkPage({
+    searchParams
+}: {
+    searchParams: { search?: string; sport?: string }
+}) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) redirect('/login')
 
-    // Fetch all users with their athlete profiles, excluding the current user
-    const { data: users, error } = await supabase
+    const search = searchParams.search || ''
+    const sport = searchParams.sport && searchParams.sport !== 'All' ? searchParams.sport : null
+
+    // Fetch users with their athlete profiles
+    let query = supabase
         .from('users')
-        .select('id, name, email, role, athlete_profiles(sport, school, ncaa_level)')
+        .select('id, name, email, role, athlete_profiles(sport, school, ncaa_level, verification_status)')
         .neq('id', user.id)
+
+    if (search) {
+        query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`)
+    }
+
+    const { data: users, error } = await query;
 
     if (error) {
         console.error('Error fetching users:', error)
@@ -55,9 +68,16 @@ export default async function NetworkPage() {
             }
         })
 
+    // Post-fetch filter for sport (since cross-table filtering in 1-select is tricky in some versions of Supabase SDK)
+    const finalUsers = realUsers.filter(u => !sport || u.sport === sport)
+
     return (
         <div className="w-full">
-            <NetworkClient realUsers={realUsers} />
+            <NetworkClient
+                realUsers={finalUsers}
+                initialSearch={search}
+                initialSport={sport || 'All'}
+            />
 
             {/* Diagnostic info (hidden unless empty) */}
             {realUsers.length === 0 && (

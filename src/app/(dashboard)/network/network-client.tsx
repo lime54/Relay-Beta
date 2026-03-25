@@ -14,6 +14,7 @@ import {
     ShieldCheck,
     Star
 } from "lucide-react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -57,6 +58,8 @@ const PLACEHOLDER_PEOPLE: NetworkPerson[] = [];
 
 interface NetworkClientProps {
     realUsers: NetworkPerson[];
+    initialSearch: string;
+    initialSport: string;
 }
 
 const container = {
@@ -74,24 +77,44 @@ const item = {
     show: { y: 0, opacity: 1 }
 };
 
-export default function NetworkClient({ realUsers }: NetworkClientProps) {
-    const [filter, setFilter] = useState<Sport | "All">("All");
-    const [searchQuery, setSearchQuery] = useState("");
+export default function NetworkClient({ realUsers, initialSearch, initialSport }: NetworkClientProps) {
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
+    const [filter, setFilter] = useState<Sport | "All">((initialSport as any) || "All");
+    const [searchQuery, setSearchQuery] = useState(initialSearch || "");
     const [connected] = useState<Set<string>>(new Set());
     const [selectedPerson, setSelectedPerson] = useState<NetworkPerson | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    const allPeople = useMemo(() => [...realUsers, ...PLACEHOLDER_PEOPLE], [realUsers]);
+    const updateParams = (key: string, value: string) => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (value && value !== 'All') {
+            params.set(key, value);
+        } else {
+            params.delete(key);
+        }
+        router.push(`${pathname}?${params.toString()}`);
+    };
 
-    const filteredPeople = useMemo(() => allPeople.filter((person) => {
-        const matchesSport = filter === "All" || person.sport === filter;
-        const matchesSearch =
-            searchQuery === "" ||
-            person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            person.school.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            person.role.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesSport && matchesSearch;
-    }), [allPeople, filter, searchQuery]);
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+        // Simple debounce could be added, but for now we'll update on enter or small delay
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            updateParams('search', searchQuery);
+        }
+    };
+
+    const handleSportChange = (s: Sport | "All") => {
+        setFilter(s);
+        updateParams('sport', s);
+    };
+
+    const filteredPeople = realUsers; // Now filtered on server (plus minor client sync)
 
     const handleConnectClick = (person: NetworkPerson) => {
         if (connected.has(person.id)) return;
@@ -127,13 +150,14 @@ export default function NetworkClient({ realUsers }: NetworkClientProps) {
                             placeholder="Harvard Squash..."
                             className="bg-white/5 border-white/10 text-white placeholder:text-white/40 mb-3 rounded-xl h-12 focus-visible:ring-secondary/50"
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={handleSearch}
+                            onKeyDown={handleKeyDown}
                         />
                         <div className="flex flex-wrap gap-2">
                             {["All", "Squash", "Tennis", "Golf"].map((s) => (
                                 <button
                                     key={s}
-                                    onClick={() => setFilter(s as any)}
+                                    onClick={() => handleSportChange(s as any)}
                                     className={cn(
                                         "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
                                         filter === s

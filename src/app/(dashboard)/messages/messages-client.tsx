@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,18 +15,36 @@ interface Connection {
     request_type: string;
     requester_id: string;
     recipient_id: string;
-    users: { name: string; email: string };
-    athlete_profiles: { school: string; sport: string; avatar_url?: string };
+    requester: { name: string; athlete_profiles: any };
+    recipient: { name: string; athlete_profiles: any };
 }
 
 export default function MessagesClient({ userId, initialConnections }: { userId: string, initialConnections: any[] }) {
-    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const searchParams = useSearchParams();
+    const targetUser = searchParams.get('user');
+    
+    // Auto-select conversation if ?user= is in the URL
+    const initialSelectedId = (() => {
+        if (targetUser) {
+            const match = initialConnections.find((c: Connection) => 
+                c.requester_id === targetUser || c.recipient_id === targetUser
+            );
+            if (match) return match.id;
+        }
+        return null;
+    })();
+
+    const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
     const [messages, setMessages] = useState<any[]>([]);
     const [newMessage, setNewMessage] = useState("");
     const supabase = createClient();
 
-    const selectedConnection = initialConnections.find(c => c.id === selectedId);
-    const otherParticipant = selectedConnection ? (selectedConnection.requester_id === userId ? selectedConnection.users : { name: "Collaborator" }) : null;
+    const selectedConnection = initialConnections.find(c => c.id === selectedId) as Connection | undefined;
+    
+    // The other person is the one who is NOT the current userId
+    const otherPerson = selectedConnection 
+        ? (selectedConnection.requester_id === userId ? selectedConnection.recipient : selectedConnection.requester)
+        : null;
 
     useEffect(() => {
         if (!selectedId) return;
@@ -50,7 +69,11 @@ export default function MessagesClient({ userId, initialConnections }: { userId:
                 table: 'messages',
                 filter: `request_id=eq.${selectedId}`
             }, (payload) => {
-                setMessages(prev => [...prev, payload.new]);
+                setMessages(prev => {
+                    // Prevent duplicate messages if realtime fires quickly
+                    if (prev.some(m => m.id === payload.new.id)) return prev;
+                    return [...prev, payload.new];
+                });
             })
             .subscribe();
 
@@ -61,7 +84,7 @@ export default function MessagesClient({ userId, initialConnections }: { userId:
         if (!newMessage.trim() || !selectedId || !selectedConnection) return;
 
         const receiverId = selectedConnection.requester_id === userId
-            ? selectedConnection.recipient_id // Need to ensure recipient_id exists on request
+            ? selectedConnection.recipient_id
             : selectedConnection.requester_id;
 
         const { error } = await supabase
@@ -93,28 +116,31 @@ export default function MessagesClient({ userId, initialConnections }: { userId:
                                 No active chats yet.
                             </div>
                         ) : (
-                            initialConnections.map((conn) => (
-                                <button
-                                    key={conn.id}
-                                    onClick={() => setSelectedId(conn.id)}
-                                    className={cn(
-                                        "w-full p-4 flex items-center gap-3 text-left transition-colors hover:bg-muted/50",
-                                        selectedId === conn.id && "bg-secondary/10 border-r-4 border-secondary"
-                                    )}
-                                >
-                                    <Avatar className="h-10 w-10 border-border/50 border">
-                                        <AvatarImage src={conn.athlete_profiles?.avatar_url} />
-                                        <AvatarFallback className="bg-secondary/10 text-secondary text-xs font-bold">
-                                            {conn.users?.name?.charAt(0)}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-sm truncate">{conn.users?.name}</p>
-                                        <p className="text-xs text-muted-foreground truncate">{conn.request_type.replace('_', ' ')}</p>
-                                    </div>
-                                    <ChevronRight className="h-4 w-4 text-muted-foreground/30" />
-                                </button>
-                            ))
+                            initialConnections.map((conn: Connection) => {
+                                const contact = conn.requester_id === userId ? conn.recipient : conn.requester;
+                                return (
+                                    <button
+                                        key={conn.id}
+                                        onClick={() => setSelectedId(conn.id)}
+                                        className={cn(
+                                            "w-full p-4 flex items-center gap-3 text-left transition-colors hover:bg-muted/50",
+                                            selectedId === conn.id && "bg-secondary/10 border-r-4 border-secondary"
+                                        )}
+                                    >
+                                        <Avatar className="h-10 w-10 border-border/50 border">
+                                            <AvatarImage src={contact?.athlete_profiles?.avatar_url} />
+                                            <AvatarFallback className="bg-secondary/10 text-secondary text-xs font-bold">
+                                                {contact?.name?.charAt(0)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-semibold text-sm truncate">{contact?.name}</p>
+                                            <p className="text-xs text-muted-foreground truncate">{conn.request_type.replace('_', ' ')}</p>
+                                        </div>
+                                        <ChevronRight className="h-4 w-4 text-muted-foreground/30" />
+                                    </button>
+                                );
+                            })
                         )}
                     </div>
                 </ScrollArea>
@@ -134,14 +160,16 @@ export default function MessagesClient({ userId, initialConnections }: { userId:
                     <>
                         <div className="p-4 border-b border-border/50 flex items-center gap-4 bg-muted/20">
                             <Avatar className="h-10 w-10 border-border/50 border">
-                                <AvatarImage src={selectedConnection?.athlete_profiles?.avatar_url} />
+                                <AvatarImage src={otherPerson?.athlete_profiles?.avatar_url} />
                                 <AvatarFallback className="bg-secondary/10 text-secondary font-bold">
-                                    {selectedConnection?.users?.name?.charAt(0)}
+                                    {otherPerson?.name?.charAt(0)}
                                 </AvatarFallback>
                             </Avatar>
                             <div>
-                                <p className="font-bold">{selectedConnection?.users?.name}</p>
-                                <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">{selectedConnection?.athlete_profiles?.sport} • {selectedConnection?.athlete_profiles?.school}</p>
+                                <p className="font-bold">{otherPerson?.name}</p>
+                                <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
+                                    {otherPerson?.athlete_profiles?.sport || "Multi-Sport"} • {otherPerson?.athlete_profiles?.school || "University"}
+                                </p>
                             </div>
                         </div>
 

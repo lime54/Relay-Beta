@@ -13,8 +13,9 @@ export async function login(formData: FormData) {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
     const captchaToken = formData.get('captchaToken') as string
-
-    if (!captchaToken) {
+    const isDev = process.env.NODE_ENV === 'development'
+    
+    if (!captchaToken && !isDev) {
         return redirect('/login?error=Please complete the captcha')
     }
 
@@ -22,7 +23,7 @@ export async function login(formData: FormData) {
         email,
         password,
         options: {
-            captchaToken,
+            captchaToken: isDev && captchaToken === 'dev-mock-token' ? undefined : captchaToken,
         },
     })
 
@@ -44,8 +45,9 @@ export async function signup(formData: FormData) {
     const sport = formData.get('sport') as string
     const school = formData.get('school') as string
     const captchaToken = formData.get('captchaToken') as string
+    const isDev = process.env.NODE_ENV === 'development'
 
-    if (!captchaToken) {
+    if (!captchaToken && !isDev) {
         return redirect('/signup?error=Please complete the captcha')
     }
 
@@ -63,7 +65,7 @@ export async function signup(formData: FormData) {
                 school,
             },
             emailRedirectTo: `${origin}/auth/callback`,
-            captchaToken,
+            captchaToken: isDev && captchaToken === 'dev-mock-token' ? undefined : captchaToken,
         }
     })
 

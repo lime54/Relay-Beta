@@ -47,7 +47,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                 <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-6">
                     {/* Main Content Column */}
                     <main className="space-y-6">
-                        <ProfileHeader profile={profile} isOwnProfile={false} />
+                        <ProfileHeader profile={profile} isOwnProfile={false} currentExperience={experiences?.find(e => e.is_current)} />
 
                         {/* Experience Section */}
                         <ExperienceList initialExperiences={experiences || []} />

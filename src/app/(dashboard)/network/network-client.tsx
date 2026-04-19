@@ -17,6 +17,7 @@ import {
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import {
     Card,
     CardContent,
@@ -38,6 +39,7 @@ import {
 import { RequestForm } from "@/app/(dashboard)/requests/new/request-form";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { cn } from "@/lib/utils";
+import { SimilarityScore } from "@/components/profile/similarity-score";
 
 type Sport = "Squash" | "Tennis" | "Golf" | "Hockey" | "Basketball" | "Football";
 
@@ -49,6 +51,9 @@ interface NetworkPerson {
     sport: Sport;
     level?: string;
     imageUrl?: string;
+    industry?: string;
+    company?: string;
+    position?: string;
     mutuals?: number;
     isPlaceholder?: boolean;
     isVerified?: boolean;
@@ -56,10 +61,20 @@ interface NetworkPerson {
 
 const PLACEHOLDER_PEOPLE: NetworkPerson[] = [];
 
+const SECTORS = [
+  "All", "Finance & Banking", "Consulting", "Technology & Software", 
+  "Healthcare & Medicine", "Law", "Sports Management & Coaching",
+  "Media, Entertainment & Content", "Marketing & Advertising", 
+  "Real Estate", "Education", "Government & Public Policy",
+  "Nonprofit & Social Impact", "Entrepreneurship / Startups", 
+  "Engineering", "Sales & Business Development"
+];
+
 interface NetworkClientProps {
     realUsers: NetworkPerson[];
     initialSearch: string;
     initialSport: string;
+    initialIndustry: string;
 }
 
 const container = {
@@ -77,14 +92,15 @@ const item = {
     show: { y: 0, opacity: 1 }
 };
 
-export default function NetworkClient({ realUsers, initialSearch, initialSport }: NetworkClientProps) {
+export default function NetworkClient({ realUsers, initialSearch, initialSport, initialIndustry }: NetworkClientProps) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
     const [filter, setFilter] = useState<Sport | "All">((initialSport as any) || "All");
+    const [industryFilter, setIndustryFilter] = useState<string>(initialIndustry || "All");
     const [searchQuery, setSearchQuery] = useState(initialSearch || "");
-    const [connected] = useState<Set<string>>(new Set());
+    const [connected, setConnected] = useState<Set<string>>(new Set());
     const [selectedPerson, setSelectedPerson] = useState<NetworkPerson | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -100,7 +116,6 @@ export default function NetworkClient({ realUsers, initialSearch, initialSport }
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(e.target.value);
-        // Simple debounce could be added, but for now we'll update on enter or small delay
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -114,12 +129,29 @@ export default function NetworkClient({ realUsers, initialSearch, initialSport }
         updateParams('sport', s);
     };
 
+    const handleIndustryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+        setIndustryFilter(value);
+        updateParams('industry', value);
+    };
+
     const filteredPeople = realUsers; // Now filtered on server (plus minor client sync)
 
     const handleConnectClick = (person: NetworkPerson) => {
         if (connected.has(person.id)) return;
         setSelectedPerson(person);
         setIsDialogOpen(true);
+    };
+
+    const handleRequestSuccess = () => {
+        if (selectedPerson) {
+            setConnected(prev => {
+                const newSet = new Set(prev);
+                newSet.add(selectedPerson.id);
+                return newSet;
+            });
+        }
+        setIsDialogOpen(false);
     };
 
     return (
@@ -153,21 +185,34 @@ export default function NetworkClient({ realUsers, initialSearch, initialSport }
                             onChange={handleSearch}
                             onKeyDown={handleKeyDown}
                         />
-                        <div className="flex flex-wrap gap-2">
-                            {["All", "Squash", "Tennis", "Golf"].map((s) => (
-                                <button
-                                    key={s}
-                                    onClick={() => handleSportChange(s as any)}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
-                                        filter === s
-                                            ? "bg-secondary text-secondary-foreground"
-                                            : "bg-white/5 hover:bg-white/10"
-                                    )}
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <div className="flex flex-wrap gap-2 flex-1">
+                                {["All", "Squash", "Tennis", "Golf"].map((s) => (
+                                    <button
+                                        key={s}
+                                        onClick={() => handleSportChange(s as any)}
+                                        className={cn(
+                                            "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                                            filter === s
+                                                ? "bg-secondary text-secondary-foreground"
+                                                : "bg-white/5 hover:bg-white/10"
+                                        )}
+                                    >
+                                        {s}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="sm:w-48">
+                                <Select 
+                                    value={industryFilter} 
+                                    onChange={handleIndustryChange}
+                                    className="h-8 text-xs bg-white/5 border-white/10 text-white rounded-full focus-visible:ring-secondary/50"
                                 >
-                                    {s}
-                                </button>
-                            ))}
+                                    {SECTORS.map(s => (
+                                        <option key={s} value={s} className="text-black">{s === "All" ? "All Industries" : s}</option>
+                                    ))}
+                                </Select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -215,13 +260,14 @@ export default function NetworkClient({ realUsers, initialSearch, initialSport }
                         >
                             <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-accent/5 rounded-[2rem] -z-10 group-hover:scale-[1.02] transition-transform duration-300" />
                             <Card className="h-full border-border/40 bg-card/80 backdrop-blur-sm overflow-hidden rounded-[2rem] ring-1 ring-black/5 hover:shadow-2xl hover:shadow-secondary/10 transition-all duration-300">
-                                <div className="absolute top-4 right-4 z-10">
+                                <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
                                     {person.isVerified && (
                                         <div className="p-1 px-2.5 rounded-full bg-accent/10 border border-accent/20 backdrop-blur-md flex items-center gap-1">
                                             <ShieldCheck className="h-3 w-3 text-accent" />
                                             <span className="text-[10px] font-bold text-accent uppercase tracking-tighter">Verified</span>
                                         </div>
                                     )}
+                                    <SimilarityScore targetUserId={person.id} className="backdrop-blur-md shadow-lg" />
                                 </div>
 
                                 <CardHeader className="pt-8 pb-4 flex flex-col items-center text-center">
@@ -239,9 +285,17 @@ export default function NetworkClient({ realUsers, initialSearch, initialSport }
                                         <CardTitle className="text-2xl font-bold tracking-tight mb-1 group-hover:text-secondary transition-colors text-primary">
                                             {person.name}
                                         </CardTitle>
-                                        <CardDescription className="text-sm font-medium text-muted-foreground flex items-center justify-center gap-1.5 px-4 mb-2">
-                                            <Target className="h-3.5 w-3.5" />
-                                            {person.role}
+                                        <CardDescription className="text-sm font-medium text-muted-foreground flex flex-col items-center justify-center gap-1.5 px-4 mb-2">
+                                            {person.company && person.position ? (
+                                                <span className="font-semibold text-primary">{person.position} at {person.company}</span>
+                                            ) : (
+                                                <span className="flex items-center gap-1"><Target className="h-3.5 w-3.5" />{person.role}</span>
+                                            )}
+                                            {person.industry && (
+                                                <span className="text-xs text-secondary bg-secondary/10 px-2.5 py-0.5 rounded-full mt-1">
+                                                    {person.industry}
+                                                </span>
+                                            )}
                                         </CardDescription>
                                         <div className="flex items-center justify-center gap-3 mt-4">
                                             <Badge variant="outline" className="rounded-full bg-background border-border/80 text-xs py-1 px-3">
@@ -312,7 +366,7 @@ export default function NetworkClient({ realUsers, initialSearch, initialSport }
                     <p className="text-muted-foreground max-w-sm mx-auto">
                         Try adjusting your filters or search query to find more profiles in the network.
                     </p>
-                    <Button variant="link" onClick={() => { setFilter("All"); setSearchQuery(""); }} className="text-secondary font-bold">
+                    <Button variant="link" onClick={() => { setFilter("All"); setIndustryFilter("All"); setSearchQuery(""); }} className="text-secondary font-bold">
                         Clear all filters
                     </Button>
                 </div>
@@ -339,9 +393,12 @@ export default function NetworkClient({ realUsers, initialSearch, initialSport }
                                         sport: selectedPerson.sport,
                                         school: selectedPerson.school,
                                         role: selectedPerson.role,
-                                        imageUrl: selectedPerson.imageUrl
+                                        imageUrl: selectedPerson.imageUrl,
+                                        company: selectedPerson.company,
+                                        position: selectedPerson.position,
+                                        industry: selectedPerson.industry
                                     }}
-                                    onSuccess={() => setIsDialogOpen(false)}
+                                    onSuccess={handleRequestSuccess}
                                 />
                             )}
                         </div>

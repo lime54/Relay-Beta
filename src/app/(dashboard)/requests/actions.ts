@@ -2,56 +2,77 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 
 export async function submitRequest(formData: FormData) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-        return redirect('/login')
+        console.error('[submitRequest] No authenticated user found')
+        return { success: false, error: 'Not authenticated' }
     }
 
     const requestType = formData.get('type') as string
     const context = formData.get('context') as string
     const timeCommitment = formData.get('time_commitment') as string
     const offer = formData.get('offer') as string
-    const aiAssisted = formData.get('ai_assisted') === 'true'
+    const recipientId = formData.get('recipient_id') as string
+
+    console.log('[submitRequest] User:', user.id)
+    console.log('[submitRequest] FormData:', { requestType, context: context?.substring(0, 50), timeCommitment, offer: offer?.substring(0, 50), recipientId })
+
+    // Validate required fields
+    if (!requestType || !context) {
+        console.error('[submitRequest] Missing required fields:', { requestType, context: !!context })
+        return { success: false, error: 'Request type and context are required' }
+    }
 
     // Calculate expiration date (7 days from now)
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7)
 
-    const { error } = await supabase
+    const insertPayload = {
+        requester_id: user.id,
+        recipient_id: recipientId || null,
+        request_type: requestType,
+        context: context,
+        time_commitment: timeCommitment || null,
+        offer_in_return: offer || null,
+        status: 'pending',
+        expires_at: expiresAt.toISOString(),
+    }
+
+    console.log('[submitRequest] Insert payload:', JSON.stringify(insertPayload))
+
+    const { data, error } = await supabase
         .from('requests')
-        .insert({
-            requester_id: user.id,
-            request_type: requestType,
-            context: context,
-            time_commitment: timeCommitment,
-            offer_in_return: offer,
-            ai_assisted: aiAssisted,
-            status: 'pending',
-            expires_at: expiresAt.toISOString(),
-        })
+        .insert(insertPayload)
+        .select()
+
+    console.log('[submitRequest] Insert result - data:', JSON.stringify(data), 'error:', JSON.stringify(error))
 
     if (error) {
-        console.error('Error creating request:', error)
-        return redirect('/requests/new?error=Failed to create request')
+        console.error('[submitRequest] Error creating request:', error)
+        return { success: false, error: error.message || 'Failed to create request' }
     }
 
     revalidatePath('/requests')
-    redirect('/requests')
+    revalidatePath('/dashboard')
+    return { success: true }
 }
 
 export async function refineRequestDraft(context: string, offer: string) {
-    // Placeholder for AI refinement - in production this would call an AI API
-    // For now, return slightly improved versions
-    await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800))
+
+    // Simple heuristic refinement
+    const refinedContext = `Hi! I'm reaching out as a fellow athlete. ${context.length > 5 ? context : "I'm interested in connecting and learning more about your journey."} I'm particularly impressed by your transition from the field to your current role and would love to hear your perspective.`
+
+    const refinedOffer = `I'll be sure to come prepared with specific questions to respect your time, and ${offer || "I'd love to share any insights I have on current campus culture"} or help in any way I can.`
 
     return {
-        refinedContext: context.trim() + (context.endsWith('.') ? '' : '.'),
-        refinedOffer: offer.trim() + (offer.endsWith('.') ? '' : '.'),
+        refinedContext,
+        refinedOffer,
     }
 }
 

@@ -3,16 +3,23 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Plus } from "lucide-react"
+import { Plus, Send, Inbox, MessageCircle, Clock, ArrowRight } from "lucide-react"
 import { AthleteConnectionCard } from "./athlete-connection-card"
 
-export default async function RequestsPage() {
+export default async function RequestsPage({
+    searchParams
+}: {
+    searchParams: Promise<{ tab?: string }>
+}) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
         redirect('/login')
     }
+
+    const sp = await searchParams
+    const activeTab = sp.tab || 'all'
 
     // Fetch current user profile (for overlap logic)
     const { data: currentUserProfile } = await supabase
@@ -21,169 +28,298 @@ export default async function RequestsPage() {
         .eq('user_id', user.id)
         .single()
 
-    // Fetch requests I sent (My Plays)
-    const { data: sentRequests } = await supabase
+    // Fetch requests I sent (My Plays) - no FK join on recipient_id, so fetch separately
+    const { data: rawSentRequests, error: sentError } = await supabase
         .from('requests')
-        .select(`
-            *,
-            responses (
-                id,
-                response_type,
-                responder_id,
-                users:responder_id (
-                    name,
-                    athlete_profiles (school, sport)
-                )
-            )
-        `)
+        .select('*')
         .eq('requester_id', user.id)
         .order('created_at', { ascending: false })
 
-    // Fetch requests sent to me (Team Huddle)
-    const { data: receivedRequests } = await supabase
+    if (sentError) {
+        console.error('[RequestsPage] sentRequests error:', sentError)
+    }
+
+    // Bulk fetch recipient user data for sent requests
+    const recipientIds = (rawSentRequests || [])
+        .map((r: any) => r.recipient_id)
+        .filter(Boolean)
+    
+    let recipientMap: Record<string, any> = {}
+    if (recipientIds.length > 0) {
+        const { data: recipientUsers } = await supabase
+            .from('users')
+            .select('id, name, athlete_profiles(school, sport)')
+            .in('id', recipientIds)
+        
+        if (recipientUsers) {
+            recipientUsers.forEach((u: any) => {
+                recipientMap[u.id] = u
+            })
+        }
+    }
+
+    // Stitch recipient data into sent requests
+    const sentRequests = (rawSentRequests || []).map((req: any) => ({
+        ...req,
+        recipient: req.recipient_id ? recipientMap[req.recipient_id] || null : null
+    }))
+
+    // Fetch requests sent to me (Inbox)
+    const { data: receivedRequests, error: receivedError } = await supabase
         .from('requests')
         .select(`
             *,
             users:requester_id (
                 name,
-                athlete_profiles (school, sport, graduation_year, level)
+                athlete_profiles (school, sport, ncaa_level)
             )
         `)
-        .neq('requester_id', user.id)
+        .eq('recipient_id', user.id)
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
         .limit(20)
 
+    if (receivedError) {
+        console.error('[RequestsPage] receivedRequests error:', receivedError)
+    }
+
+    const allCount = (sentRequests?.length || 0) + (receivedRequests?.length || 0)
+    const sentCount = sentRequests?.length || 0
+    const receivedCount = receivedRequests?.length || 0
+
+    const tabs = [
+        { id: 'all', label: 'All Activity', count: allCount },
+        { id: 'sent', label: 'Sent', count: sentCount, icon: Send },
+        { id: 'inbox', label: 'Inbox', count: receivedCount, icon: Inbox },
+    ]
+
     return (
-        <div className="container mx-auto px-4 py-8 max-w-[1128px] animate-fade-in">
-            <div className="flex flex-col md:flex-row gap-8 items-start">
+        <div className="container mx-auto px-4 py-8 max-w-[900px] animate-fade-in">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">My Requests</h1>
+                    <p className="text-slate-500 mt-1">Manage your connections and incoming requests</p>
+                </div>
+                <Link href="/network">
+                    <Button className="gap-2 rounded-full px-6 h-11 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+                        <Plus className="h-4 w-4" />
+                        New Request
+                    </Button>
+                </Link>
+            </div>
 
-                {/* LEFT COLUMN: Team Huddle (Incoming Requests) - PRIMARY */}
-                <main className="flex-1 w-full">
-                    <div className="mb-6">
-                        <h1 className="text-2xl font-bold text-slate-900">My Network</h1>
-                        <p className="text-slate-500">Athletes in your huddle waiting for a response</p>
-                    </div>
+            {/* Tab Navigation */}
+            <div className="flex gap-1 p-1 bg-slate-100 rounded-2xl mb-8">
+                {tabs.map((tab) => (
+                    <Link
+                        key={tab.id}
+                        href={`/requests${tab.id === 'all' ? '' : `?tab=${tab.id}`}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all ${
+                            activeTab === tab.id
+                                ? 'bg-white text-slate-900 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                    >
+                        {tab.icon && <tab.icon className="h-4 w-4" />}
+                        {tab.label}
+                        {tab.count > 0 && (
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                                activeTab === tab.id
+                                    ? 'bg-primary text-white'
+                                    : 'bg-slate-200 text-slate-600'
+                            }`}>
+                                {tab.count}
+                            </span>
+                        )}
+                    </Link>
+                ))}
+            </div>
 
-                    {(!receivedRequests || receivedRequests.length === 0) ? (
-                        <Card className="bg-slate-50 border-none shadow-none">
-                            <CardContent className="py-16 text-center flex flex-col items-center">
-                                <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center text-3xl mb-4 shadow-sm border border-slate-100">
-                                    🤝
-                                </div>
-                                <h3 className="text-lg font-semibold text-slate-900">All caught up!</h3>
-                                <p className="text-slate-500 max-w-sm mx-auto mt-1 mb-6">
-                                    You don&apos;t have any pending requests. Maybe verify your profile to become more visible?
-                                </p>
-                                <Link href="/profile/verify">
-                                    <Button variant="outline">Verify Profile</Button>
-                                </Link>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        <div>
-                            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
-                                Incoming Requests ({receivedRequests.length})
+            {/* Content */}
+            <div className="space-y-4">
+                {/* Inbox Section (show when tab is 'all' or 'inbox') */}
+                {(activeTab === 'all' || activeTab === 'inbox') && (
+                    <>
+                        {receivedCount > 0 && (
+                            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                <Inbox className="h-3.5 w-3.5" />
+                                Incoming Requests ({receivedCount})
                             </h2>
-                            {receivedRequests.map((request) => (
+                        )}
+                        {receivedRequests && receivedRequests.length > 0 ? (
+                            receivedRequests.map((request) => (
                                 <AthleteConnectionCard
                                     key={request.id}
                                     request={request}
                                     currentUserProfile={currentUserProfile || undefined}
                                 />
-                            ))}
-                        </div>
-                    )}
-                </main>
-
-                {/* RIGHT COLUMN: My Plays (Outgoing Status) - SECONDARY */}
-                <aside className="w-full md:w-[320px] shrink-0">
-                    <div className="sticky top-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-bold text-slate-900">My Plays</h2>
-                            <Link href="/network">
-                                <Button size="sm" variant="secondary" className="gap-1.5 h-8 px-3">
-                                    <Plus className="h-3.5 w-3.5" />
-                                    New
-                                </Button>
-                            </Link>
-                        </div>
-
-                        <Card>
-                            <CardContent className="p-0">
-                                {(!sentRequests || sentRequests.length === 0) ? (
-                                    <div className="p-6 text-center text-sm text-slate-500">
-                                        No active requests sent.
-                                        <div className="mt-3">
-                                            <Link href="/network">
-                                                <Button variant="link" size="sm" className="text-primary p-0 h-auto">
-                                                    Browse network &rarr;
-                                                </Button>
-                                            </Link>
-                                        </div>
+                            ))
+                        ) : activeTab === 'inbox' ? (
+                            <Card className="bg-slate-50 border-none shadow-none">
+                                <CardContent className="py-16 text-center flex flex-col items-center">
+                                    <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center text-3xl mb-4 shadow-sm border border-slate-100">
+                                        📬
                                     </div>
-                                ) : (
-                                    <div className="divide-y divide-slate-100">
-                                        {sentRequests.map((req) => {
-                                            const acceptance = (req as any).responses?.find((r: { response_type: string }) => r.response_type === 'accept');
-                                            const responder = acceptance?.users;
+                                    <h3 className="text-lg font-semibold text-slate-900">No incoming requests</h3>
+                                    <p className="text-slate-500 max-w-sm mx-auto mt-1">
+                                        When someone sends you a connection request, it will appear here.
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        ) : null}
+                    </>
+                )}
 
-                                            return (
-                                                <div key={req.id} className="p-4 hover:bg-slate-50 transition-colors">
-                                                    <div className="flex justify-between items-start mb-1">
-                                                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                                            {req.request_type.split('_').join(' ')}
-                                                        </span>
-                                                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${req.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                                                            req.status === 'declined' ? 'bg-red-100 text-red-700' :
+                {/* Divider between sections when showing all */}
+                {activeTab === 'all' && receivedCount > 0 && sentCount > 0 && (
+                    <div className="border-t border-slate-200 my-6" />
+                )}
+
+                {/* Sent Section (show when tab is 'all' or 'sent') */}
+                {(activeTab === 'all' || activeTab === 'sent') && (
+                    <>
+                        {sentCount > 0 && (
+                            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                <Send className="h-3.5 w-3.5" />
+                                Sent Requests ({sentCount})
+                            </h2>
+                        )}
+                        {sentRequests && sentRequests.length > 0 ? (
+                            <div className="space-y-3">
+                                {sentRequests.map((req) => {
+                                    const recipient = (req as any).recipient
+                                    const recipientName = recipient?.name || 'Someone'
+                                    const recipientSchool = recipient?.athlete_profiles?.school
+                                    const recipientSport = recipient?.athlete_profiles?.sport
+
+                                    return (
+                                        <Card key={req.id} className="hover:shadow-md transition-all overflow-hidden border-border/60">
+                                            <CardContent className="p-0">
+                                                <div className="flex items-stretch">
+                                                    {/* Status Bar */}
+                                                    <div className={`w-1.5 shrink-0 ${
+                                                        req.status === 'accepted' ? 'bg-green-500' :
+                                                        req.status === 'declined' ? 'bg-red-400' :
+                                                        'bg-amber-400'
+                                                    }`} />
+
+                                                    <div className="flex-1 p-5">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="h-10 w-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-sm font-bold text-slate-500">
+                                                                    {recipientName.charAt(0)}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-bold text-slate-900 text-sm">{recipientName}</p>
+                                                                    <p className="text-xs text-slate-500">
+                                                                        {[recipientSport, recipientSchool].filter(Boolean).join(' • ') || 'Athlete'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-full ${
+                                                                req.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                                                                req.status === 'declined' ? 'bg-red-100 text-red-700' :
                                                                 'bg-amber-100 text-amber-700'
                                                             }`}>
-                                                            {req.status}
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-sm font-medium text-slate-900 line-clamp-2">
-                                                        {req.context}
-                                                    </p>
-                                                    {req.status === 'accepted' && responder && (
-                                                        <div className="mt-3 p-2 bg-green-50 rounded-lg border border-green-100">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="h-6 w-6 rounded-full bg-green-200 flex items-center justify-center text-[10px] font-bold text-green-700">
-                                                                    {responder.name?.charAt(0)}
-                                                                </div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <p className="text-[11px] font-bold text-green-900 truncate">{responder.name}</p>
-                                                                    <p className="text-[9px] text-green-700 truncate">{responder.athlete_profiles?.school}</p>
-                                                                </div>
-                                                                <Link href={`/messages?id=${req.id}`}>
-                                                                    <Button size="sm" variant="secondary" className="h-7 px-3 text-[10px] bg-green-600 hover:bg-green-700 text-white border-0">
+                                                                {req.status}
+                                                            </span>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                                {req.request_type?.split('_').join(' ')}
+                                                            </span>
+                                                            <span className="text-slate-300">•</span>
+                                                            <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                                                                <Clock className="h-3 w-3" />
+                                                                {new Date(req.created_at).toLocaleDateString()}
+                                                            </span>
+                                                        </div>
+
+                                                        <p className="text-sm text-slate-700 line-clamp-2 leading-relaxed">
+                                                            {req.context}
+                                                        </p>
+
+                                                        {/* Actions */}
+                                                        <div className="flex items-center gap-3 mt-4 pt-3 border-t border-slate-100">
+                                                            {req.status === 'accepted' ? (
+                                                                <Link href={`/messages?user=${recipient?.id || ''}`}>
+                                                                    <Button size="sm" className="h-8 px-4 text-xs bg-green-600 hover:bg-green-700 text-white rounded-full gap-1.5">
+                                                                        <MessageCircle className="h-3.5 w-3.5" />
                                                                         Message
                                                                     </Button>
                                                                 </Link>
-                                                            </div>
+                                                            ) : req.status === 'pending' ? (
+                                                                <span className="text-xs text-amber-600 font-medium flex items-center gap-1">
+                                                                    <Clock className="h-3 w-3" />
+                                                                    Waiting for response...
+                                                                </span>
+                                                            ) : null}
+                                                            <Link href={`/requests/${req.id}`} className="ml-auto">
+                                                                <Button variant="ghost" size="sm" className="h-8 px-3 text-xs text-slate-500 hover:text-slate-900 gap-1">
+                                                                    Details
+                                                                    <ArrowRight className="h-3 w-3" />
+                                                                </Button>
+                                                            </Link>
                                                         </div>
-                                                    )}
-                                                    <div className="mt-2 text-xs text-slate-400">
-                                                        Sent {new Date(req.created_at).toLocaleDateString()}
                                                     </div>
                                                 </div>
-                                            );
-                                        })}
+                                            </CardContent>
+                                        </Card>
+                                    )
+                                })}
+                            </div>
+                        ) : activeTab === 'sent' ? (
+                            <Card className="bg-slate-50 border-none shadow-none">
+                                <CardContent className="py-16 text-center flex flex-col items-center">
+                                    <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center text-3xl mb-4 shadow-sm border border-slate-100">
+                                        🚀
                                     </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                                    <h3 className="text-lg font-semibold text-slate-900">No requests sent yet</h3>
+                                    <p className="text-slate-500 max-w-sm mx-auto mt-1 mb-4">
+                                        Browse the network to find athletes and send your first connection request.
+                                    </p>
+                                    <Link href="/network">
+                                        <Button variant="outline" className="rounded-full px-6">Browse Network</Button>
+                                    </Link>
+                                </CardContent>
+                            </Card>
+                        ) : null}
+                    </>
+                )}
 
-                        <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-100">
-                            <h4 className="font-semibold text-blue-900 text-sm mb-1">💡 Pro Tip</h4>
-                            <p className="text-xs text-blue-800 leading-relaxed">
-                                Athletes are 3x more likely to respond if you mention your shared sport in the first sentence.
+                {/* Empty state for All tab */}
+                {activeTab === 'all' && allCount === 0 && (
+                    <Card className="bg-slate-50 border-none shadow-none">
+                        <CardContent className="py-16 text-center flex flex-col items-center">
+                            <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center text-3xl mb-4 shadow-sm border border-slate-100">
+                                🤝
+                            </div>
+                            <h3 className="text-lg font-semibold text-slate-900">No activity yet</h3>
+                            <p className="text-slate-500 max-w-sm mx-auto mt-1 mb-4">
+                                Start connecting with athletes in the network to build your professional circle.
                             </p>
-                        </div>
-                    </div>
-                </aside>
+                            <Link href="/network">
+                                <Button className="rounded-full px-6 gap-2">
+                                    <Plus className="h-4 w-4" />
+                                    Browse Network
+                                </Button>
+                            </Link>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
+
+            {/* Pro Tip */}
+            {allCount > 0 && (
+                <div className="mt-8 bg-blue-50 rounded-2xl p-5 border border-blue-100">
+                    <h4 className="font-semibold text-blue-900 text-sm mb-1">💡 Pro Tip</h4>
+                    <p className="text-xs text-blue-800 leading-relaxed">
+                        Athletes are 3x more likely to respond if you mention your shared sport in the first sentence.
+                    </p>
+                </div>
+            )}
         </div>
     )
 }
-
-

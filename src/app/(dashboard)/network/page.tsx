@@ -13,13 +13,17 @@ interface RealUser {
     school: string
     sport: Sport
     level?: string
+    imageUrl?: string
+    industry?: string
+    company?: string
+    position?: string
     isPlaceholder: false
 }
 
 export default async function NetworkPage({
     searchParams
 }: {
-    searchParams: Promise<{ search?: string; sport?: string }>
+    searchParams: Promise<{ search?: string; sport?: string; industry?: string }>
 }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -29,11 +33,12 @@ export default async function NetworkPage({
     const sp = await searchParams
     const search = sp.search || ''
     const sport = sp.sport && sp.sport !== 'All' ? sp.sport : null
+    const industry = sp.industry && sp.industry !== 'All' ? sp.industry : null
 
     // Fetch users with their athlete profiles
     let query = supabase
         .from('users')
-        .select('id, name, email, role, athlete_profiles(sport, school, ncaa_level, verification_status)')
+        .select('id, name, email, role, avatar_url, athlete_profiles(sport, school, ncaa_level, verification_status, avatar_url)')
         .neq('id', user.id)
 
     if (search) {
@@ -44,6 +49,27 @@ export default async function NetworkPage({
 
     if (error) {
         console.error('Error fetching users:', error)
+    }
+
+    // Fetch all current experiences for these users in bulk
+    const userIds = users?.map(u => u.id) || []
+    let experiencesMap: Record<string, {company: string, role: string}> = {}
+    
+    if (userIds.length > 0) {
+        const { data: expData, error: expError } = await supabase
+            .from('experiences')
+            .select('user_id, company, role, is_current')
+            .in('user_id', userIds)
+            .eq('is_current', true)
+
+        if (!expError && expData) {
+            // Priority to the first current experience
+            expData.forEach(exp => {
+                if (!experiencesMap[exp.user_id]) {
+                    experiencesMap[exp.user_id] = { company: exp.company, role: exp.role }
+                }
+            })
+        }
     }
 
     // Transform database rows into the format the client component expects
@@ -64,13 +90,16 @@ export default async function NetworkPage({
                 school: profile?.school || 'Unknown School',
                 sport: (profile?.sport || 'Squash') as Sport,
                 level: profile?.ncaa_level || undefined,
+                imageUrl: u.avatar_url || profile?.avatar_url || '',
+                company: experiencesMap[u.id]?.company,
+                position: experiencesMap[u.id]?.role,
                 isPlaceholder: false as const,
                 isVerified: profile?.verification_status || false,
             }
         })
 
-    // Post-fetch filter for sport (since cross-table filtering in 1-select is tricky in some versions of Supabase SDK)
-    const finalUsers = realUsers.filter(u => !sport || u.sport === sport)
+    // Post-fetch filter for sport
+    const finalUsers = realUsers.filter(u => (!sport || u.sport === sport))
 
     return (
         <div className="w-full">
@@ -78,6 +107,7 @@ export default async function NetworkPage({
                 realUsers={finalUsers}
                 initialSearch={search}
                 initialSport={sport || 'All'}
+                initialIndustry={industry || 'All'}
             />
 
             {/* Diagnostic info (hidden unless empty) */}

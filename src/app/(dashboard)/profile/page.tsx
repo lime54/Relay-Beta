@@ -37,7 +37,7 @@ export default async function ProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-6">
                     {/* Main Content Column */}
                     <main className="space-y-6">
-                        <ProfileHeader profile={profile} isOwnProfile={true} />
+                        <ProfileHeader profile={profile} isOwnProfile={true} currentExperience={experiences?.find(e => e.is_current)} />
 
                         {/* Experience Section */}
                         <ExperienceList initialExperiences={experiences || []} />

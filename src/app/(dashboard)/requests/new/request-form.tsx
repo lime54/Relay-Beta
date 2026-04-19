@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { refineRequestDraft, submitRequest } from "./actions";
+import { refineRequestDraft } from "./actions";
+import { submitRequest } from "../actions";
 import { Wand2, Send, Clock, Sparkles, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,9 @@ interface Recipient {
     school: string;
     role: string;
     imageUrl?: string;
+    industry?: string;
+    company?: string;
+    position?: string;
 }
 
 export function RequestForm({
@@ -50,7 +54,7 @@ export function RequestForm({
                 .single();
 
             if (profile) {
-                setIsVerified(profile.verification_status === 'verified');
+                setIsVerified(profile.verification_status === true);
             }
         }
         checkVerification();
@@ -134,9 +138,17 @@ export function RequestForm({
                         <p className="text-base font-bold text-primary">
                             Connecting with {recipient.name}
                         </p>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                            <Badge variant="default" className="text-[10px] uppercase tracking-wider py-0 px-2 bg-secondary/10 text-secondary border-none hover:bg-secondary/20 transition-colors pointer-events-none">{recipient.sport}</Badge>
-                            <span className="text-xs text-muted-foreground">• {recipient.school}</span>
+                        <div className="flex flex-col gap-1 mt-1 font-medium text-xs">
+                            {recipient.company && recipient.position ? (
+                                <span className="text-primary">{recipient.position} at {recipient.company}</span>
+                            ) : null}
+                            <div className="flex flex-wrap gap-2 items-center">
+                                {recipient.industry && (
+                                    <Badge variant="outline" className="text-[10px] uppercase tracking-wider py-0 px-2 bg-secondary/10 text-secondary border-none pointer-events-none">{recipient.industry}</Badge>
+                                )}
+                                <Badge variant="default" className="text-[10px] uppercase tracking-wider py-0 px-2 bg-secondary/10 text-secondary border-none hover:bg-secondary/20 transition-colors pointer-events-none">{recipient.sport}</Badge>
+                                <span className="text-muted-foreground">• {recipient.school}</span>
+                            </div>
                         </div>
                     </div>
                 </div>

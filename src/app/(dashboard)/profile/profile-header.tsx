@@ -20,6 +20,13 @@ import {
 import { RequestForm } from "@/app/(dashboard)/requests/new/request-form"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
 import { cn } from "@/lib/utils"
+import { SimilarityScore } from "@/components/profile/similarity-score"
+import { ResumeDropbox } from "@/components/profile/resume-dropbox"
+import { Linkedin, FileText, Lock, Upload } from "lucide-react"
+import { ResumeParser } from "@/components/profile/resume-parser"
+import { checkConnection } from "./actions"
+import { useEffect } from "react"
+import { EditIndustryDialog } from "@/components/profile/edit-industry-dialog"
 
 interface AthleteProfile {
     school?: string
@@ -28,9 +35,14 @@ interface AthleteProfile {
     cover_url?: string
     theme_gradient?: string
     verification_status?: boolean
+    resume_url?: string
+    linkedin_url?: string
+    locations?: string
+    career_sectors?: string[]
 }
 
 interface Profile {
+    id: string
     name?: string
     avatar_url?: string
     cover_url?: string
@@ -41,6 +53,7 @@ interface Profile {
 interface ProfileHeaderProps {
     profile: Profile | null
     isOwnProfile: boolean
+    currentExperience?: { company: string, role: string }
 }
 
 const THEME_OPTIONS = [
@@ -52,7 +65,7 @@ const THEME_OPTIONS = [
     { name: "Midnight (Dark)", value: "from-slate-800 to-slate-900 text-white" },
 ]
 
-export function ProfileHeader({ profile, isOwnProfile }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, isOwnProfile, currentExperience }: ProfileHeaderProps) {
     const avatarInputRef = useRef<HTMLInputElement>(null)
     const coverInputRef = useRef<HTMLInputElement>(null)
     const [isUploading, setIsUploading] = useState<string | null>(null)
@@ -80,6 +93,36 @@ export function ProfileHeader({ profile, isOwnProfile }: ProfileHeaderProps) {
     const [cropType, setCropType] = useState<'avatar' | 'cover' | null>(null)
     // Request Dialog State
     const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [isResumeUploadOpen, setIsResumeUploadOpen] = useState(false)
+    const [isResumeParserOpen, setIsResumeParserOpen] = useState(false)
+    const [isEditIndustryOpen, setIsEditIndustryOpen] = useState(false)
+    const [isConnected, setIsConnected] = useState<boolean | null>(null)
+    const [connectionCount, setConnectionCount] = useState<number>(0)
+    
+    const primaryIndustry = profile?.athlete_profiles?.career_sectors?.[0] || null
+
+    useEffect(() => {
+        if (!isOwnProfile && profile?.id) {
+            checkConnection(profile.id).then(res => setIsConnected(res.connected))
+        } else if (isOwnProfile) {
+            setIsConnected(true)
+        }
+
+        // Fetch actual connection count
+        async function fetchConnectionCount() {
+            const targetId = profile?.id
+            if (!targetId) return
+            const { createClient } = await import('@/lib/supabase/client')
+            const supabase = createClient()
+            const { count } = await supabase
+                .from('requests')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'accepted')
+                .or(`requester_id.eq.${targetId},recipient_id.eq.${targetId}`)
+            setConnectionCount(count || 0)
+        }
+        fetchConnectionCount()
+    }, [isOwnProfile, profile?.id])
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'cover') => {
         const file = e.target.files?.[0]
@@ -224,10 +267,9 @@ export function ProfileHeader({ profile, isOwnProfile }: ProfileHeaderProps) {
                                 variant="secondary"
                                 className="bg-white/50 backdrop-blur-sm hover:bg-white/80 shadow-md"
                                 onClick={() => coverInputRef.current?.click()}
-                                loading={isUploading === 'cover'}
                                 disabled={!!isUploading}
                             >
-                                <Camera className="h-4 w-4 mr-2" />
+                                {isUploading === 'cover' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Camera className="h-4 w-4 mr-2" />}
                                 {isUploading === 'cover' ? "Uploading..." : "Edit Cover"}
                             </Button>
                         </motion.div>
@@ -310,26 +352,63 @@ export function ProfileHeader({ profile, isOwnProfile }: ProfileHeaderProps) {
 
                 {/* Profile Info */}
                 <div className="mt-4 space-y-2 max-w-2xl">
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-center justify-center gap-3">
                         <h1 className="text-3xl font-bold text-foreground">
                             {profile?.name}
                         </h1>
                         {profile?.athlete_profiles?.verification_status && (
                             <ShieldCheck className="h-6 w-6 text-blue-500" />
                         )}
+                        {!isOwnProfile && profile?.id && (
+                            <SimilarityScore targetUserId={profile.id} />
+                        )}
                     </div>
 
-                    <p className="text-lg font-medium text-foreground/80">
-                        {profile?.athlete_profiles?.sport ? `${profile.athlete_profiles.sport} Student-Athlete` : 'Student-Athlete'} at {profile?.athlete_profiles?.school || 'University'}
+                    <p className="text-lg font-medium text-foreground/80 flex items-center justify-center gap-2">
+                        {currentExperience ? (
+                             <span className="font-bold text-primary">{currentExperience.role} at {currentExperience.company}</span>
+                        ) : (
+                             <span>{profile?.athlete_profiles?.sport ? `${profile.athlete_profiles.sport} Student-Athlete` : 'Student-Athlete'} at {profile?.athlete_profiles?.school || 'University'}</span>
+                        )}
+                        {primaryIndustry && (
+                            <span className="text-xs bg-secondary/10 text-secondary px-2.5 py-0.5 rounded-full ring-1 ring-secondary/20 uppercase tracking-tight font-bold">
+                                {primaryIndustry}
+                            </span>
+                        )}
+                        {isOwnProfile && (
+                            <Button variant="ghost" size="icon" className="h-6 w-6 ml-1 text-muted-foreground hover:text-secondary rounded-full" onClick={() => setIsEditIndustryOpen(true)}>
+                                <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                        )}
                     </p>
 
                     <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            Los Angeles, CA
-                        </span>
-                        <span>•</span>
-                        <span className="font-medium text-primary">500+ Connections</span>
+                        {profile?.athlete_profiles?.locations && (
+                            <span className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {profile.athlete_profiles.locations}
+                            </span>
+                        )}
+                        {profile?.athlete_profiles?.linkedin_url && (
+                            <>
+                                {profile?.athlete_profiles?.locations && <span>•</span>}
+                                <a 
+                                    href={profile.athlete_profiles.linkedin_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-secondary hover:underline font-medium"
+                                >
+                                    <Linkedin className="h-3 w-3" />
+                                    LinkedIn
+                                </a>
+                            </>
+                        )}
+                        {connectionCount > 0 && (
+                            <>
+                                <span>•</span>
+                                <span className="font-medium text-primary">{connectionCount} Connection{connectionCount !== 1 ? 's' : ''}</span>
+                            </>
+                        )}
                     </div>
 
                     {/* Action Buttons */}
@@ -342,9 +421,63 @@ export function ProfileHeader({ profile, isOwnProfile }: ProfileHeaderProps) {
                                 Send Personal Request
                             </Button>
                         )}
-                        <Button variant="outline" className="rounded-full px-6 transition-all hover:bg-muted">
-                            View Resume
-                        </Button>
+                        
+                        {isOwnProfile ? (
+                            <>
+                                <Button 
+                                    variant="outline" 
+                                    className="rounded-full px-6 transition-all hover:bg-muted gap-2"
+                                    onClick={() => setIsResumeUploadOpen(true)}
+                                >
+                                    <Upload className="h-4 w-4" />
+                                    {profile?.athlete_profiles?.resume_url ? "Update Resume" : "Upload Resume"}
+                                </Button>
+                                <Button 
+                                    variant="outline" 
+                                    className="rounded-full px-6 transition-all border-secondary/30 text-secondary hover:bg-secondary/5 gap-2"
+                                    onClick={() => setIsResumeParserOpen(true)}
+                                >
+                                    <FileText className="h-4 w-4" />
+                                    Import Resume
+                                </Button>
+                            </>
+                        ) : (
+                            <Button 
+                                variant="outline" 
+                                className={cn(
+                                    "rounded-full px-6 transition-all gap-2",
+                                    isConnected ? "hover:bg-muted" : "opacity-60 cursor-not-allowed group"
+                                )}
+                                onClick={() => {
+                                    if (isConnected && profile?.athlete_profiles?.resume_url) {
+                                        window.open(profile.athlete_profiles.resume_url, '_blank')
+                                    } else if (!isConnected) {
+                                        toast.info("Connect with this user to view their resume", {
+                                            icon: <Lock className="h-4 w-4" />
+                                        })
+                                    }
+                                }}
+                            >
+                                {isConnected ? (
+                                    <FileText className="h-4 w-4" />
+                                ) : (
+                                    <Lock className="h-4 w-4" />
+                                )}
+                                View Resume
+                            </Button>
+                        )}
+
+                        {profile?.athlete_profiles?.resume_url && isOwnProfile && (
+                            <Button 
+                                variant="ghost" 
+                                className="rounded-full px-4 text-secondary hover:text-secondary/80 flex items-center gap-1.5"
+                                onClick={() => window.open(profile.athlete_profiles?.resume_url, '_blank')}
+                            >
+                                <FileText className="h-4 w-4" />
+                                <span className="text-xs font-bold">Preview</span>
+                            </Button>
+                        )}
+                        
                         <Button variant="ghost" size="icon" className="rounded-full transition-transform hover:rotate-90">
                             <div className="sr-only">More options</div>
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
@@ -384,6 +517,43 @@ export function ProfileHeader({ profile, isOwnProfile }: ProfileHeaderProps) {
                 </DialogContent>
             </Dialog>
 
+            {/* Resume Upload Dialog */}
+            <Dialog open={isResumeUploadOpen} onOpenChange={setIsResumeUploadOpen}>
+                <DialogContent className="max-w-xl p-0 overflow-hidden rounded-[2.5rem] border-none shadow-2xl">
+                    <div className="bg-background p-8 md:p-10 space-y-6">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-bold">Resume Settings</DialogTitle>
+                            <DialogDescription>
+                                Upload your professional resume in PDF format. This will be shared with other users once they successfully connect with you.
+                            </DialogDescription>
+                        </DialogHeader>
+                        
+                        <ResumeDropbox 
+                            currentResumeUrl={profile?.athlete_profiles?.resume_url}
+                            onUploadSuccess={() => {
+                                setIsResumeUploadOpen(false)
+                                // The action revalidates the path, but we might want local feedback
+                            }}
+                        />
+                        
+                        <div className="flex justify-end gap-3 pt-4 border-t border-border/40">
+                            <Button 
+                                variant="ghost" 
+                                className="rounded-xl px-6"
+                                onClick={() => setIsResumeUploadOpen(false)}
+                            >
+                                Close
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <ResumeParser 
+                open={isResumeParserOpen} 
+                onOpenChange={setIsResumeParserOpen} 
+            />
+
             <ImageCropper
                 image={imageToCrop}
                 open={cropperOpen}
@@ -391,6 +561,12 @@ export function ProfileHeader({ profile, isOwnProfile }: ProfileHeaderProps) {
                 onCropComplete={handleCropSave}
                 aspect={cropType === 'avatar' ? 1 : 16 / 9}
                 title={cropType === 'avatar' ? "Crop Profile Photo" : "Crop Banner Image"}
+            />
+            
+            <EditIndustryDialog 
+                isOpen={isEditIndustryOpen}
+                onOpenChange={setIsEditIndustryOpen}
+                currentIndustry={primaryIndustry}
             />
         </Card>
     )

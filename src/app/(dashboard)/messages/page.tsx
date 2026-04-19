@@ -18,8 +18,14 @@ export default async function MessagesPage() {
             status,
             requester_id,
             recipient_id,
-            users:requester_id (name, email),
-            athlete_profiles:requester_id (school, sport, avatar_url)
+            requester:requester_id (
+                name, 
+                athlete_profiles (school, sport, avatar_url)
+            ),
+            recipient:recipient_id (
+                name, 
+                athlete_profiles (school, sport, avatar_url)
+            )
         `)
         .eq('status', 'accepted')
         .or(`requester_id.eq.${user.id}, recipient_id.eq.${user.id}`)

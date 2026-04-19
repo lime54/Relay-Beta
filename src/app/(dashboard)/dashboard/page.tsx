@@ -21,7 +21,7 @@ export default async function DashboardPage() {
         .eq('user_id', user.id)
         .single()
 
-    const isVerified = profile?.verification_status === 'verified'
+    const isVerified = profile?.verification_status === true
 
     // Count sent requests (My Plays)
     const { count: sentCount } = await supabase
@@ -40,8 +40,8 @@ export default async function DashboardPage() {
     const { count: receivedCount } = await supabase
         .from('requests')
         .select('*', { count: 'exact', head: true })
+        .eq('recipient_id', user.id)
         .eq('status', 'pending')
-        .neq('requester_id', user.id)
 
     // Count accepted requests (Successful Connections)
     const { count: acceptedCount } = await supabase

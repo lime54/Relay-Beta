@@ -53,7 +53,7 @@ export function DashboardHeader() {
             const { data: incomingRequests } = await supabase
                 .from('requests')
                 .select('id, request_type, status, created_at, users:requester_id(name)')
-                .neq('requester_id', user.id)
+                .eq('recipient_id', user.id)
                 .eq('status', 'pending')
                 .order('created_at', { ascending: false });
 

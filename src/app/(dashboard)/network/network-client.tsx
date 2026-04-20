@@ -15,6 +15,7 @@ import {
     Star
 } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -271,20 +272,22 @@ export default function NetworkClient({ realUsers, initialSearch, initialSport, 
                                 </div>
 
                                 <CardHeader className="pt-8 pb-4 flex flex-col items-center text-center">
-                                    <div className="relative mb-4">
-                                        <div className="absolute inset-0 bg-secondary/20 rounded-full blur-xl group-hover:scale-125 transition-transform duration-500" />
-                                        <Avatar className="h-24 w-24 border-4 border-background shadow-xl ring-2 ring-secondary/10 group-hover:scale-105 transition-transform">
+                                    <Link href={`/profile/${person.id}`} className="relative mb-4 group/avatar block">
+                                        <div className="absolute inset-0 bg-secondary/20 rounded-full blur-xl group-hover/avatar:scale-125 transition-transform duration-500" />
+                                        <Avatar className="h-24 w-24 border-4 border-background shadow-xl ring-2 ring-secondary/10 group-hover/avatar:scale-105 transition-transform">
                                             <AvatarImage src={person.imageUrl} alt={person.name} />
                                             <AvatarFallback className="text-2xl bg-gradient-to-br from-muted to-border">
                                                 {person.name.split(" ").map((n) => n[0]).join("")}
                                             </AvatarFallback>
                                         </Avatar>
-                                    </div>
-
-                                    <div>
-                                        <CardTitle className="text-2xl font-bold tracking-tight mb-1 group-hover:text-secondary transition-colors text-primary">
-                                            {person.name}
-                                        </CardTitle>
+                                    </Link>
+ 
+                                     <div>
+                                         <Link href={`/profile/${person.id}`} className="hover:underline block">
+                                             <CardTitle className="text-2xl font-bold tracking-tight mb-1 group-hover:text-secondary transition-colors text-primary">
+                                                 {person.name}
+                                             </CardTitle>
+                                         </Link>
                                         <CardDescription className="text-sm font-medium text-muted-foreground flex flex-col items-center justify-center gap-1.5 px-4 mb-2">
                                             {person.company && person.position ? (
                                                 <span className="font-semibold text-primary">{person.position} at {person.company}</span>

@@ -38,7 +38,7 @@ export default async function NetworkPage({
     // Fetch users with their athlete profiles
     let query = supabase
         .from('users')
-        .select('id, name, email, role, avatar_url, athlete_profiles(sport, school, ncaa_level, verification_status, avatar_url)')
+        .select('id, name, email, role, avatar_url, athlete_profiles(sport, sports, school, ncaa_level, verification_status, avatar_url, career_sectors)')
         .neq('id', user.id)
 
     if (search) {
@@ -82,15 +82,22 @@ export default async function NetworkPage({
         .map((u: any) => {
             const profiles = u.athlete_profiles
             const profile = Array.isArray(profiles) ? profiles[0] : profiles
+            
+            // Extract the best sport name to display
+            let displaySport = profile?.sport
+            if (!displaySport && profile?.sports && Array.isArray(profile.sports) && profile.sports.length > 0) {
+                displaySport = profile.sports[0].name
+            }
 
             return {
                 id: u.id,
                 name: u.name || u.email || 'Unknown User',
                 role: u.role === 'student' ? 'Student-Athlete' : 'Alumni',
                 school: profile?.school || 'Unknown School',
-                sport: (profile?.sport || 'Squash') as Sport,
-                level: profile?.ncaa_level || undefined,
+                sport: (displaySport || 'Athlete') as Sport,
+                level: profile?.ncaa_level || profile?.year || undefined,
                 imageUrl: u.avatar_url || profile?.avatar_url || '',
+                industry: profile?.career_sectors?.[0] || undefined,
                 company: experiencesMap[u.id]?.company,
                 position: experiencesMap[u.id]?.role,
                 isPlaceholder: false as const,
@@ -98,8 +105,12 @@ export default async function NetworkPage({
             }
         })
 
-    // Post-fetch filter for sport
-    const finalUsers = realUsers.filter(u => (!sport || u.sport === sport))
+    // Post-fetch filter for sport and industry
+    const finalUsers = realUsers.filter(u => {
+        const sportMatch = !sport || (u.sport === sport);
+        const industryMatch = !industry || (u.industry === industry);
+        return sportMatch && industryMatch;
+    })
 
     return (
         <div className="w-full">

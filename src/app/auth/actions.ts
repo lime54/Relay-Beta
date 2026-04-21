@@ -52,7 +52,9 @@ export async function signup(formData: FormData) {
     }
 
     // Get the origin for the email redirect URL
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+    const origin = process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes('localhost') 
+        ? process.env.NEXT_PUBLIC_SITE_URL 
+        : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
 
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,

@@ -1,4 +1,4 @@
-'use server'
+
 
 /**
  * Roster Verification Engine for Relay

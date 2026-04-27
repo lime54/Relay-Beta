@@ -20,11 +20,11 @@ export default async function MessagesPage() {
             recipient_id,
             requester:requester_id (
                 name, 
-                athlete_profiles (school, sport, avatar_url)
+                athlete_profiles (*)
             ),
             recipient:recipient_id (
                 name, 
-                athlete_profiles (school, sport, avatar_url)
+                athlete_profiles (*)
             )
         `)
         .eq('status', 'accepted')

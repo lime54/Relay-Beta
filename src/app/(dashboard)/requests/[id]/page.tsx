@@ -92,7 +92,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                 id,
                 name,
                 email,
-                athlete_profiles (school, sport, year, verification_status)
+                athlete_profiles (*)
             ),
             responses (id, response_type, message, created_at, responder_id)
         `)

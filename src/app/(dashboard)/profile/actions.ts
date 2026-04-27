@@ -280,7 +280,7 @@ export async function getSimilarityScore(targetUserId: string) {
     // Fetch both profiles
     const { data: profiles, error } = await supabase
         .from('athlete_profiles')
-        .select('user_id, school, sport, majors, career_goals, career_sectors')
+        .select('*')
         .in('user_id', [currentUser.id, targetUserId])
 
     if (error || !profiles || profiles.length < 2) return { score: 0 }
@@ -321,7 +321,7 @@ export async function updateIndustry(industry: string) {
     // Read the current sectors so we don't overwrite the whole array
     const { data: profile } = await supabase
         .from('athlete_profiles')
-        .select('career_sectors')
+        .select('*')
         .eq('user_id', user.id)
         .single()
 

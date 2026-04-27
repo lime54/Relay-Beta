@@ -48,7 +48,7 @@ export default async function RequestsPage({
     if (recipientIds.length > 0) {
         const { data: recipientUsers } = await supabase
             .from('users')
-            .select('id, name, athlete_profiles(school, sport)')
+            .select('id, name, athlete_profiles(*)')
             .in('id', recipientIds)
         
         if (recipientUsers) {
@@ -71,7 +71,7 @@ export default async function RequestsPage({
             *,
             users:requester_id (
                 name,
-                athlete_profiles (school, sport)
+                athlete_profiles (*)
             )
         `)
         .eq('recipient_id', user.id)

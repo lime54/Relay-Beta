@@ -38,7 +38,7 @@ export default async function NetworkPage({
     // Fetch users with their athlete profiles
     let query = supabase
         .from('users')
-        .select('id, name, email, role, avatar_url, athlete_profiles(sport, school, verification_status, avatar_url, career_sectors, year)')
+        .select('id, name, email, role, avatar_url, athlete_profiles(*)')
         .neq('id', user.id)
 
     if (search) {

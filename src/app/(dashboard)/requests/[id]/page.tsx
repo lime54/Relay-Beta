@@ -25,8 +25,7 @@ type RequestWithDetails = {
         athlete_profiles: {
             school: string
             sport: string
-            ncaa_level: string
-            years_active: string
+            year: string
             verification_status: boolean
         } | null
     }
@@ -153,7 +152,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                                     <>
                                         <p className="text-muted-foreground flex items-center gap-2">
                                             <Trophy className="h-4 w-4" />
-                                            {typedRequest.users.athlete_profiles.sport} • {typedRequest.users.athlete_profiles.ncaa_level}
+                                            {typedRequest.users.athlete_profiles.sport}{typedRequest.users.athlete_profiles.year ? ` • ${typedRequest.users.athlete_profiles.year}` : ''}
                                         </p>
                                         <p className="text-muted-foreground flex items-center gap-2">
                                             <School className="h-4 w-4" />

@@ -84,18 +84,15 @@ export default async function NetworkPage({
             const profile = Array.isArray(profiles) ? profiles[0] : profiles
             
             // Extract the best sport name to display
-            let displaySport = profile?.sport
-            if (!displaySport && profile?.sports && Array.isArray(profile.sports) && profile.sports.length > 0) {
-                displaySport = profile.sports[0].name
-            }
+            const displaySport = profile?.sport || 'Athlete'
 
             return {
                 id: u.id,
                 name: u.name || u.email || 'Unknown User',
                 role: u.role === 'student' ? 'Student-Athlete' : 'Alumni',
                 school: profile?.school || 'Unknown School',
-                sport: (displaySport || 'Athlete') as Sport,
-                level: profile?.ncaa_level || profile?.year || undefined,
+                sport: displaySport as Sport,
+                level: profile?.year || undefined,
                 imageUrl: u.avatar_url || profile?.avatar_url || '',
                 industry: profile?.career_sectors?.[0] || undefined,
                 company: experiencesMap[u.id]?.company,

@@ -71,7 +71,7 @@ export default async function RequestsPage({
             *,
             users:requester_id (
                 name,
-                athlete_profiles (school, sport, ncaa_level)
+                athlete_profiles (school, sport)
             )
         `)
         .eq('recipient_id', user.id)

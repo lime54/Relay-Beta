@@ -280,7 +280,7 @@ export async function getSimilarityScore(targetUserId: string) {
     // Fetch both profiles
     const { data: profiles, error } = await supabase
         .from('athlete_profiles')
-        .select('user_id, school, sport, sports, majors, career_goals, career_sectors')
+        .select('user_id, school, sport, majors, career_goals, career_sectors')
         .in('user_id', [currentUser.id, targetUserId])
 
     if (error || !profiles || profiles.length < 2) return { score: 0 }

@@ -1,5 +1,9 @@
 -- Onboarding Progress for Users
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS onboarded BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view all onboarded profiles" ON public.users FOR SELECT USING (onboarded = true OR auth.uid() = id);
+CREATE POLICY "Users can update their own record" ON public.users FOR UPDATE USING (auth.uid() = id);
 
 -- Expanded Athlete Profile Table
 CREATE TABLE IF NOT EXISTS public.athlete_profiles (
@@ -47,6 +51,7 @@ CREATE TABLE IF NOT EXISTS public.athlete_profiles (
     verification_methods TEXT[] DEFAULT '{}',
     verification_status BOOLEAN DEFAULT FALSE,
     resume_url TEXT,
+    scheduling_url TEXT, -- Link for Calendly, SavvyCal, etc.
     proof_details JSONB DEFAULT '{}'::jsonb -- Stores additional verification data
 );
 

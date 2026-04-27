@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, Users, Trophy, ArrowRight } from 'lucide-react'
 import AnimatedHero from "@/components/ui/glassmorphism-trust-hero"
-import { GlowingFeatures } from "@/components/ui/glowing-features"
+import { FeatureAccordion } from "@/components/ui/feature-accordion"
 import Navbar from "@/components/navbar"
 
 export const dynamic = "force-dynamic";
@@ -42,17 +42,17 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Features / Glowing Grid Section */}
-        <section className="py-24 bg-background">
+        {/* Features / Accordion Section */}
+        <section className="py-24 bg-background overflow-hidden">
           <div className="container px-4 mx-auto">
             <div className="max-w-3xl mx-auto text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6 font-serif">Transitioning is hard. We make it easier.</h2>
+              <h2 className="text-3xl md:text-5xl font-bold mb-6 font-serif tracking-tight">Transitioning is hard. We make it easier.</h2>
               <p className="text-xl text-muted-foreground font-sans">
                 Only 2% of student-athletes go pro. For the other 98%, Relay provides the network and resources needed to launch a successful career.
               </p>
             </div>
 
-            <GlowingFeatures />
+            <FeatureAccordion />
           </div>
         </section>
 

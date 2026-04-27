@@ -2,10 +2,61 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
 import type { OnboardingData } from "./onboarding-form"
+import { z } from "zod"
 
-export async function submitOnboarding(data: OnboardingData) {
+// Strict validation schema for onboarding data
+const OnboardingSchema = z.object({
+    profile: z.object({
+        first_name: z.string().min(1, "First name is required"),
+        last_name: z.string().min(1, "Last name is required"),
+        preferred_name: z.string().optional(),
+        email: z.string().email("Invalid email address"),
+        country: z.string().min(1),
+        linkedin: z.string().url().or(z.literal("")).optional(),
+        status: z.string().min(1, "Status is required"),
+    }),
+    athletic: z.object({
+        is_athlete: z.boolean(),
+        college: z.string().min(1, "College is required"),
+        secondary_college: z.string().optional(),
+        sports: z.array(z.object({
+            name: z.string(),
+            division: z.string(),
+            role: z.string(),
+            start_year: z.string().regex(/^\d{4}$/, "Invalid start year"),
+            end_year: z.string().regex(/^(\d{4}|Present)$/, "Invalid end year")
+        })).min(1, "At least one sport is required"),
+        high_level: z.boolean().nullable(),
+        high_level_sports: z.string().optional(),
+        high_level_details: z.string().optional(),
+    }),
+    academic: z.object({
+        year: z.string().min(1),
+        majors: z.string().min(1),
+        minors: z.string().optional(),
+        grad_year: z.string().min(1),
+        gpa: z.string().optional(),
+        citizenship: z.string().min(1),
+        work_auth: z.string().min(1),
+        international_interest: z.boolean(),
+        target_countries: z.string().optional(),
+    }),
+    career: z.object({
+        goals: z.array(z.string()).min(1),
+        sectors: z.array(z.string()).min(1),
+        locations: z.string().optional(),
+        hours: z.string().min(1),
+        aspiration: z.string().min(10, "Please provide more detail about your aspirations"),
+        scheduling: z.string().url().or(z.literal("")).optional(),
+    }),
+    verification: z.object({
+        methods: z.array(z.string()).min(1),
+        honesty_consent: z.literal(true),
+    }).passthrough(), // Relaxed for the diverse verification fields
+})
+
+export async function submitOnboarding(rawData: OnboardingData) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -13,10 +64,16 @@ export async function submitOnboarding(data: OnboardingData) {
         return { error: "You must be logged in to complete onboarding." }
     }
 
+    // 1. Validate data
+    const validation = OnboardingSchema.safeParse(rawData)
+    if (!validation.success) {
+        const firstError = validation.error.errors[0]
+        return { error: `${firstError.path.join('.')}: ${firstError.message}` }
+    }
+    const data = validation.data
+
     try {
-        // 1. Update Profile & Athletic & Academic info in athlete_profiles
-        // We use upsert because the profile might not exist yet if it's a new sign up
-        // that didn't trigger a trigger (or if triggers aren't set up yet)
+        // 2. Update Profile & Athletic & Academic info in athlete_profiles
         const { error: profileError } = await supabase
             .from('athlete_profiles')
             .upsert({
@@ -49,21 +106,10 @@ export async function submitOnboarding(data: OnboardingData) {
                 locations: data.career.locations,
                 hours: data.career.hours,
                 aspiration: data.career.aspiration,
+                scheduling_url: data.career.scheduling,
 
                 verification_methods: data.verification.methods,
-                proof_details: {
-                    edu_email: data.verification.edu_email,
-                    roster_link: data.verification.roster_link,
-                    roster_name: data.verification.roster_name,
-                    legacy_roster_link: data.verification.legacy_roster_link,
-                    legacy_seasons: data.verification.legacy_seasons,
-                    proof_description: data.verification.proof_description,
-                    vouch_name: data.verification.vouch_name,
-                    vouch_role: data.verification.vouch_role,
-                    vouch_school: data.verification.vouch_school,
-                    vouch_email: data.verification.vouch_email,
-                    missed_time: data.verification.missed_time
-                },
+                proof_details: (rawData.verification as any), // Use raw for the flexible JSON mapping
                 updated_at: new Date().toISOString()
             })
 
@@ -72,7 +118,8 @@ export async function submitOnboarding(data: OnboardingData) {
             return { error: `Failed to update profile: ${profileError.message}` }
         }
 
-        // 2. Mark user as onboarded
+        // 3. Mark user as onboarded
+        // Note: This requires an RLS policy on public.users allowing UPDATE for own user_id
         const { error: userError } = await supabase
             .from('users')
             .update({ 
@@ -83,7 +130,6 @@ export async function submitOnboarding(data: OnboardingData) {
 
         if (userError) {
             console.error("User update error:", userError)
-            // Even if message fails, the profile is saved. But we want to know.
             return { error: `Failed to update user status: ${userError.message}` }
         }
 

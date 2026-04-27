@@ -143,19 +143,28 @@ export function AthleticBackgroundStep({ data, updateData }: AthleticBackgroundS
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-tight text-muted-foreground">Start Year</label>
-                        <Input
-                          placeholder="2021"
+                        <Select
                           value={sport.start_year}
                           onChange={(e) => updateSportDetail(index, { start_year: e.target.value })}
-                        />
+                        >
+                          <option value="" disabled>Year</option>
+                          {Array.from({ length: 40 }, (_, i) => 2029 - i).map(year => (
+                            <option key={year} value={year.toString()}>{year}</option>
+                          ))}
+                        </Select>
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-tight text-muted-foreground">End Year</label>
-                        <Input
-                          placeholder="2025"
+                        <Select
                           value={sport.end_year}
                           onChange={(e) => updateSportDetail(index, { end_year: e.target.value })}
-                        />
+                        >
+                          <option value="" disabled>Year</option>
+                          <option value="Present">Present</option>
+                          {Array.from({ length: 40 }, (_, i) => 2029 - i).map(year => (
+                            <option key={year} value={year.toString()}>{year}</option>
+                          ))}
+                        </Select>
                       </div>
                     </div>
                   </CardContent>

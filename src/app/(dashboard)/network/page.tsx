@@ -123,9 +123,14 @@ export default async function NetworkPage({
 
             {/* Diagnostic info (hidden unless empty) */}
             {realUsers.length === 0 && (
-                <div className="max-w-7xl mx-auto px-4 opacity-20 hover:opacity-100 transition-opacity">
-                    <pre className="p-4 bg-slate-900 text-slate-50 rounded-2xl text-[10px] overflow-auto font-mono">
-                        {JSON.stringify({ query_status: error ? 'error' : 'empty', count: users?.length || 0 }, null, 2)}
+                <div className="max-w-7xl mx-auto px-4 opacity-50 hover:opacity-100 transition-opacity pb-20">
+                    <pre className="p-4 bg-slate-900 text-red-400 rounded-2xl text-[10px] overflow-auto font-mono border border-red-500/30">
+                        {JSON.stringify({ 
+                            query_status: error ? 'error' : 'empty', 
+                            error_message: error?.message,
+                            raw_db_count: users?.length || 0,
+                            transformed_count: realUsers?.length || 0
+                        }, null, 2)}
                     </pre>
                 </div>
             )}

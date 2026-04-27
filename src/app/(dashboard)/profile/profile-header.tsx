@@ -22,7 +22,7 @@ import { GlowingEffect } from "@/components/ui/glowing-effect"
 import { cn } from "@/lib/utils"
 import { SimilarityScore } from "@/components/profile/similarity-score"
 import { ResumeDropbox } from "@/components/profile/resume-dropbox"
-import { Linkedin, FileText, Lock, Upload } from "lucide-react"
+import { Linkedin, FileText, Lock, Upload, Calendar } from "lucide-react"
 import { ResumeParser } from "@/components/profile/resume-parser"
 import { checkConnection } from "./actions"
 import { useEffect } from "react"
@@ -39,6 +39,7 @@ interface AthleteProfile {
     linkedin_url?: string
     locations?: string
     career_sectors?: string[]
+    scheduling_url?: string
 }
 
 interface Profile {
@@ -422,6 +423,26 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                             </Button>
                         )}
                         
+                        {profile?.athlete_profiles?.scheduling_url && (
+                             <Button
+                                variant={isOwnProfile ? "ghost" : "default"}
+                                className={cn(
+                                    "rounded-full px-6 transition-all gap-2",
+                                    !isOwnProfile && "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                                )}
+                                onClick={() => {
+                                    const url = profile.athlete_profiles?.scheduling_url;
+                                    if (url) {
+                                        const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+                                        window.open(fullUrl, '_blank');
+                                    }
+                                }}
+                             >
+                                <Calendar className="h-4 w-4" />
+                                {isOwnProfile ? "Preview Booking Link" : "Book a Coffee Chat"}
+                             </Button>
+                        )}
+
                         {isOwnProfile ? (
                             <>
                                 <Button 

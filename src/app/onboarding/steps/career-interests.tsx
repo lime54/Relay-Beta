@@ -127,6 +127,20 @@ export function CareerInterestsStep({ data, updateData }: CareerInterestsStepPro
           </Select>
           <p className="text-xs text-muted-foreground italic">Factoring in practice, travel, and classes.</p>
         </div>
+
+        <div className="space-y-2 pt-2">
+          <label className="text-sm font-medium flex items-center gap-2">
+            Meeting / Scheduling Link (optional)
+            <span className="text-[10px] bg-secondary/10 text-secondary px-1.5 py-0.5 rounded uppercase font-bold">New</span>
+          </label>
+          <Input
+            value={data.scheduling}
+            onChange={(e) => updateData({ scheduling: e.target.value })}
+            placeholder="calendly.com/your-name"
+            type="url"
+          />
+          <p className="text-xs text-muted-foreground">Add your Calendly, SavvyCal, or a link to your booking page to allow users to meet with you.</p>
+        </div>
       </div>
 
       <div className="space-y-2 pt-4 border-t border-border/40">

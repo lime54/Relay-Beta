@@ -62,6 +62,7 @@ export type OnboardingData = {
     locations: string;
     hours: string;
     aspiration: string;
+    scheduling: string;
   };
   verification: {
     methods: string[];
@@ -117,6 +118,7 @@ const initialData: OnboardingData = {
     locations: "",
     hours: "",
     aspiration: "",
+    scheduling: "",
   },
   verification: {
     methods: [],
@@ -135,8 +137,42 @@ const initialData: OnboardingData = {
   },
 };
 
-export function OnboardingForm() {
-  const [data, setData] = useState<OnboardingData>(initialData);
+export function OnboardingForm({ user }: { user: any }) {
+  const [data, setData] = useState<OnboardingData>(() => {
+    // Check local storage first
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('relay_onboarding_data');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          // Only use saved if it's the same user or if we don't care
+          return parsed;
+        } catch (e) {
+          console.error("Failed to parse saved onboarding data", e);
+        }
+      }
+    }
+
+    const fullName = user?.user_metadata?.name || "";
+    const [first_name, ...lastParts] = fullName.split(" ");
+    const last_name = lastParts.join(" ");
+
+    return {
+      ...initialData,
+      profile: {
+        ...initialData.profile,
+        first_name: first_name || "",
+        last_name: last_name || "",
+        email: user?.email || "",
+      }
+    };
+  });
+
+  // Save to local storage on change
+  React.useEffect(() => {
+    localStorage.setItem('relay_onboarding_data', JSON.stringify(data));
+  }, [data]);
+
   const [dir, setDir] = useState<number>(1); // 1 for forward, -1 for backward
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
@@ -235,6 +271,9 @@ export function OnboardingForm() {
       }
 
       toast.success("Welcome to Relay! Your profile is ready.");
+      
+      // Clear persistence
+      localStorage.removeItem('relay_onboarding_data');
       
       // Delay slightly for the toast to be seen
       setTimeout(() => {

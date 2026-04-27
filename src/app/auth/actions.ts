@@ -51,6 +51,12 @@ export async function signup(formData: FormData) {
         return redirect('/signup?error=Please complete the captcha')
     }
 
+    // Enforce .edu email requirement
+    const emailDomain = email.toLowerCase().trim()
+    if (!emailDomain.endsWith('.edu')) {
+        return redirect('/signup?error=' + encodeURIComponent('Please use your .edu email address. Relay requires a valid university email for verification.'))
+    }
+
     // Get the origin for the email redirect URL
     const origin = process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes('localhost') 
         ? process.env.NEXT_PUBLIC_SITE_URL 

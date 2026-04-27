@@ -39,8 +39,9 @@ export default function SignupForm() {
                 <Input id="name" name="name" type="text" required placeholder="Your full name" />
             </div>
             <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">Email</label>
+                <label htmlFor="email" className="text-sm font-medium">University Email</label>
                 <Input id="email" name="email" type="email" required placeholder="you@university.edu" />
+                <p className="text-[11px] text-muted-foreground">A valid <strong>.edu</strong> email is required to join Relay. This is how we verify your school affiliation.</p>
             </div>
             <div className="space-y-2">
                 <label htmlFor="password" className="text-sm font-medium">Password</label>

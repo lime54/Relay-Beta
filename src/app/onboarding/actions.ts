@@ -118,6 +118,21 @@ export async function submitOnboarding(rawData: OnboardingData) {
             return { error: `Failed to update profile: ${profileError.message}` }
         }
 
+        // 2b. Run automated verification in the background
+        // This checks .edu email + scrapes roster URL if provided
+        try {
+            const { runVerification } = await import('@/app/(dashboard)/profile/verify/verify-actions')
+            const verificationData = rawData.verification as any
+            const rosterUrl = verificationData?.roster_link || undefined
+            const legacyRosterUrl = verificationData?.legacy_roster_link || undefined
+            
+            const verificationResult = await runVerification(rosterUrl, legacyRosterUrl)
+            console.log('[Onboarding] Auto-verification result:', verificationResult)
+        } catch (verifyErr) {
+            // Don't block onboarding if verification fails
+            console.error('[Onboarding] Auto-verification error (non-blocking):', verifyErr)
+        }
+
         // 3. Mark user as onboarded
         // Note: This requires an RLS policy on public.users allowing UPDATE for own user_id
         const { error: userError } = await supabase

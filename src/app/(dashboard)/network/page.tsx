@@ -1,24 +1,11 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import NetworkClient from "./network-client"
+import { calculateSimilarityScore, ProfileSnippet } from "@/lib/similarity"
 
 export const dynamic = 'force-dynamic'
 
 type Sport = "Squash" | "Tennis" | "Golf" | "Hockey" | "Basketball" | "Football"
-
-interface RealUser {
-    id: string
-    name: string
-    role: string
-    school: string
-    sport: Sport
-    level?: string
-    imageUrl?: string
-    industry?: string
-    company?: string
-    position?: string
-    isPlaceholder: false
-}
 
 export default async function NetworkPage({
     searchParams
@@ -34,6 +21,13 @@ export default async function NetworkPage({
     const search = sp.search || ''
     const sport = sp.sport && sp.sport !== 'All' ? sp.sport : null
     const industry = sp.industry && sp.industry !== 'All' ? sp.industry : null
+
+    // Fetch the current user's athlete profile for similarity scoring
+    const { data: currentProfile } = await supabase
+        .from('athlete_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
 
     // Fetch users with their athlete profiles
     let query = supabase
@@ -63,7 +57,6 @@ export default async function NetworkPage({
             .eq('is_current', true)
 
         if (!expError && expData) {
-            // Priority to the first current experience
             expData.forEach(exp => {
                 if (!experiencesMap[exp.user_id]) {
                     experiencesMap[exp.user_id] = { company: exp.company, role: exp.role }
@@ -86,6 +79,15 @@ export default async function NetworkPage({
             // Extract the best sport name to display
             const displaySport = profile?.sport || 'Athlete'
 
+            // Compute similarity score server-side (single batch instead of N client calls)
+            let similarityScore = 0
+            if (currentProfile && profile) {
+                similarityScore = calculateSimilarityScore(
+                    currentProfile as ProfileSnippet,
+                    profile as ProfileSnippet
+                )
+            }
+
             return {
                 id: u.id,
                 name: u.name || u.email || 'Unknown User',
@@ -99,6 +101,7 @@ export default async function NetworkPage({
                 position: experiencesMap[u.id]?.role,
                 isPlaceholder: false as const,
                 isVerified: profile?.verification_status || false,
+                similarityScore,
             }
         })
 
@@ -108,6 +111,9 @@ export default async function NetworkPage({
         const industryMatch = !industry || (u.industry === industry);
         return sportMatch && industryMatch;
     })
+
+    // Sort by similarity score (highest match first)
+    finalUsers.sort((a: any, b: any) => (b.similarityScore || 0) - (a.similarityScore || 0))
 
     return (
         <div className="w-full">

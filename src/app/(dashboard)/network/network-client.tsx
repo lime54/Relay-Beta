@@ -12,7 +12,8 @@ import {
     Target,
     ChevronRight,
     ShieldCheck,
-    Star
+    Star,
+    Sparkles
 } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -40,7 +41,6 @@ import {
 import { RequestForm } from "@/app/(dashboard)/requests/new/request-form";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { cn } from "@/lib/utils";
-import { SimilarityScore } from "@/components/profile/similarity-score";
 
 type Sport = "Squash" | "Tennis" | "Golf" | "Hockey" | "Basketball" | "Football";
 
@@ -58,6 +58,7 @@ interface NetworkPerson {
     mutuals?: number;
     isPlaceholder?: boolean;
     isVerified?: boolean;
+    similarityScore?: number;
 }
 
 const PLACEHOLDER_PEOPLE: NetworkPerson[] = [];
@@ -268,7 +269,20 @@ export default function NetworkClient({ realUsers, initialSearch, initialSport, 
                                             <span className="text-[10px] font-bold text-accent uppercase tracking-tighter">Verified</span>
                                         </div>
                                     )}
-                                    <SimilarityScore targetUserId={person.id} className="backdrop-blur-md shadow-lg" />
+                                    {typeof person.similarityScore === 'number' && (
+                                        <div className={cn(
+                                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border shadow-sm backdrop-blur-md",
+                                            person.similarityScore >= 80 ? "bg-green-500/10 text-green-600 border-green-500/20" :
+                                            person.similarityScore >= 50 ? "bg-secondary/10 text-secondary border-secondary/20" :
+                                            person.similarityScore > 0 ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+                                            "bg-muted/80 text-muted-foreground border-border/50"
+                                        )}>
+                                            <Sparkles className="h-3 w-3" />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider">
+                                                {person.similarityScore}% Match
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <CardHeader className="pt-8 pb-4 flex flex-col items-center text-center">

@@ -58,7 +58,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
 
                     {/* Right Sidebar Column */}
                     <aside className="hidden md:block">
-                        <ProfileSidebar />
+                        <ProfileSidebar userId={id} userName={profile?.name} />
                     </aside>
                 </div>
             </div>

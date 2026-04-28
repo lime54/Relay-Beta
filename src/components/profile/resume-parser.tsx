@@ -124,18 +124,12 @@ async function extractTextFromPdf(file: File): Promise<string> {
     // Dynamically import pdfjs-dist
     const pdfjsLib = await import('pdfjs-dist');
 
-    // Disable the web worker — run PDF parsing on the main thread.
-    // This avoids CDN/worker loading issues in Next.js and is fast enough
-    // for text extraction from resumes (not rendering full pages).
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+    // Point to the worker file served from public/ directory.
+    // The file is copied from node_modules/pdfjs-dist/build/pdf.worker.min.mjs
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({
-        data: arrayBuffer,
-        useWorkerFetch: false,
-        isEvalSupported: false,
-        useSystemFonts: true,
-    }).promise;
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
     const textPages: string[] = [];
 

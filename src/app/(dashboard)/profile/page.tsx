@@ -48,7 +48,7 @@ export default async function ProfilePage() {
 
                     {/* Right Sidebar Column */}
                     <aside className="hidden md:block">
-                        <ProfileSidebar />
+                        <ProfileSidebar userId={user.id} userName={profile?.name} />
                     </aside>
                 </div>
             </div>

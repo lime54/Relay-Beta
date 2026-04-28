@@ -1,9 +1,41 @@
+'use client'
+
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Edit } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { ExternalLink, Copy, Check } from "lucide-react"
+import { useState } from "react"
+import { toast } from "sonner"
+import Link from "next/link"
 
-export function ProfileSidebar() {
+interface ProfileSidebarProps {
+    userId: string
+    userName?: string
+}
+
+export function ProfileSidebar({ userId, userName }: ProfileSidebarProps) {
+    const [copied, setCopied] = useState(false)
+
+    // Build the profile URL
+    const profilePath = `/profile/${userId}`
+    const siteUrl = typeof window !== 'undefined' ? window.location.origin : ''
+    const fullProfileUrl = `${siteUrl}${profilePath}`
+
+    // Generate a display-friendly slug from the name
+    const displaySlug = userName
+        ? userName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+        : userId.substring(0, 8)
+
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(fullProfileUrl)
+            setCopied(true)
+            toast.success('Profile link copied!')
+            setTimeout(() => setCopied(false), 2000)
+        } catch {
+            toast.error('Failed to copy link')
+        }
+    }
+
     return (
         <div className="space-y-6">
             {/* Profile Link Card */}
@@ -11,18 +43,35 @@ export function ProfileSidebar() {
                 <CardContent className="p-5">
                     <div className="flex justify-between items-center mb-2">
                         <h3 className="font-semibold text-lg">Public Profile</h3>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-muted/50 rounded-full">
-                            <Edit className="h-4 w-4" />
-                        </Button>
+                        <Link href={profilePath}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-muted/50 rounded-full">
+                                <ExternalLink className="h-4 w-4" />
+                            </Button>
+                        </Link>
                     </div>
                     <p className="text-sm text-muted-foreground mb-3">Share your verified athlete profile with recruiters.</p>
-                    <div className="bg-muted/30 p-2 rounded-lg text-sm text-foreground font-mono truncate flex justify-between items-center">
-                        <span>relay.com/in/corey-shen</span>
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">Copy</Button>
+                    <div className="bg-muted/30 p-2.5 rounded-lg text-sm font-mono truncate flex justify-between items-center gap-2">
+                        <Link 
+                            href={profilePath} 
+                            className="text-secondary hover:underline truncate"
+                        >
+                            relay/{displaySlug}
+                        </Link>
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7 px-2.5 text-xs shrink-0"
+                            onClick={handleCopy}
+                        >
+                            {copied ? (
+                                <><Check className="h-3 w-3 mr-1 text-green-500" /> Copied</>
+                            ) : (
+                                <><Copy className="h-3 w-3 mr-1" /> Copy</>
+                            )}
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
-
 
             {/* Relay Pro Promo */}
             <Card className="bg-gradient-to-br from-[#1a1f2c] to-[#2d3748] text-white border-none shadow-lg rounded-xl sticky top-24 overflow-hidden">

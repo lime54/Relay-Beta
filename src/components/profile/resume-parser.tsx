@@ -72,34 +72,79 @@ function parseResumeText(text: string): { experiences: ParsedExperience[]; educa
 
         if (dateInfo && currentSection === 'experience') {
             if (isEducationLine(line)) continue;
-            let roleStr = '';
+            
+            // Gather the 3 lines directly before the date-containing line
+            const contextLines = [];
             for (let j = i - 1; j >= Math.max(0, i - 3); j--) {
                 const candidate = lines[j];
                 if (detectSection(candidate) !== null) break;
                 if (extractDateRange(candidate)) break;
                 if (isEducationLine(candidate)) continue;
-                if (candidate.length > 2) { roleStr = candidate; break; }
+                if (candidate.length > 2) contextLines.push(candidate);
             }
-            if (!roleStr) roleStr = 'Unknown Role';
-            const parts = roleStr.split(/\s*[,|•·–—]\s*/).map(p => p.trim()).filter(Boolean);
-            let company = parts[0] || 'Unknown Company';
-            let role = parts.length > 1 ? parts[1] : company;
-            if (/^(senior|junior|lead|staff|principal|associate|analyst|manager|director|vp|intern|engineer|developer|consultant|coordinator)/i.test(company) && parts.length > 1) {
-                [company, role] = [role, company];
+            contextLines.reverse(); // So it's in top-to-bottom order
+
+            // If we found context lines, usually the first is Company, second is Title (or vice versa).
+            // A common fallback: if the date line itself contains words, that might be the title or company.
+            const dateLineRest = line.replace(/((?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+)?(?:20|19)\d{2})/gi, '')
+                                     .replace(/present|current|now/gi, '')
+                                     .replace(/[^a-zA-Z\s]/g, ' ')
+                                     .trim();
+
+            let roleStr = '';
+            let companyStr = '';
+
+            if (contextLines.length >= 2) {
+                companyStr = contextLines[0];
+                roleStr = contextLines[1];
+            } else if (contextLines.length === 1) {
+                // Parse a single line containing both "Company - Title" or "Title at Company"
+                roleStr = contextLines[0];
+            } else if (dateLineRest.length > 3) {
+                roleStr = dateLineRest;
+            } else {
+                roleStr = 'Unknown Role';
             }
+
+            // Split role from company if they are on the same line
+            if (roleStr && !companyStr) {
+                const parts = roleStr.split(/\s*(?:[,|•·–—]|\s+at\s+)\s*/i).map(p => p.trim()).filter(Boolean);
+                companyStr = parts[0] || 'Unknown Company';
+                roleStr = parts.length > 1 ? parts[1] : companyStr;
+            }
+
+            // Swap them if the company looks more like a role
+            if (/^(senior|junior|lead|staff|principal|associate|analyst|manager|director|vp|intern|engineer|developer|consultant|coordinator|founder|co-founder|head of|specialist|assistant)/i.test(companyStr) && roleStr !== companyStr) {
+                [companyStr, roleStr] = [roleStr, companyStr];
+            }
+
+            // Fix case where role is still missing
+            if (!roleStr || roleStr === 'Unknown Role') {
+                if (dateLineRest.length > 3) {
+                    roleStr = dateLineRest;
+                }
+            }
+
+            // Gather description
             let description = '';
-            for (let j = i + 1; j < Math.min(lines.length, i + 4); j++) {
+            for (let j = i + 1; j < Math.min(lines.length, i + 6); j++) {
                 const descLine = lines[j];
                 if (detectSection(descLine) !== null) break;
                 if (extractDateRange(descLine)) break;
-                if (descLine.startsWith('•') || descLine.startsWith('-') || descLine.startsWith('–') || descLine.startsWith('*')) {
+                
+                const isList = descLine.startsWith('•') || descLine.startsWith('-') || descLine.startsWith('–') || descLine.startsWith('*');
+                if (isList) {
                     description += (description ? '\n' : '') + descLine;
-                } else if (descLine.length > 20 && !extractDateRange(descLine)) {
+                } else if (descLine.length > 40 && !isList) {
+                    // It's a paragraph
                     description += (description ? '\n' : '') + descLine;
-                    break;
-                } else { break; }
+                } else {
+                    // Small extraneous line, could be location or skipped
+                    continue;
+                }
             }
-            experiences.push({ company, role, start_date: `${dateInfo.startYear}-01-01`, end_date: dateInfo.isCurrent ? '' : `${dateInfo.endYear}-01-01`, is_current: dateInfo.isCurrent, description });
+
+            experiences.push({ company: companyStr, role: roleStr, start_date: `${dateInfo.startYear}-01-01`, end_date: dateInfo.isCurrent ? '' : `${dateInfo.endYear}-01-01`, is_current: dateInfo.isCurrent, description });
         } else if (dateInfo && currentSection === 'education') {
             let schoolStr = '';
             for (let j = i - 1; j >= Math.max(0, i - 3); j--) {
@@ -108,10 +153,24 @@ function parseResumeText(text: string): { experiences: ParsedExperience[]; educa
                 if (extractDateRange(candidate)) break;
                 if (candidate.length > 2) { schoolStr = candidate; break; }
             }
-            if (!schoolStr) schoolStr = 'Unknown School';
+            // Often the school might be on the date line
+            if (!schoolStr) {
+                const dateLineRest = line.replace(/((?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+)?(?:20|19)\d{2})/gi, '')
+                                        .replace(/present|current|now/gi, '')
+                                        .replace(/[^a-zA-Z\s]/g, ' ')
+                                        .trim();
+                schoolStr = dateLineRest.length > 3 ? dateLineRest : 'Unknown School';
+            }
+            
             let degree = '';
-            if (/\b(bachelor|master|associate|doctorate|ph\.?d|m\.?b\.?a|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|degree|diploma|certificate)\b/i.test(line)) degree = line;
-            if (!degree && i + 1 < lines.length && /\b(bachelor|master|associate|doctorate|ph\.?d|m\.?b\.?a|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|degree|diploma|certificate)\b/i.test(lines[i + 1])) degree = lines[i + 1];
+            // Degree detection logic looking closely around the date
+            for (let j = Math.max(0, i - 2); j <= Math.min(lines.length - 1, i + 2); j++) {
+                 if (/\b(bachelor|master|associate|doctorate|ph\.?d|m\.?b\.?a|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|degree|diploma|certificate|B\.?S\.?|B\.?A\.?)\b/i.test(lines[j])) {
+                     degree = lines[j];
+                     break;
+                 }
+            }
+            
             educations.push({ school: schoolStr, degree, start_date: `${dateInfo.startYear}-09-01`, end_date: dateInfo.isCurrent ? '' : `${dateInfo.endYear || parseInt(dateInfo.startYear) + 4}-05-01`, is_current: dateInfo.isCurrent });
         }
     }
@@ -517,7 +576,7 @@ export function ResumeParser({
 
                         {/* Action buttons */}
                         <div className="flex gap-3">
-                            <Button variant="outline" className="flex-1" onClick={resetState}>
+                            <Button variant="outline" className="flex-1" onClick={() => setParsed(null)}>
                                 ← Back
                             </Button>
                             <Button

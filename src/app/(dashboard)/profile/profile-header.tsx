@@ -22,7 +22,7 @@ import { GlowingEffect } from "@/components/ui/glowing-effect"
 import { cn } from "@/lib/utils"
 import { SimilarityScore } from "@/components/profile/similarity-score"
 import { ResumeDropbox } from "@/components/profile/resume-dropbox"
-import { Linkedin, FileText, Lock, Upload, Calendar } from "lucide-react"
+import { Linkedin, FileText, Lock, Upload, Calendar, Share2, Link as LinkIcon, ExternalLink, MoreHorizontal } from "lucide-react"
 import { ResumeParser } from "@/components/profile/resume-parser"
 import { checkConnection } from "./actions"
 import { useEffect } from "react"
@@ -96,6 +96,7 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [isResumeUploadOpen, setIsResumeUploadOpen] = useState(false)
     const [isResumeParserOpen, setIsResumeParserOpen] = useState(false)
+    const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
     const [isEditIndustryOpen, setIsEditIndustryOpen] = useState(false)
     const [isConnected, setIsConnected] = useState<boolean | null>(null)
     const [connectionCount, setConnectionCount] = useState<number>(0)
@@ -499,10 +500,89 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                             </Button>
                         )}
                         
-                        <Button variant="ghost" size="icon" className="rounded-full transition-transform hover:rotate-90">
-                            <div className="sr-only">More options</div>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
-                        </Button>
+                        <div className="relative">
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="rounded-full transition-transform hover:rotate-90"
+                                onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                            >
+                                <div className="sr-only">More options</div>
+                                <MoreHorizontal className="h-5 w-5" />
+                            </Button>
+
+                            {isMoreMenuOpen && (
+                                <>
+                                    {/* Backdrop */}
+                                    <div className="fixed inset-0 z-40" onClick={() => setIsMoreMenuOpen(false)} />
+                                    {/* Menu */}
+                                    <div className="absolute right-0 top-full mt-2 z-50 w-52 rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl p-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <button
+                                            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(window.location.href);
+                                                toast.success('Profile link copied!');
+                                                setIsMoreMenuOpen(false);
+                                            }}
+                                        >
+                                            <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                                            Copy Profile Link
+                                        </button>
+                                        <button
+                                            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
+                                            onClick={() => {
+                                                if (navigator.share) {
+                                                    navigator.share({ title: `${profile?.name} — Relay`, url: window.location.href });
+                                                } else {
+                                                    navigator.clipboard.writeText(window.location.href);
+                                                    toast.success('Link copied!');
+                                                }
+                                                setIsMoreMenuOpen(false);
+                                            }}
+                                        >
+                                            <Share2 className="h-4 w-4 text-muted-foreground" />
+                                            Share Profile
+                                        </button>
+                                        {isOwnProfile && (
+                                            <>
+                                                <div className="my-1 h-px bg-border/40" />
+                                                <button
+                                                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
+                                                    onClick={() => {
+                                                        setIsEditIndustryOpen(true);
+                                                        setIsMoreMenuOpen(false);
+                                                    }}
+                                                >
+                                                    <Pencil className="h-4 w-4 text-muted-foreground" />
+                                                    Edit Industry
+                                                </button>
+                                                <a
+                                                    href="/profile/verify"
+                                                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
+                                                    onClick={() => setIsMoreMenuOpen(false)}
+                                                >
+                                                    <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                                                    Verification Status
+                                                </a>
+                                                {profile?.athlete_profiles?.scheduling_url && (
+                                                    <button
+                                                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
+                                                        onClick={() => {
+                                                            const url = profile.athlete_profiles?.scheduling_url;
+                                                            if (url) window.open(url.startsWith('http') ? url : `https://${url}`, '_blank');
+                                                            setIsMoreMenuOpen(false);
+                                                        }}
+                                                    >
+                                                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                                                        View Booking Page
+                                                    </button>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             </CardContent>

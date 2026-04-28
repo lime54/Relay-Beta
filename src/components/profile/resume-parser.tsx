@@ -121,14 +121,21 @@ function parseResumeText(text: string): { experiences: ParsedExperience[]; educa
 // ─── PDF Text Extraction using pdf.js ────────────────────────────────────────
 
 async function extractTextFromPdf(file: File): Promise<string> {
-    // Dynamically import pdfjs-dist to keep the bundle size small
+    // Dynamically import pdfjs-dist
     const pdfjsLib = await import('pdfjs-dist');
 
-    // Set the worker source — use the bundled worker from pdfjs-dist
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+    // Disable the web worker — run PDF parsing on the main thread.
+    // This avoids CDN/worker loading issues in Next.js and is fast enough
+    // for text extraction from resumes (not rendering full pages).
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
 
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pdf = await pdfjsLib.getDocument({
+        data: arrayBuffer,
+        useWorkerFetch: false,
+        isEvalSupported: false,
+        useSystemFonts: true,
+    }).promise;
 
     const textPages: string[] = [];
 

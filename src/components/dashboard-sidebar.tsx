@@ -9,7 +9,8 @@ import {
     MessageSquare,
     LogOut,
     ShieldCheck,
-    Users
+    Users,
+    Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,12 @@ const navItems = [
         href: "/profile",
         icon: User,
         id: "profile"
+    },
+    {
+        title: "Settings",
+        href: "/settings/calendar",
+        icon: Settings,
+        id: "settings"
     },
 ];
 

@@ -28,6 +28,7 @@ import { ResumeParser } from "@/components/profile/resume-parser"
 import { checkConnection } from "./actions"
 import { useEffect } from "react"
 import { EditIndustryDialog } from "@/components/profile/edit-industry-dialog"
+import { AvailabilityPicker } from "@/components/scheduling/availability-picker"
 
 interface AthleteProfile {
     school?: string
@@ -100,6 +101,7 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
     const [isResumeParserOpen, setIsResumeParserOpen] = useState(false)
     const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
     const [isEditIndustryOpen, setIsEditIndustryOpen] = useState(false)
+    const [isBookingOpen, setIsBookingOpen] = useState(false)
     const [isConnected, setIsConnected] = useState<boolean | null>(null)
     const [connectionCount, setConnectionCount] = useState<number>(0)
     
@@ -435,7 +437,7 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                             </Button>
                         )}
                         
-                        {profile?.athlete_profiles?.scheduling_url && (
+                        {(!isOwnProfile || profile?.athlete_profiles?.scheduling_url) && (
                              <Button
                                 variant={isOwnProfile ? "ghost" : "default"}
                                 className={cn(
@@ -443,15 +445,19 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                                     !isOwnProfile && "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
                                 )}
                                 onClick={() => {
-                                    const url = profile.athlete_profiles?.scheduling_url;
-                                    if (url) {
-                                        const fullUrl = url.startsWith('http') ? url : `https://${url}`;
-                                        window.open(fullUrl, '_blank');
+                                    if (isOwnProfile) {
+                                        const url = profile?.athlete_profiles?.scheduling_url;
+                                        if (url) {
+                                            const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+                                            window.open(fullUrl, '_blank');
+                                        }
+                                    } else {
+                                        setIsBookingOpen(true);
                                     }
                                 }}
                              >
                                 <Calendar className="h-4 w-4" />
-                                {isOwnProfile ? "Preview Booking Link" : "Book a Coffee Chat"}
+                                {isOwnProfile ? "Preview Booking Link" : "Book a Meeting"}
                              </Button>
                         )}
 
@@ -658,6 +664,15 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                             </Button>
                         </div>
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Booking Dialog */}
+            <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+                <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-[2.5rem] border-none shadow-2xl bg-transparent">
+                    {profile && (
+                        <AvailabilityPicker recipientId={profile.id} recipientName={profile.name || "User"} />
+                    )}
                 </DialogContent>
             </Dialog>
 

@@ -12,13 +12,16 @@ import {
     TrendingUp,
     Target,
     Rocket,
-    ArrowUpRight
+    ArrowUpRight,
+    Calendar
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useRouter } from "next/navigation";
 
 interface DashboardData {
     userName: string;
@@ -36,6 +39,7 @@ interface DashboardData {
         status: string;
         created_at: string;
     }>;
+    upcomingMeetings?: any[];
 }
 
 const container = {
@@ -66,6 +70,7 @@ function timeAgo(dateStr: string) {
 }
 
 export default function DashboardClient({ data }: { data: DashboardData }) {
+    const router = useRouter();
     const stats = [
         { label: "Requests Sent", value: data.sentCount, icon: Target, color: "text-secondary" },
         { label: "Athletes Helped", value: data.acceptedCount, icon: Rocket, color: "text-accent" },
@@ -233,6 +238,59 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                             </Card>
                         </motion.div>
                     )}
+
+                    <motion.div variants={item}>
+                        <Card className="border-border/50 shadow-lg overflow-hidden">
+                            <div className="h-2 bg-secondary" />
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                                    <Clock className="h-5 w-5 text-secondary" />
+                                    Upcoming Meetings
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {data.upcomingMeetings?.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {data.upcomingMeetings.map((meeting: any) => {
+                                            // Determine the other person
+                                            const isRequester = meeting.requester.name === data.userName;
+                                            const otherPerson = isRequester ? meeting.recipient : meeting.requester;
+                                            const otherAvatar = otherPerson?.athlete_profiles?.avatar_url;
+                                            const dateObj = new Date(meeting.start_time);
+                                            const formattedDate = dateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+                                            const formattedTime = dateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+
+                                            return (
+                                                <div key={meeting.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-card hover:bg-muted/50 transition-colors">
+                                                    <Avatar className="h-10 w-10 border border-border">
+                                                        <AvatarImage src={otherAvatar} />
+                                                        <AvatarFallback>{otherPerson?.name?.charAt(0) || 'U'}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="flex-1 overflow-hidden">
+                                                        <h4 className="text-sm font-bold truncate">{otherPerson?.name}</h4>
+                                                        <p className="text-xs text-muted-foreground truncate">{formattedDate} at {formattedTime}</p>
+                                                    </div>
+                                                    {meeting.meeting_link && (
+                                                        <Button size="sm" variant="outline" className="h-8 border-secondary/30 text-secondary hover:bg-secondary/10 shrink-0" onClick={() => window.open(meeting.meeting_link, '_blank')}>
+                                                            Join
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-6 text-muted-foreground space-y-2 bg-muted/20 rounded-xl border border-dashed border-border/60">
+                                        <Calendar className="h-8 w-8 text-muted-foreground/50 mx-auto" />
+                                        <p className="text-sm font-medium">No upcoming meetings</p>
+                                        <Button variant="link" size="sm" className="text-secondary h-auto py-0" onClick={() => router.push('/network')}>
+                                            Find athletes to connect with
+                                        </Button>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </motion.div>
 
                     <motion.div variants={item}>
                         <Card className="border-border/50 shadow-lg overflow-hidden">

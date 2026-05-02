@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 import { Suspense } from "react";
 import { PageProgressBar } from "@/components/page-progress-bar";
 import { cn } from "@/lib/utils";
+import { CommandMenu } from "@/components/command-menu";
 
 export default function RootLayout({
   children,
@@ -34,6 +35,7 @@ export default function RootLayout({
           <PageProgressBar />
         </Suspense>
         {children}
+        <CommandMenu />
         <Toaster />
       </body>
     </html>

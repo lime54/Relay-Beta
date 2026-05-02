@@ -67,6 +67,9 @@ export function MobileNav({ isLoggedIn }: { isLoggedIn: boolean }) {
                             <Link href="/profile" className="text-lg font-medium hover:text-secondary transition-colors py-2">
                                 Profile
                             </Link>
+                            <Link href="/settings/calendar" className="text-lg font-medium hover:text-secondary transition-colors py-2">
+                                Settings
+                            </Link>
                             <div className="h-px bg-border my-2" />
                             <form action="/auth/signout" method="post">
                                 <Button variant="outline" size="sm" type="submit" className="w-full">

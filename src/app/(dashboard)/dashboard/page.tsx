@@ -91,6 +91,24 @@ export default async function DashboardPage() {
         .order('created_at', { ascending: false })
         .limit(5)
 
+    // Fetch Upcoming Meetings
+    const { data: upcomingMeetingsData } = await supabase
+        .from('bookings')
+        .select(`
+            id,
+            start_time,
+            end_time,
+            status,
+            meeting_link,
+            requester:requester_id (name, athlete_profiles(avatar_url)),
+            recipient:recipient_id (name, athlete_profiles(avatar_url))
+        `)
+        .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .eq('status', 'CONFIRMED')
+        .gte('start_time', new Date().toISOString())
+        .order('start_time', { ascending: true })
+        .limit(3);
+
     return (
         <DashboardClient
             data={{
@@ -103,7 +121,8 @@ export default async function DashboardPage() {
                 receivedCount: receivedCount || 0,
                 acceptedCount: acceptedCount || 0,
                 pendingCount: pendingCount || 0,
-                recentRequests: recentRequests || []
+                recentRequests: recentRequests || [],
+                upcomingMeetings: upcomingMeetingsData || []
             }}
         />
     )

@@ -14,14 +14,40 @@ export default async function DashboardPage() {
     const userName = user.user_metadata?.name || user.email?.split('@')[0] || 'Athlete'
     const userRole = user.user_metadata?.role || 'student'
 
-    // Check verification status
+    // Fetch full profile to check completion
     const { data: profile } = await supabase
         .from('athlete_profiles')
-        .select('verification_status')
+        .select('*')
         .eq('user_id', user.id)
         .single()
 
     const isVerified = profile?.verification_status === true
+
+    // Calculate Profile Strength
+    const completionFields = [
+        { key: 'school', label: 'University/College', weight: 15 },
+        { key: 'sport', label: 'Sport', weight: 15 },
+        { key: 'avatar_url', label: 'Profile Picture', weight: 20 },
+        { key: 'industry', label: 'Industry Interest', weight: 15 },
+        { key: 'resume_url', label: 'Resume', weight: 20 },
+        { key: 'linkedin_url', label: 'LinkedIn URL', weight: 15 }
+    ];
+
+    let profileStrength = 0;
+    const missingFields: { label: string, href: string }[] = [];
+
+    if (profile) {
+        completionFields.forEach(field => {
+            if (profile[field.key]) {
+                profileStrength += field.weight;
+            } else {
+                let href = '/profile';
+                if (field.key === 'resume_url') href = '/profile?tab=resume';
+                if (field.key === 'avatar_url') href = '/profile';
+                missingFields.push({ label: field.label, href });
+            }
+        });
+    }
 
     // Count sent requests (My Plays)
     const { count: sentCount } = await supabase
@@ -71,6 +97,8 @@ export default async function DashboardPage() {
                 userName,
                 userRole,
                 isVerified,
+                profileStrength,
+                missingFields,
                 sentCount: sentCount || 0,
                 receivedCount: receivedCount || 0,
                 acceptedCount: acceptedCount || 0,

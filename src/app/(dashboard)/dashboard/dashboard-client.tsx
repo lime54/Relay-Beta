@@ -24,6 +24,8 @@ interface DashboardData {
     userName: string;
     userRole: string;
     isVerified: boolean;
+    profileStrength: number;
+    missingFields: { label: string, href: string }[];
     sentCount: number;
     receivedCount: number;
     acceptedCount: number;
@@ -189,8 +191,49 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                     </motion.div>
                 </div>
 
-                {/* Right Column: Quick Actions */}
+                {/* Right Column: Quick Actions & Profile Status */}
                 <div className="space-y-8">
+                    {data.profileStrength < 100 && (
+                        <motion.div variants={item}>
+                            <Card className="border-border/50 shadow-lg overflow-hidden bg-card/50 backdrop-blur-sm">
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="text-sm font-bold flex justify-between items-center text-muted-foreground uppercase tracking-wider">
+                                        Profile Strength
+                                        <span className="text-primary font-black">{data.profileStrength}%</span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="h-2 w-full bg-secondary/20 rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-secondary transition-all duration-1000 ease-out" 
+                                            style={{ width: `${data.profileStrength}%` }}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="text-xs text-muted-foreground font-medium">Complete these to boost visibility:</p>
+                                        <div className="flex flex-col gap-2">
+                                            {data.missingFields.slice(0, 3).map((field, i) => (
+                                                <Link key={i} href={field.href}>
+                                                    <Button variant="outline" size="sm" className="w-full justify-between h-8 text-xs border-dashed border-border/60 hover:border-secondary/40 hover:bg-secondary/5 group">
+                                                        <span className="flex items-center gap-2">
+                                                            <div className="h-4 w-4 rounded-full border border-muted-foreground/30 flex items-center justify-center group-hover:border-secondary/50">
+                                                                <Plus className="h-2.5 w-2.5 text-muted-foreground group-hover:text-secondary" />
+                                                            </div>
+                                                            Add {field.label}
+                                                        </span>
+                                                        <span className="text-[10px] text-secondary font-bold group-hover:translate-x-1 transition-transform">
+                                                            +pts
+                                                        </span>
+                                                    </Button>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    )}
+
                     <motion.div variants={item}>
                         <Card className="border-border/50 shadow-lg overflow-hidden">
                             <div className="h-2 bg-secondary" />

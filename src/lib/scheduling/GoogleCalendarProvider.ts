@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import crypto from 'node:crypto';
 import { CalendarProvider, CalendarEvent } from './CalendarProvider';
 
 export class GoogleCalendarProvider implements CalendarProvider {
@@ -10,51 +11,49 @@ export class GoogleCalendarProvider implements CalendarProvider {
 
     async getFreeBusy(accessToken: string, startTime: Date, endTime: Date): Promise<{ start: Date; end: Date }[]> {
         const calendar = this.getClient(accessToken);
-        try {
-            const res = await calendar.freebusy.query({
-                requestBody: {
-                    timeMin: startTime.toISOString(),
-                    timeMax: endTime.toISOString(),
-                    items: [{ id: 'primary' }]
-                }
-            });
-            const busyBlocks = res.data.calendars?.['primary']?.busy || [];
-            return busyBlocks.map(block => ({
-                start: new Date(block.start!),
-                end: new Date(block.end!)
+        const res = await calendar.freebusy.query({
+            requestBody: {
+                timeMin: startTime.toISOString(),
+                timeMax: endTime.toISOString(),
+                items: [{ id: 'primary' }],
+            },
+        });
+        const busyBlocks = res.data.calendars?.['primary']?.busy || [];
+        return busyBlocks
+            .filter((block) => block.start && block.end)
+            .map((block) => ({
+                start: new Date(block.start as string),
+                end: new Date(block.end as string),
             }));
-        } catch (error) {
-            console.error("Failed to query Google Calendar Free/Busy", error);
-            // On failure (e.g., token expired), we might return empty array or throw.
-            // In a production environment, if token expired, we would try to refresh it first.
-            throw error;
-        }
     }
 
     async createEvent(accessToken: string, event: CalendarEvent): Promise<CalendarEvent> {
         const calendar = this.getClient(accessToken);
+        // Use RFC3339 timestamps with explicit timeZone = UTC; Google will translate for the
+        // attendee. This avoids ambiguity from server-local time.
         const res = await calendar.events.insert({
             calendarId: 'primary',
-            conferenceDataVersion: 1, // Required for Google Meet links
+            conferenceDataVersion: 1,
+            sendUpdates: 'all', // email invites to attendees
             requestBody: {
                 summary: event.title,
                 description: event.description,
-                start: { dateTime: event.startTime.toISOString() },
-                end: { dateTime: event.endTime.toISOString() },
-                attendees: event.attendeeEmails.map(email => ({ email })),
+                start: { dateTime: event.startTime.toISOString(), timeZone: 'UTC' },
+                end: { dateTime: event.endTime.toISOString(), timeZone: 'UTC' },
+                attendees: event.attendeeEmails.map((email) => ({ email })),
                 conferenceData: {
                     createRequest: {
-                        requestId: Math.random().toString(36).substring(7), // Unique request ID
-                        conferenceSolutionKey: { type: "hangoutsMeet" }
-                    }
-                }
-            }
+                        requestId: crypto.randomUUID(),
+                        conferenceSolutionKey: { type: 'hangoutsMeet' },
+                    },
+                },
+            },
         });
-        
+
         return {
             ...event,
-            providerEventId: res.data.id!,
-            meetLink: res.data.hangoutLink!
+            providerEventId: res.data.id ?? undefined,
+            meetLink: res.data.hangoutLink ?? undefined,
         };
     }
 
@@ -62,7 +61,8 @@ export class GoogleCalendarProvider implements CalendarProvider {
         const calendar = this.getClient(accessToken);
         await calendar.events.delete({
             calendarId: 'primary',
-            eventId: providerEventId
+            eventId: providerEventId,
+            sendUpdates: 'all',
         });
     }
 }

@@ -1,115 +1,118 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { BookingService } from '@/lib/scheduling/BookingService';
+import { generateAvailableSlots } from '@/lib/scheduling/slot-generator';
+
+const DEFAULT_SCHEDULE: Record<string, { start: string; end: string }[]> = {
+    monday: [{ start: '09:00', end: '17:00' }],
+    tuesday: [{ start: '09:00', end: '17:00' }],
+    wednesday: [{ start: '09:00', end: '17:00' }],
+    thursday: [{ start: '09:00', end: '17:00' }],
+    friday: [{ start: '09:00', end: '17:00' }],
+};
+
+const MAX_RANGE_DAYS = 31;
 
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { userId, startDate, endDate } = body;
+        const { userId, startDate, endDate } = body ?? {};
 
         if (!userId || !startDate || !endDate) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+            return NextResponse.json({ error: 'Invalid date range' }, { status: 400 });
+        }
+
+        const rangeMs = end.getTime() - start.getTime();
+        if (rangeMs > MAX_RANGE_DAYS * 24 * 60 * 60 * 1000) {
+            return NextResponse.json(
+                { error: `Date range too large (max ${MAX_RANGE_DAYS} days)` },
+                { status: 400 }
+            );
         }
 
         const supabase = await createClient();
 
-        // 1. Fetch Availability Rules
+        // 1. Availability rules. If the user hasn't set them up, fall back to a sensible default.
         const { data: rules } = await supabase
             .from('availability_rules')
             .select('*')
             .eq('user_id', userId)
-            .single();
+            .maybeSingle();
 
-        if (!rules) {
-            return NextResponse.json({ error: "User has not set up availability" }, { status: 404 });
+        const durationMins = rules?.meeting_duration_mins || 30;
+        const bufferBefore = rules?.buffer_before_mins || 0;
+        const bufferAfter = rules?.buffer_after_mins || 0;
+        const schedule =
+            (rules?.schedule as Record<string, { start: string; end: string }[]> | undefined) ||
+            DEFAULT_SCHEDULE;
+
+        const hasAnySchedule = Object.values(schedule).some((arr) => arr && arr.length > 0);
+        if (!hasAnySchedule) {
+            return NextResponse.json({ slots: [] });
         }
 
-        // 2. Fetch Free/Busy from Calendar Provider
+        // 2. Free/busy from the recipient's connected calendar (best-effort).
         const { data: conn } = await supabase
             .from('calendar_connections')
-            .select('*')
+            .select('id, provider, is_active')
             .eq('user_id', userId)
             .eq('is_active', true)
-            .single();
+            .maybeSingle();
 
         let busyBlocks: { start: Date; end: Date }[] = [];
 
         if (conn) {
             const token = await BookingService.getValidToken(conn.id);
             if (token) {
-                const provider = BookingService.getProvider(conn.provider);
                 try {
-                    busyBlocks = await provider.getFreeBusy(token, new Date(startDate), new Date(endDate));
+                    const provider = BookingService.getProvider(conn.provider);
+                    busyBlocks = await provider.getFreeBusy(token, start, end);
                 } catch (e) {
-                    console.error("Error fetching free/busy:", e);
+                    console.error('[availability] free/busy lookup failed', e);
                 }
             }
         }
 
-        // 3. Generate Available Slots
-        const durationMins = rules.meeting_duration_mins || 30;
-        const bufferBefore = rules.buffer_before_mins || 0;
-        const bufferAfter = rules.buffer_after_mins || 0;
-        const schedule = rules.schedule as Record<string, { start: string, end: string }[]>;
+        // 3. Existing CONFIRMED bookings on Relay are also busy.
+        const { data: existingBookings } = await supabase
+            .from('bookings')
+            .select('start_time, end_time')
+            .eq('recipient_id', userId)
+            .eq('status', 'CONFIRMED')
+            .gte('end_time', start.toISOString())
+            .lte('start_time', end.toISOString());
 
-        const availableSlots: string[] = [];
-        
-        let current = new Date(startDate);
-        const end = new Date(endDate);
-
-        while (current < end) {
-            const dayOfWeek = current.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-            const dayRules = schedule[dayOfWeek];
-
-            if (dayRules) {
-                for (const rule of dayRules) {
-                    const [startHour, startMin] = rule.start.split(':').map(Number);
-                    const [endHour, endMin] = rule.end.split(':').map(Number);
-                    
-                    const ruleStart = new Date(current);
-                    ruleStart.setHours(startHour, startMin, 0, 0);
-                    
-                    const ruleEnd = new Date(current);
-                    ruleEnd.setHours(endHour, endMin, 0, 0);
-
-                    // Generate slots within this rule
-                    let slotStart = new Date(ruleStart);
-                    while (slotStart < ruleEnd) {
-                        const slotEnd = new Date(slotStart.getTime() + durationMins * 60000);
-                        
-                        if (slotEnd <= ruleEnd) {
-                            // Check if this slot conflicts with busyBlocks
-                            const slotStartWithBuffer = new Date(slotStart.getTime() - bufferBefore * 60000);
-                            const slotEndWithBuffer = new Date(slotEnd.getTime() + bufferAfter * 60000);
-
-                            const isConflict = busyBlocks.some(block => 
-                                (slotStartWithBuffer < block.end && slotEndWithBuffer > block.start)
-                            );
-
-                            // Also check existing bookings in our DB
-                            // In MVP, we might rely entirely on GCal free/busy, but ideally we check our DB too
-                            // We will skip local DB check here to keep it simple, assuming GCal syncs fast enough,
-                            // but in a production app you'd query the `bookings` table here too.
-
-                            if (!isConflict) {
-                                availableSlots.push(slotStart.toISOString());
-                            }
-                        }
-                        
-                        // Increment slotStart by duration (or 30 mins)
-                        slotStart = new Date(slotStart.getTime() + durationMins * 60000);
-                    }
-                }
-            }
-            
-            // Move to next day
-            current.setDate(current.getDate() + 1);
-            current.setHours(0, 0, 0, 0);
+        if (existingBookings) {
+            busyBlocks = busyBlocks.concat(
+                existingBookings.map((b) => ({
+                    start: new Date(b.start_time),
+                    end: new Date(b.end_time),
+                }))
+            );
         }
+
+        // 4. Generate available slots.
+        const availableSlots = generateAvailableSlots({
+            rangeStart: start,
+            rangeEnd: end,
+            schedule,
+            durationMins,
+            bufferBeforeMins: bufferBefore,
+            bufferAfterMins: bufferAfter,
+            busyBlocks,
+        });
 
         return NextResponse.json({ slots: availableSlots });
-    } catch (error: any) {
-        console.error("Availability error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        console.error('[availability] error', error);
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

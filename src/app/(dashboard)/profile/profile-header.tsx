@@ -8,6 +8,7 @@ import { Pencil, ShieldCheck, MapPin, Camera, Palette, Trash2, Loader2 } from "l
 import { updateProfileImage, updateProfileTheme, removeProfileImage } from "./actions"
 import { toast } from "sonner"
 import { Select } from "@/components/ui/select"
+import { useRouter } from "next/navigation"
 import { ImageCropper } from "./image-cropper"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -22,7 +23,7 @@ import { GlowingEffect } from "@/components/ui/glowing-effect"
 import { cn } from "@/lib/utils"
 import { SimilarityScore } from "@/components/profile/similarity-score"
 import { ResumeDropbox } from "@/components/profile/resume-dropbox"
-import { Linkedin, FileText, Lock, Upload, Calendar, Share2, Link as LinkIcon, ExternalLink, MoreHorizontal } from "lucide-react"
+import { Linkedin, FileText, Lock, Upload, Calendar, Share2, Link as LinkIcon, ExternalLink, MoreHorizontal, MessageCircle } from "lucide-react"
 import { ResumeParser } from "@/components/profile/resume-parser"
 import { checkConnection } from "./actions"
 import { useEffect } from "react"
@@ -71,6 +72,7 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
     const coverInputRef = useRef<HTMLInputElement>(null)
     const [isUploading, setIsUploading] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
+    const router = useRouter()
 
     // Optimistic States
     const [optimisticTheme, setOptimisticTheme] = useOptimistic(
@@ -216,14 +218,14 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
     }
 
     return (
-        <Card className="rounded-2xl overflow-hidden border-none shadow-sm bg-white dark:bg-card">
+        <Card className="rounded-2xl border-none shadow-sm bg-white dark:bg-card">
             {/* Banner Image */}
             <motion.div
                 initial={false}
                 animate={{
                     backgroundImage: optimisticCover ? `url(${optimisticCover})` : 'none'
                 }}
-                className={`h-40 md:h-52 bg-gradient-to-r ${optimisticTheme} relative transition-all duration-500`}
+                className={`h-40 md:h-52 bg-gradient-to-r ${optimisticTheme} relative transition-all duration-500 rounded-t-2xl overflow-hidden`}
                 style={{ backgroundSize: 'cover', backgroundPosition: 'center' }}
             >
                 {isOwnProfile && (
@@ -415,12 +417,21 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
 
                     {/* Action Buttons */}
                     <div className="flex flex-wrap justify-center gap-3 mt-6 pt-2">
-                        {!isOwnProfile && (
+                        {!isOwnProfile && isConnected === false && (
                             <Button
                                 className="rounded-full px-8 shadow-md hover:shadow-lg transition-all bg-primary hover:bg-primary/90 text-primary-foreground"
                                 onClick={() => setIsDialogOpen(true)}
                             >
                                 Send Personal Request
+                            </Button>
+                        )}
+                        {!isOwnProfile && isConnected === true && (
+                            <Button
+                                className="rounded-full px-8 shadow-md hover:shadow-lg transition-all bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
+                                onClick={() => router.push(`/messages?user=${profile?.id}`)}
+                            >
+                                <MessageCircle className="h-4 w-4" />
+                                Message
                             </Button>
                         )}
                         
@@ -500,7 +511,7 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                             </Button>
                         )}
                         
-                        <div className="relative">
+                        <div className="relative z-50">
                             <Button 
                                 variant="ghost" 
                                 size="icon" 
@@ -516,7 +527,7 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                                     {/* Backdrop */}
                                     <div className="fixed inset-0 z-40" onClick={() => setIsMoreMenuOpen(false)} />
                                     {/* Menu */}
-                                    <div className="absolute right-0 top-full mt-2 z-50 w-52 rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl p-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="absolute right-0 top-full mt-2 z-50 w-52 rounded-xl border border-border bg-white dark:bg-card shadow-xl p-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
                                         <button
                                             className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
                                             onClick={() => {

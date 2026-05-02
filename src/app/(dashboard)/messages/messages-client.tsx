@@ -68,6 +68,16 @@ export default function MessagesClient({ userId, initialConnections }: { userId:
                 .order('created_at', { ascending: true });
 
             if (data) setMessages(data);
+
+            // Mark unread messages as read
+            if (data && data.some(m => m.receiver_id === userId && !m.is_read)) {
+                await supabase
+                    .from('messages')
+                    .update({ is_read: true })
+                    .eq('request_id', selectedId)
+                    .eq('receiver_id', userId)
+                    .eq('is_read', false);
+            }
         }
 
         fetchMessages();

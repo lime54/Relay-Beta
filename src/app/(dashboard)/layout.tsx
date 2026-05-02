@@ -4,6 +4,7 @@ import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
+import { NotificationProvider } from "@/contexts/notification-context";
 
 export default function DashboardLayout({
     children,
@@ -13,7 +14,8 @@ export default function DashboardLayout({
     const pathname = usePathname();
 
     return (
-        <div className="flex h-screen bg-background text-foreground overflow-hidden">
+        <NotificationProvider>
+            <div className="flex h-screen bg-background text-foreground overflow-hidden">
             <DashboardSidebar />
             <div className="flex-1 flex flex-col min-w-0">
                 <DashboardHeader />
@@ -34,5 +36,6 @@ export default function DashboardLayout({
                 </main>
             </div>
         </div>
+        </NotificationProvider>
     );
 }

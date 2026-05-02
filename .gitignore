@@ -40,3 +40,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# build / test artifacts
+build_output*.txt
+playwright-report/
+test-results/
+.swc/
+
+# Claude / agent local config
+.claude/
+.mcp.json

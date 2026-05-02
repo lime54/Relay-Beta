@@ -4,10 +4,9 @@ import { useRef, useState, useOptimistic, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Pencil, ShieldCheck, MapPin, Camera, Palette, Trash2, Loader2 } from "lucide-react"
-import { updateProfileImage, updateProfileTheme, removeProfileImage } from "./actions"
+import { Pencil, ShieldCheck, MapPin, Camera, Trash2, Loader2 } from "lucide-react"
+import { updateProfileImage, removeProfileImage } from "./actions"
 import { toast } from "sonner"
-import { Select } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
 import { ImageCropper } from "./image-cropper"
 import { motion, AnimatePresence } from "framer-motion"
@@ -59,15 +58,6 @@ interface ProfileHeaderProps {
     currentExperience?: { company: string, role: string }
 }
 
-const THEME_OPTIONS = [
-    { name: "Update Theme...", value: "" },
-    { name: "Default (Blue)", value: "from-blue-100 to-cyan-100" },
-    { name: "Sunset (Pink)", value: "from-orange-100 to-rose-100" },
-    { name: "Forest (Green)", value: "from-emerald-100 to-teal-100" },
-    { name: "Twilight (Purple)", value: "from-indigo-100 to-purple-100" },
-    { name: "Midnight (Dark)", value: "from-slate-800 to-slate-900 text-white" },
-]
-
 export function ProfileHeader({ profile, isOwnProfile, currentExperience }: ProfileHeaderProps) {
     const avatarInputRef = useRef<HTMLInputElement>(null)
     const coverInputRef = useRef<HTMLInputElement>(null)
@@ -76,10 +66,7 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
     const router = useRouter()
 
     // Optimistic States
-    const [optimisticTheme, setOptimisticTheme] = useOptimistic(
-        profile?.athlete_profiles?.theme_gradient || 'from-blue-100 to-cyan-100',
-        (_, newTheme: string) => newTheme
-    )
+    const themeGradient = profile?.athlete_profiles?.theme_gradient || 'from-blue-100 to-cyan-100'
 
     const [optimisticAvatar, setOptimisticAvatar] = useOptimistic<string | null | undefined, string | null>(
         profile?.athlete_profiles?.avatar_url || profile?.avatar_url,
@@ -181,26 +168,6 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
         })
     }
 
-    const handleThemeChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const gradient = e.target.value
-        if (!gradient) return
-
-        startTransition(async () => {
-            setOptimisticTheme(gradient)
-            try {
-                const result = await updateProfileTheme(gradient)
-                if (result.error) {
-                    toast.error(`Error: ${result.error}`)
-                } else {
-                    toast.success("Theme updated!")
-                }
-            } catch (err) {
-                toast.error("An unexpected error occurred")
-                console.error(err)
-            }
-        })
-    }
-
     const handleRemoveImage = async (type: 'avatar' | 'cover') => {
         startTransition(async () => {
             if (type === 'avatar') setOptimisticAvatar(null)
@@ -227,32 +194,11 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                 animate={{
                     backgroundImage: optimisticCover ? `url(${optimisticCover})` : 'none'
                 }}
-                className={`h-40 md:h-52 bg-gradient-to-r ${optimisticTheme} relative transition-all duration-500 rounded-t-2xl overflow-hidden`}
+                className={`h-40 md:h-52 bg-gradient-to-r ${themeGradient} relative transition-all duration-500 rounded-t-2xl overflow-hidden`}
                 style={{ backgroundSize: 'cover', backgroundPosition: 'center' }}
             >
                 {isOwnProfile && (
                     <div className="absolute top-4 right-4 flex gap-2">
-                        <div className="relative">
-                            <Select
-                                className={cn(
-                                    "h-9 w-36 bg-white/50 backdrop-blur-sm border-none text-xs font-bold transition-all",
-                                    isPending && cropType === null && "opacity-50 grayscale cursor-not-allowed"
-                                )}
-                                onChange={handleThemeChange}
-                                value=""
-                                disabled={isPending}
-                            >
-                                {THEME_OPTIONS.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.name}</option>
-                                ))}
-                            </Select>
-                            {isPending && cropType === null && (
-                                <div className="absolute inset-y-0 right-2 flex items-center">
-                                    <Loader2 className="h-3 w-3 animate-spin text-foreground/50" />
-                                </div>
-                            )}
-                        </div>
-
                         {optimisticCover && (
                             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                 <Button

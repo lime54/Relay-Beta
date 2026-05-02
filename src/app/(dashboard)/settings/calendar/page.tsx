@@ -7,9 +7,11 @@ import { Calendar, Clock, CheckCircle, AlertCircle } from "lucide-react";
 export const dynamic = 'force-dynamic';
 
 const ERROR_MESSAGES: Record<string, string> = {
-    invalid_request: "The Google sign-in could not be completed. Please try again.",
+    invalid_request: "Google rejected the OAuth request. The redirect URI registered in Google Cloud Console likely doesn't match what this app is sending. See the README's \"Setting up Google Calendar OAuth\" section.",
+    redirect_uri_mismatch: "The redirect URI registered in Google Cloud Console doesn't match what this app is sending. See the README's \"Setting up Google Calendar OAuth\" section.",
     state_mismatch: "The sign-in session expired or didn't match. Please try again.",
-    not_configured: "Google Calendar isn't configured on this server.",
+    not_configured: "Google Calendar isn't set up yet. The site owner needs to configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET. See the README's \"Setting up Google Calendar OAuth\" section.",
+    missing_app_url: "Google Calendar isn't fully configured. The NEXT_PUBLIC_APP_URL environment variable is missing. See the README's \"Setting up Google Calendar OAuth\" section.",
     database_error: "We couldn't save your connection. Please try again.",
     oauth_failed: "Google rejected the sign-in request. Please try again.",
     access_denied: "You declined access to Google Calendar.",
@@ -24,7 +26,7 @@ const SUCCESS_MESSAGES: Record<string, string> = {
 export default async function CalendarSettingsPage({
     searchParams,
 }: {
-    searchParams?: Promise<{ success?: string; error?: string }>;
+    searchParams?: Promise<{ success?: string; error?: string; redirect_uri?: string }>;
 }) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -36,6 +38,7 @@ export default async function CalendarSettingsPage({
     const params = (await searchParams) ?? {};
     const successMsg = params.success ? SUCCESS_MESSAGES[params.success] : null;
     const errorMsg = params.error ? (ERROR_MESSAGES[params.error] ?? "Something went wrong.") : null;
+    const showRedirectUri = !!params.redirect_uri && (params.error === 'invalid_request' || params.error === 'redirect_uri_mismatch');
 
     const { data: connections } = await supabase
         .from('calendar_connections')
@@ -68,9 +71,17 @@ export default async function CalendarSettingsPage({
                 </div>
             )}
             {errorMsg && (
-                <div role="alert" className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
-                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                    {errorMsg}
+                <div role="alert" className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                    <div>
+                        <p>{errorMsg}</p>
+                        {showRedirectUri && (
+                            <>
+                                <p className="mt-2">Add this <strong>exact URL</strong> to your Google Cloud OAuth client&apos;s <em>Authorized redirect URIs</em>:</p>
+                                <pre className="mt-2 px-3 py-2 bg-red-100 text-red-900 dark:bg-red-900/30 dark:text-red-200 rounded font-mono text-xs whitespace-pre-wrap break-all">{params.redirect_uri}</pre>
+                            </>
+                        )}
+                    </div>
                 </div>
             )}
 

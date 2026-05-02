@@ -17,12 +17,14 @@ function getRedirectUri() {
 }
 
 export async function GET(request: Request) {
-    const { searchParams } = new URL(request.url);
+    const requestUrl = new URL(request.url);
+    const { searchParams } = requestUrl;
     const code = searchParams.get('code');
     const stateParam = searchParams.get('state') || '';
     const oauthError = searchParams.get('error');
 
     if (oauthError) {
+        console.error(`[calendar/callback] Google returned OAuth error: ${oauthError}`);
         return NextResponse.redirect(
             appUrl(`${SETTINGS_PATH}?error=${encodeURIComponent(oauthError)}`)
         );
@@ -54,6 +56,7 @@ export async function GET(request: Request) {
     }
 
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+        console.error('[calendar/callback] Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET when exchanging code.');
         return NextResponse.redirect(appUrl(`${SETTINGS_PATH}?error=not_configured`));
     }
 

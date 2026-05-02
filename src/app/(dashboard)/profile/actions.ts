@@ -157,22 +157,6 @@ export async function updateProfileImage(formData: FormData) {
     return { success: true, url: publicUrl }
 }
 
-export async function updateProfileTheme(gradient: string) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) return { error: 'Not authenticated' }
-
-    const { error } = await supabase
-        .from('athlete_profiles')
-        .update({ theme_gradient: gradient })
-        .eq('user_id', user.id)
-
-    if (error) return { error: error.message }
-
-    revalidatePath('/profile')
-    return { success: true }
-}
 export async function removeProfileImage(type: 'avatar' | 'cover') {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

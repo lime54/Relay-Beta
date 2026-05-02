@@ -28,7 +28,7 @@ export default async function MessagesPage() {
             )
         `)
         .eq('status', 'accepted')
-        .or(`requester_id.eq.${user.id}, recipient_id.eq.${user.id}`)
+        .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
 
     return (
         <MessagesClient

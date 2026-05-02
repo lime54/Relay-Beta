@@ -39,6 +39,17 @@ export default function MessagesClient({ userId, initialConnections }: { userId:
     const [newMessage, setNewMessage] = useState("");
     const supabase = createClient();
 
+    useEffect(() => {
+        if (targetUser) {
+            const match = initialConnections.find((c: Connection) => 
+                c.requester_id === targetUser || c.recipient_id === targetUser
+            );
+            if (match) {
+                setSelectedId(match.id);
+            }
+        }
+    }, [targetUser, initialConnections]);
+
     const selectedConnection = initialConnections.find(c => c.id === selectedId) as Connection | undefined;
     
     // The other person is the one who is NOT the current userId

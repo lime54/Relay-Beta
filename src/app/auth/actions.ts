@@ -82,8 +82,6 @@ export async function signup(formData: FormData) {
         return redirect(`/signup?error=${encodeURIComponent(signUpError.message)}`)
     }
 
-    console.log('Sign up successful for:', email)
-
     // Option 1: Send a custom verification email via Resend
     // This assumes Supabase is configured to NOT send the default confirmation email,
     // or you are using Resend as a custom SMTP provider in Supabase.
@@ -97,7 +95,6 @@ export async function signup(formData: FormData) {
                 subject: 'Welcome to Relay!',
                 html: '<p>Thanks for joining the team!</p>'
             });
-            console.log('Welcome email sent via Resend successfully.');
         } catch (e) {
             console.error('Error with Resend integration:', e);
         }

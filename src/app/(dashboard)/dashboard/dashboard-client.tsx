@@ -249,7 +249,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                {data.upcomingMeetings?.length > 0 ? (
+                                {data.upcomingMeetings && data.upcomingMeetings.length > 0 ? (
                                     <div className="space-y-3">
                                         {data.upcomingMeetings.map((meeting: any) => {
                                             // Determine the other person

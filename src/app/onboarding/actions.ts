@@ -67,7 +67,7 @@ export async function submitOnboarding(rawData: OnboardingData) {
     // 1. Validate data
     const validation = OnboardingSchema.safeParse(rawData)
     if (!validation.success) {
-        const firstError = validation.error.errors[0]
+        const firstError = validation.error.issues[0]
         return { error: `${firstError.path.join('.')}: ${firstError.message}` }
     }
     const data = validation.data
@@ -126,8 +126,7 @@ export async function submitOnboarding(rawData: OnboardingData) {
             const rosterUrl = verificationData?.roster_link || undefined
             const legacyRosterUrl = verificationData?.legacy_roster_link || undefined
             
-            const verificationResult = await runVerification(rosterUrl, legacyRosterUrl)
-            console.log('[Onboarding] Auto-verification result:', verificationResult)
+            await runVerification(rosterUrl, legacyRosterUrl)
         } catch (verifyErr) {
             // Don't block onboarding if verification fails
             console.error('[Onboarding] Auto-verification error (non-blocking):', verifyErr)

@@ -2,18 +2,32 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, CheckCircle } from "lucide-react";
+import { Calendar, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
 
-export default async function CalendarSettingsPage() {
+const ERROR_MESSAGES: Record<string, string> = {
+    invalid_request: "The Google Calendar authorization request was missing required information. Please try connecting again.",
+    oauth_failed: "We couldn't complete the connection with Google. Please try again.",
+    database_error: "We connected to Google but failed to save your calendar connection. Please try again.",
+};
+
+export default async function CalendarSettingsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ success?: string; error?: string }>;
+}) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
         redirect('/login');
     }
+
+    const sp = await searchParams;
+    const successParam = sp.success;
+    const errorParam = sp.error;
 
     // Fetch connections
     const { data: connections } = await supabase
@@ -31,6 +45,30 @@ export default async function CalendarSettingsPage() {
                 <h1 className="text-3xl font-bold tracking-tight text-foreground">Calendar & Scheduling</h1>
                 <p className="text-muted-foreground mt-2">Manage your availability and calendar integrations.</p>
             </div>
+
+            {successParam === 'calendar_connected' && (
+                <div className="mb-6 flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-green-900">
+                    <CheckCircle className="h-5 w-5 flex-shrink-0 text-green-600 mt-0.5" />
+                    <div>
+                        <p className="font-semibold">Google Calendar connected successfully.</p>
+                        <p className="text-sm text-green-800">You can now receive bookings.</p>
+                    </div>
+                </div>
+            )}
+
+            {successParam === 'rules_reset' && (
+                <div className="mb-6 flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-green-900">
+                    <CheckCircle className="h-5 w-5 flex-shrink-0 text-green-600 mt-0.5" />
+                    <p className="text-sm">Default availability rules have been initialized.</p>
+                </div>
+            )}
+
+            {errorParam && (
+                <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-900">
+                    <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-600 mt-0.5" />
+                    <p className="text-sm">{ERROR_MESSAGES[errorParam] ?? "Something went wrong connecting your calendar. Please try again."}</p>
+                </div>
+            )}
 
             <div className="grid gap-8">
                 <Card className="border-border/50 shadow-sm">

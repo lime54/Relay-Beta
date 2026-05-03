@@ -8,13 +8,13 @@ export async function GET(request: Request) {
     const stateUserId = searchParams.get('state'); // The user ID we passed in the auth route
 
     if (!code || !stateUserId) {
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/settings/integrations?error=invalid_request`);
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/settings/calendar?error=invalid_request`);
     }
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Verify the user who started the OAuth flow is the one finishing it
+    // Verify the user who started the OAuth flow is the one finishing it (CSRF protection)
     if (!user || user.id !== stateUserId) {
         return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/login`);
     }
@@ -44,13 +44,26 @@ export async function GET(request: Request) {
         // Note: In a production app, the refresh_token and access_token SHOULD be encrypted here using Supabase Vault or KMS.
         // For this scaffold, we store them directly.
 
+        // If Google didn't return a refresh_token this round (rare given prompt='consent'),
+        // preserve any existing one rather than wiping it.
+        let refreshTokenToStore: string | null = tokens.refresh_token ?? null;
+        if (!refreshTokenToStore) {
+            const { data: existing } = await supabase
+                .from('calendar_connections')
+                .select('refresh_token')
+                .eq('user_id', user.id)
+                .eq('provider_account_id', providerAccountId)
+                .maybeSingle();
+            refreshTokenToStore = existing?.refresh_token ?? null;
+        }
+
         // Upsert the connection
         const { error } = await supabase.from('calendar_connections').upsert({
             user_id: user.id,
             provider: 'google',
             provider_account_id: providerAccountId,
             access_token: tokens.access_token,
-            refresh_token: tokens.refresh_token || null, // Might be null if prompt='none' and previously granted
+            refresh_token: refreshTokenToStore,
             expires_at: expiresAt,
             is_active: true,
             updated_at: new Date().toISOString()
@@ -60,13 +73,13 @@ export async function GET(request: Request) {
 
         if (error) {
             console.error("Error saving calendar connection:", error);
-            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/settings/integrations?error=database_error`);
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/settings/calendar?error=database_error`);
         }
 
         // Redirect back to the app with a success parameter
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/settings/integrations?success=calendar_connected`);
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/settings/calendar?success=calendar_connected`);
     } catch (error) {
         console.error('Error exchanging OAuth code:', error);
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/settings/integrations?error=oauth_failed`);
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/settings/calendar?error=oauth_failed`);
     }
 }

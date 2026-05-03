@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -34,12 +37,15 @@ type Overlap = {
 interface AthleteConnectionCardProps {
     request: Request
     currentUserProfile?: AthleteProfile // To calculate overlap
+    onAccept?: () => void | Promise<void>
+    onPass?: () => void | Promise<void>
 }
 
-export function AthleteConnectionCard({ request, currentUserProfile }: AthleteConnectionCardProps) {
+export function AthleteConnectionCard({ request, currentUserProfile, onAccept, onPass }: AthleteConnectionCardProps) {
     const requester = request.users
     const profile = requester?.athlete_profiles
     const isVerified = true // Assuming all users in this view are verified for now
+    const [busy, setBusy] = useState<"accept" | "pass" | null>(null)
 
     // Calculate Overlaps (Mock logic for now, utilizing props if available)
     const overlaps: Overlap[] = []
@@ -69,6 +75,18 @@ export function AthleteConnectionCard({ request, currentUserProfile }: AthleteCo
             label: `${profile.sport} Athlete`,
             icon: <Trophy className="h-3 w-3" />
         })
+    }
+
+    const handlePass = async () => {
+        if (!onPass) return
+        setBusy("pass")
+        try { await onPass() } finally { setBusy(null) }
+    }
+
+    const handleAccept = async () => {
+        if (!onAccept) return
+        setBusy("accept")
+        try { await onAccept() } finally { setBusy(null) }
     }
 
     return (
@@ -134,18 +152,44 @@ export function AthleteConnectionCard({ request, currentUserProfile }: AthleteCo
 
                         {/* D. Actions */}
                         <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 border-t border-slate-50 sm:border-t-0 sm:pt-0">
-                            <Link href={`/requests/${request.id}`} className="w-full sm:w-auto">
-                                <Button variant="ghost" size="sm" className="w-full sm:w-auto text-slate-500 hover:text-slate-800 hover:bg-slate-100">
+                            {onPass ? (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full sm:w-auto text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+                                    onClick={handlePass}
+                                    loading={busy === "pass"}
+                                    disabled={busy !== null}
+                                >
                                     <X className="h-4 w-4 mr-1.5" />
                                     Pass
                                 </Button>
-                            </Link>
-                            <Link href={`/requests/${request.id}`} className="w-full sm:w-auto">
-                                <Button className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white shadow-sm ring-1 ring-slate-900/10">
+                            ) : (
+                                <Link href={`/requests/${request.id}`} className="w-full sm:w-auto">
+                                    <Button variant="ghost" size="sm" className="w-full sm:w-auto text-slate-500 hover:text-slate-800 hover:bg-slate-100">
+                                        <X className="h-4 w-4 mr-1.5" />
+                                        Pass
+                                    </Button>
+                                </Link>
+                            )}
+                            {onAccept ? (
+                                <Button
+                                    className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white shadow-sm ring-1 ring-slate-900/10"
+                                    onClick={handleAccept}
+                                    loading={busy === "accept"}
+                                    disabled={busy !== null}
+                                >
                                     <Check className="h-4 w-4 mr-1.5" />
                                     Accept Request
                                 </Button>
-                            </Link>
+                            ) : (
+                                <Link href={`/requests/${request.id}`} className="w-full sm:w-auto">
+                                    <Button className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white shadow-sm ring-1 ring-slate-900/10">
+                                        <Check className="h-4 w-4 mr-1.5" />
+                                        Accept Request
+                                    </Button>
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -4,7 +4,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Plus, Send, Inbox, MessageCircle, Clock, ArrowRight } from "lucide-react"
-import { AthleteConnectionCard } from "./athlete-connection-card"
+import { InboxList } from "./inbox-list"
+import { ClearNotificationsOnMount } from "@/components/clear-notifications-on-mount"
 
 export default async function RequestsPage({
     searchParams
@@ -95,6 +96,7 @@ export default async function RequestsPage({
 
     return (
         <div className="container mx-auto px-4 py-8 max-w-[900px] animate-fade-in">
+            <ClearNotificationsOnMount target="requests" />
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div>
@@ -140,35 +142,12 @@ export default async function RequestsPage({
             <div className="space-y-4">
                 {/* Inbox Section (show when tab is 'all' or 'inbox') */}
                 {(activeTab === 'all' || activeTab === 'inbox') && (
-                    <>
-                        {receivedCount > 0 && (
-                            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                <Inbox className="h-3.5 w-3.5" />
-                                Incoming Requests ({receivedCount})
-                            </h2>
-                        )}
-                        {receivedRequests && receivedRequests.length > 0 ? (
-                            receivedRequests.map((request) => (
-                                <AthleteConnectionCard
-                                    key={request.id}
-                                    request={request}
-                                    currentUserProfile={currentUserProfile || undefined}
-                                />
-                            ))
-                        ) : activeTab === 'inbox' ? (
-                            <Card className="bg-slate-50 border-none shadow-none">
-                                <CardContent className="py-16 text-center flex flex-col items-center">
-                                    <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center text-3xl mb-4 shadow-sm border border-slate-100">
-                                        📬
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-slate-900">No incoming requests</h3>
-                                    <p className="text-slate-500 max-w-sm mx-auto mt-1">
-                                        When someone sends you a connection request, it will appear here.
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        ) : null}
-                    </>
+                    <InboxList
+                        initialRequests={(receivedRequests || []) as any}
+                        currentUserProfile={currentUserProfile || undefined}
+                        showHeader={receivedCount > 0}
+                        showEmptyState={activeTab === 'inbox'}
+                    />
                 )}
 
                 {/* Divider between sections when showing all */}

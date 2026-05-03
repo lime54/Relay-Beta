@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 interface NotificationContextType {
@@ -8,6 +8,8 @@ interface NotificationContextType {
     pendingRequests: number;
     setUnreadMessages: React.Dispatch<React.SetStateAction<number>>;
     setPendingRequests: React.Dispatch<React.SetStateAction<number>>;
+    markRequestsSeen: () => Promise<void>;
+    markMessagesSeen: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType>({
@@ -15,6 +17,8 @@ const NotificationContext = createContext<NotificationContextType>({
     pendingRequests: 0,
     setUnreadMessages: () => {},
     setPendingRequests: () => {},
+    markRequestsSeen: async () => {},
+    markMessagesSeen: async () => {},
 });
 
 export const useNotifications = () => useContext(NotificationContext);
@@ -36,11 +40,25 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 .eq('receiver_id', user.id)
                 .eq('is_read', false);
 
-            const { count: reqCount } = await supabase
+            // Try the seen_at-aware count first; fall back if the column hasn't
+            // been migrated yet so the badge keeps working in either state.
+            let reqCount: number | null = null;
+            const seenAware = await supabase
                 .from('requests')
                 .select('*', { count: 'exact', head: true })
                 .eq('recipient_id', user.id)
-                .eq('status', 'pending');
+                .eq('status', 'pending')
+                .is('seen_at', null);
+            if (seenAware.error) {
+                const fallback = await supabase
+                    .from('requests')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('recipient_id', user.id)
+                    .eq('status', 'pending');
+                reqCount = fallback.count ?? null;
+            } else {
+                reqCount = seenAware.count ?? null;
+            }
 
             if (isMounted) {
                 if (msgCount !== null) setUnreadMessages(msgCount);
@@ -67,17 +85,20 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             })
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'requests' }, (payload) => {
                 supabase.auth.getUser().then(({ data: { user } }) => {
-                    if (user && payload.new.recipient_id === user.id && payload.new.status === 'pending') {
+                    if (user && payload.new.recipient_id === user.id && payload.new.status === 'pending' && !payload.new.seen_at) {
                         setPendingRequests(prev => prev + 1);
                     }
                 });
             })
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'requests' }, (payload) => {
                 supabase.auth.getUser().then(({ data: { user } }) => {
-                    if (user && payload.new.recipient_id === user.id) {
-                        if (payload.old.status === 'pending' && payload.new.status !== 'pending') {
-                            setPendingRequests(prev => Math.max(0, prev - 1));
-                        }
+                    if (!user || payload.new.recipient_id !== user.id) return;
+                    const wasUnseenPending = payload.old.status === 'pending' && !payload.old.seen_at;
+                    const isUnseenPending = payload.new.status === 'pending' && !payload.new.seen_at;
+                    if (wasUnseenPending && !isUnseenPending) {
+                        setPendingRequests(prev => Math.max(0, prev - 1));
+                    } else if (!wasUnseenPending && isUnseenPending) {
+                        setPendingRequests(prev => prev + 1);
                     }
                 });
             })
@@ -89,12 +110,44 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         };
     }, [supabase]);
 
+    const markRequestsSeen = useCallback(async () => {
+        // Clear in-memory immediately so the badge disappears without waiting
+        // for the network round-trip.
+        setPendingRequests(0);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { error } = await supabase
+            .from('requests')
+            .update({ seen_at: new Date().toISOString() })
+            .eq('recipient_id', user.id)
+            .eq('status', 'pending')
+            .is('seen_at', null);
+        if (error) {
+            // If seen_at column doesn't exist yet, silently no-op the persistence.
+            // Local state is already cleared so the user still sees the badge clear.
+            console.warn('[notifications] markRequestsSeen:', error.message);
+        }
+    }, [supabase]);
+
+    const markMessagesSeen = useCallback(async () => {
+        setUnreadMessages(0);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        await supabase
+            .from('messages')
+            .update({ is_read: true })
+            .eq('receiver_id', user.id)
+            .eq('is_read', false);
+    }, [supabase]);
+
     return (
         <NotificationContext.Provider value={{
             unreadMessages,
             pendingRequests,
             setUnreadMessages,
-            setPendingRequests
+            setPendingRequests,
+            markRequestsSeen,
+            markMessagesSeen,
         }}>
             {children}
         </NotificationContext.Provider>

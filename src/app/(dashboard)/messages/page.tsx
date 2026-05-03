@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import MessagesClient from "./messages-client"
+import { ClearNotificationsOnMount } from "@/components/clear-notifications-on-mount"
 
 export const dynamic = 'force-dynamic'
 
@@ -49,9 +50,12 @@ export default async function MessagesPage() {
     }
 
     return (
-        <MessagesClient
-            userId={user.id}
-            initialConnections={activeConnections}
-        />
+        <>
+            <ClearNotificationsOnMount target="messages" />
+            <MessagesClient
+                userId={user.id}
+                initialConnections={activeConnections}
+            />
+        </>
     )
 }

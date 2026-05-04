@@ -99,8 +99,16 @@ export async function GET(request: Request) {
         );
 
         if (error) {
-            console.error('Error saving calendar connection:', error);
-            return NextResponse.redirect(appUrl(`${SETTINGS_PATH}?error=database_error`));
+            console.error('[calendar-callback] insert failed', {
+                code: error.code,
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+            });
+            const dbMsg = encodeURIComponent((error.message || '').slice(0, 200));
+            return NextResponse.redirect(
+                appUrl(`${SETTINGS_PATH}?error=database_error&db_message=${dbMsg}`)
+            );
         }
 
         const res = NextResponse.redirect(
@@ -109,7 +117,11 @@ export async function GET(request: Request) {
         res.cookies.set('gcal_oauth_nonce', '', { maxAge: 0, path: '/' });
         return res;
     } catch (error) {
-        console.error('Error exchanging OAuth code:', error);
-        return NextResponse.redirect(appUrl(`${SETTINGS_PATH}?error=oauth_failed`));
+        const message = error instanceof Error ? error.message : String(error);
+        console.error('[calendar-callback] oauth exchange failed', { message, error });
+        const dbMsg = encodeURIComponent(message.slice(0, 200));
+        return NextResponse.redirect(
+            appUrl(`${SETTINGS_PATH}?error=oauth_failed&db_message=${dbMsg}`)
+        );
     }
 }

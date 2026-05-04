@@ -26,7 +26,7 @@ const SUCCESS_MESSAGES: Record<string, string> = {
 export default async function CalendarSettingsPage({
     searchParams,
 }: {
-    searchParams?: Promise<{ success?: string; error?: string; redirect_uri?: string }>;
+    searchParams?: Promise<{ success?: string; error?: string; redirect_uri?: string; db_message?: string }>;
 }) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -75,6 +75,7 @@ export default async function CalendarSettingsPage({
                     <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
                     <div>
                         <p>{errorMsg}</p>
+                        {params.db_message && <span className="block mt-1 text-xs opacity-80 font-mono">{params.db_message}</span>}
                         {showRedirectUri && (
                             <>
                                 <p className="mt-2">Add this <strong>exact URL</strong> to your Google Cloud OAuth client&apos;s <em>Authorized redirect URIs</em>:</p>

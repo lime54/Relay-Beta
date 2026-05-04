@@ -98,6 +98,69 @@ export async function respondToRequest(requestId: string, responseType: 'accept'
     return { success: true }
 }
 
+// Sender-only: hide a sent request from the default list. Soft-delete via
+// archived_at so the user can recover it from the "Archived" sub-tab.
+export async function archiveSentRequest(requestId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: 'Not authenticated' }
+
+    const { error } = await supabase
+        .from('requests')
+        .update({ archived_at: new Date().toISOString() })
+        .eq('id', requestId)
+        .eq('requester_id', user.id)
+
+    if (error) {
+        // Most common cause: archived_at column or sender-update policy
+        // hasn't been migrated yet. Surface the message so the user can act.
+        return { error: error.message }
+    }
+
+    revalidatePath('/requests')
+    return { success: true }
+}
+
+// Sender-only: unhide an archived sent request.
+export async function unarchiveSentRequest(requestId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: 'Not authenticated' }
+
+    const { error } = await supabase
+        .from('requests')
+        .update({ archived_at: null })
+        .eq('id', requestId)
+        .eq('requester_id', user.id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/requests')
+    return { success: true }
+}
+
+// Sender-only: hard-delete a sent request. Cascades clean up dependent rows
+// (messages.request_id has ON DELETE CASCADE).
+export async function deleteSentRequest(requestId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: 'Not authenticated' }
+
+    const { error } = await supabase
+        .from('requests')
+        .delete()
+        .eq('id', requestId)
+        .eq('requester_id', user.id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/requests')
+    return { success: true }
+}
+
 export async function logOutcome(requestId: string, outcomeType: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

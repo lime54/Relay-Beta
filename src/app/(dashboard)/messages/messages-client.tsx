@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Send, MessageCircle, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { useNotifications } from "@/contexts/notification-context";
 
 interface Connection {
     id: string;
@@ -38,6 +39,7 @@ export default function MessagesClient({ userId, initialConnections }: { userId:
     const [messages, setMessages] = useState<any[]>([]);
     const [newMessage, setNewMessage] = useState("");
     const supabase = createClient();
+    const { markMessagesSeen } = useNotifications();
 
     useEffect(() => {
         if (targetUser) {
@@ -69,14 +71,12 @@ export default function MessagesClient({ userId, initialConnections }: { userId:
 
             if (data) setMessages(data);
 
-            // Mark unread messages as read
-            if (data && data.some(m => m.receiver_id === userId && !m.is_read)) {
-                await supabase
-                    .from('messages')
-                    .update({ is_read: true })
-                    .eq('request_id', selectedId)
-                    .eq('receiver_id', userId)
-                    .eq('is_read', false);
+            // Clear unread for this specific thread. Routing through the
+            // notification context (instead of a direct DB update) immediately
+            // zeros the badge in the sidebar/mobile-nav and suppresses the
+            // realtime refetch race that would otherwise put the badge back.
+            if (selectedId && data && data.some(m => m.receiver_id === userId && !m.is_read)) {
+                await markMessagesSeen(selectedId);
             }
         }
 
@@ -99,7 +99,7 @@ export default function MessagesClient({ userId, initialConnections }: { userId:
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [selectedId, supabase]);
+    }, [selectedId, supabase, userId, markMessagesSeen]);
 
     const sendMessage = async () => {
         if (!newMessage.trim() || !selectedId || !selectedConnection) return;

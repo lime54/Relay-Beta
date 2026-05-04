@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import {
     Plus,
-    ArrowRight,
     CheckCircle,
     ChevronRight,
     Clock,
@@ -196,7 +195,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                     </motion.div>
                 </div>
 
-                {/* Right Column: Quick Actions & Profile Status */}
+                {/* Right Column: Profile Status */}
                 <div className="space-y-8">
                     {data.profileStrength < 100 && (
                         <motion.div variants={item}>
@@ -288,32 +287,6 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                                         </Button>
                                     </div>
                                 )}
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-
-                    <motion.div variants={item}>
-                        <Card className="border-border/50 shadow-lg overflow-hidden">
-                            <div className="h-2 bg-secondary" />
-                            <CardHeader>
-                                <CardTitle className="text-lg">Quick Actions</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <Link href="/network">
-                                    <Button variant="outline" className="w-full justify-start gap-2 rounded-lg">
-                                        <Target className="h-4 w-4" /> Browse Network
-                                    </Button>
-                                </Link>
-                                <Link href="/requests">
-                                    <Button variant="outline" className="w-full justify-start gap-2 rounded-lg">
-                                        <Clock className="h-4 w-4" /> View Requests
-                                    </Button>
-                                </Link>
-                                <Link href="/profile">
-                                    <Button variant="outline" className="w-full justify-start gap-2 rounded-lg">
-                                        <ArrowRight className="h-4 w-4" /> Edit Profile
-                                    </Button>
-                                </Link>
                             </CardContent>
                         </Card>
                     </motion.div>

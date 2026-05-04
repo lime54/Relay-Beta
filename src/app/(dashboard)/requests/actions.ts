@@ -8,7 +8,6 @@ export async function submitRequest(formData: FormData) {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-        console.error('[submitRequest] No authenticated user found')
         return { success: false, error: 'Not authenticated' }
     }
 
@@ -18,16 +17,11 @@ export async function submitRequest(formData: FormData) {
     const offer = formData.get('offer') as string
     const recipientId = formData.get('recipient_id') as string
 
-    console.log('[submitRequest] User:', user.id)
-    console.log('[submitRequest] FormData:', { requestType, context: context?.substring(0, 50), timeCommitment, offer: offer?.substring(0, 50), recipientId })
-
-    // Validate required fields
     if (!requestType || !context) {
-        console.error('[submitRequest] Missing required fields:', { requestType, context: !!context })
         return { success: false, error: 'Request type and context are required' }
     }
 
-    // Calculate expiration date (7 days from now)
+    // Requests auto-expire 7 days from now (per PRD)
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7)
 
@@ -35,24 +29,20 @@ export async function submitRequest(formData: FormData) {
         requester_id: user.id,
         recipient_id: recipientId || null,
         request_type: requestType,
-        context: context,
+        context,
         time_commitment: timeCommitment || null,
         offer_in_return: offer || null,
         status: 'pending',
         expires_at: expiresAt.toISOString(),
     }
 
-    console.log('[submitRequest] Insert payload:', JSON.stringify(insertPayload))
-
-    const { data, error } = await supabase
+    const { error } = await supabase
         .from('requests')
         .insert(insertPayload)
         .select()
 
-    console.log('[submitRequest] Insert result - data:', JSON.stringify(data), 'error:', JSON.stringify(error))
-
     if (error) {
-        console.error('[submitRequest] Error creating request:', error)
+        console.error('[submitRequest] insert failed', error.message)
         return { success: false, error: error.message || 'Failed to create request' }
     }
 

@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Relay
+
+A private, verified career network for current and former NCAA student-athletes.
+Built with Next.js (App Router), TypeScript, Tailwind, and Supabase.
+
+See `docs/PRD.md` for product context and `docs/KNOWLEDGEBASE.md` for domain knowledge.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
+cp .env.local.example .env.local   # then fill in the values below
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create `.env.local` at the repo root with the following:
 
-## Learn More
+| Variable | Required | Notes |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Supabase anon key |
+| `NEXT_PUBLIC_APP_URL` | yes | e.g. `http://localhost:3000` — used to build OAuth redirect URIs |
+| `GOOGLE_CLIENT_ID` | for calendar booking | OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | for calendar booking | OAuth client secret |
+| `GOOGLE_REDIRECT_URI` | optional | Defaults to `${NEXT_PUBLIC_APP_URL}/api/calendar/callback` |
+| `RESEND_API_KEY` | optional | Welcome emails after sign-up |
+| `OPENAI_API_KEY` | optional | AI request refinement |
+| `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` | optional | hCaptcha site key |
 
-To learn more about Next.js, take a look at the following resources:
+### Setting up Google Calendar OAuth
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Create an OAuth client in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+2. Add `${NEXT_PUBLIC_APP_URL}/api/calendar/callback` as an authorized redirect URI.
+3. Enable the **Google Calendar API**.
+4. Copy the client ID/secret into `.env.local`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Database migrations
 
-## Deploy on Vercel
+Run the SQL files in this order via the Supabase SQL editor (Dashboard → SQL Editor):
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. `supabase_schema.sql` — base tables (`users`, `athlete_profiles`, `messages`, …)
+2. `supabase_migration.sql` — column-level additions to `athlete_profiles`
+3. `supabase_scheduling_migration.sql` — **new**: `calendar_connections`, `availability_rules`, `bookings`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The scheduling migration is required for the calendar booking feature to work.
+
+## Scripts
+
+```bash
+npm run dev         # start dev server
+npm run build       # production build
+npm run lint        # eslint
+npm run test        # playwright e2e
+npm run test:ui     # playwright UI mode
+```
+
+## Project layout
+
+- `src/app` — App Router pages and route handlers
+- `src/components` — UI and feature components
+- `src/lib/supabase` — SSR-aware Supabase clients
+- `src/lib/scheduling` — Calendar provider + booking service
+- `tests` — Playwright e2e tests

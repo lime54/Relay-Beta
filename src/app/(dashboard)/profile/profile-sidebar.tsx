@@ -84,9 +84,11 @@ export function ProfileSidebar({ userId, userName }: ProfileSidebarProps) {
                     <p className="text-sm text-gray-300 mb-4 leading-relaxed">
                         Unlock advanced analytics, unlimited requests, and priority support.
                     </p>
-                    <Button className="w-full bg-white text-black hover:bg-gray-100 font-semibold rounded-lg shadow-sm">
-                        Upgrade Now
-                    </Button>
+                    <Link href="/pro">
+                        <Button className="w-full bg-white text-black hover:bg-gray-100 font-semibold rounded-lg shadow-sm">
+                            Upgrade Now
+                        </Button>
+                    </Link>
                 </CardContent>
             </Card>
         </div>

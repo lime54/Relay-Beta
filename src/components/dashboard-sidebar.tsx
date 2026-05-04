@@ -10,7 +10,8 @@ import {
     LogOut,
     ShieldCheck,
     Users,
-    Settings
+    Settings,
+    Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -109,6 +110,21 @@ export function DashboardSidebar({ className }: { className?: string }) {
             </nav>
 
             <div className="p-4 mt-auto border-t border-border/50">
+                <Link href="/pro" className="block mb-3">
+                    <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-4 cursor-pointer ring-1 ring-white/10 shadow-lg"
+                    >
+                        <div className="flex items-center gap-2 mb-1">
+                            <Sparkles className="w-4 h-4 text-yellow-400" />
+                            <span className="text-xs font-semibold uppercase tracking-wider">Relay Pro</span>
+                        </div>
+                        <p className="text-xs text-white/70">
+                            Unlimited requests, priority placement & analytics.
+                        </p>
+                    </motion.div>
+                </Link>
+
                 <Link href="/profile/verify" className="block mb-4">
                     <motion.div
                         whileHover={{ scale: 1.02 }}

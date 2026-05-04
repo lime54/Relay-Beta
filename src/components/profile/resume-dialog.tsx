@@ -2,11 +2,28 @@
 
 import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { addExperience, addEducation } from "@/app/(dashboard)/profile/actions";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import {
+    addEducation,
+    addExperience,
+    uploadResume,
+} from "@/app/(dashboard)/profile/actions";
 import { toast } from "sonner";
-import { Loader2, FileText, Sparkles, CheckCircle, Upload, X, FileUp } from "lucide-react";
+import {
+    CheckCircle,
+    FileText,
+    FileUp,
+    Loader2,
+    Sparkles,
+    Upload,
+    X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ParsedExperience {
@@ -72,9 +89,8 @@ function parseResumeText(text: string): { experiences: ParsedExperience[]; educa
 
         if (dateInfo && currentSection === 'experience') {
             if (isEducationLine(line)) continue;
-            
-            // Gather the 3 lines directly before the date-containing line
-            const contextLines = [];
+
+            const contextLines: string[] = [];
             for (let j = i - 1; j >= Math.max(0, i - 3); j--) {
                 const candidate = lines[j];
                 if (detectSection(candidate) !== null) break;
@@ -82,14 +98,12 @@ function parseResumeText(text: string): { experiences: ParsedExperience[]; educa
                 if (isEducationLine(candidate)) continue;
                 if (candidate.length > 2) contextLines.push(candidate);
             }
-            contextLines.reverse(); // So it's in top-to-bottom order
+            contextLines.reverse();
 
-            // If we found context lines, usually the first is Company, second is Title (or vice versa).
-            // A common fallback: if the date line itself contains words, that might be the title or company.
             const dateLineRest = line.replace(/((?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+)?(?:20|19)\d{2})/gi, '')
-                                     .replace(/present|current|now/gi, '')
-                                     .replace(/[^a-zA-Z\s]/g, ' ')
-                                     .trim();
+                .replace(/present|current|now/gi, '')
+                .replace(/[^a-zA-Z\s]/g, ' ')
+                .trim();
 
             let roleStr = '';
             let companyStr = '';
@@ -98,7 +112,6 @@ function parseResumeText(text: string): { experiences: ParsedExperience[]; educa
                 companyStr = contextLines[0];
                 roleStr = contextLines[1];
             } else if (contextLines.length === 1) {
-                // Parse a single line containing both "Company - Title" or "Title at Company"
                 roleStr = contextLines[0];
             } else if (dateLineRest.length > 3) {
                 roleStr = dateLineRest;
@@ -106,41 +119,30 @@ function parseResumeText(text: string): { experiences: ParsedExperience[]; educa
                 roleStr = 'Unknown Role';
             }
 
-            // Split role from company if they are on the same line
             if (roleStr && !companyStr) {
                 const parts = roleStr.split(/\s*(?:[,|•·–—]|\s+at\s+)\s*/i).map(p => p.trim()).filter(Boolean);
                 companyStr = parts[0] || 'Unknown Company';
                 roleStr = parts.length > 1 ? parts[1] : companyStr;
             }
 
-            // Swap them if the company looks more like a role
             if (/^(senior|junior|lead|staff|principal|associate|analyst|manager|director|vp|intern|engineer|developer|consultant|coordinator|founder|co-founder|head of|specialist|assistant)/i.test(companyStr) && roleStr !== companyStr) {
                 [companyStr, roleStr] = [roleStr, companyStr];
             }
 
-            // Fix case where role is still missing
             if (!roleStr || roleStr === 'Unknown Role') {
-                if (dateLineRest.length > 3) {
-                    roleStr = dateLineRest;
-                }
+                if (dateLineRest.length > 3) roleStr = dateLineRest;
             }
 
-            // Gather description
             let description = '';
             for (let j = i + 1; j < Math.min(lines.length, i + 6); j++) {
                 const descLine = lines[j];
                 if (detectSection(descLine) !== null) break;
                 if (extractDateRange(descLine)) break;
-                
                 const isList = descLine.startsWith('•') || descLine.startsWith('-') || descLine.startsWith('–') || descLine.startsWith('*');
                 if (isList) {
                     description += (description ? '\n' : '') + descLine;
                 } else if (descLine.length > 40 && !isList) {
-                    // It's a paragraph
                     description += (description ? '\n' : '') + descLine;
-                } else {
-                    // Small extraneous line, could be location or skipped
-                    continue;
                 }
             }
 
@@ -153,66 +155,50 @@ function parseResumeText(text: string): { experiences: ParsedExperience[]; educa
                 if (extractDateRange(candidate)) break;
                 if (candidate.length > 2) { schoolStr = candidate; break; }
             }
-            // Often the school might be on the date line
             if (!schoolStr) {
                 const dateLineRest = line.replace(/((?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+)?(?:20|19)\d{2})/gi, '')
-                                        .replace(/present|current|now/gi, '')
-                                        .replace(/[^a-zA-Z\s]/g, ' ')
-                                        .trim();
+                    .replace(/present|current|now/gi, '')
+                    .replace(/[^a-zA-Z\s]/g, ' ')
+                    .trim();
                 schoolStr = dateLineRest.length > 3 ? dateLineRest : 'Unknown School';
             }
-            
+
             let degree = '';
-            // Degree detection logic looking closely around the date
             for (let j = Math.max(0, i - 2); j <= Math.min(lines.length - 1, i + 2); j++) {
-                 if (/\b(bachelor|master|associate|doctorate|ph\.?d|m\.?b\.?a|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|degree|diploma|certificate|B\.?S\.?|B\.?A\.?)\b/i.test(lines[j])) {
-                     degree = lines[j];
-                     break;
-                 }
+                if (/\b(bachelor|master|associate|doctorate|ph\.?d|m\.?b\.?a|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|degree|diploma|certificate|B\.?S\.?|B\.?A\.?)\b/i.test(lines[j])) {
+                    degree = lines[j];
+                    break;
+                }
             }
-            
+
             educations.push({ school: schoolStr, degree, start_date: `${dateInfo.startYear}-09-01`, end_date: dateInfo.isCurrent ? '' : `${dateInfo.endYear || parseInt(dateInfo.startYear) + 4}-05-01`, is_current: dateInfo.isCurrent });
         }
     }
     return { experiences, educations };
 }
 
-// ─── PDF Text Extraction using pdf.js ────────────────────────────────────────
-
 async function extractTextFromPdf(file: File): Promise<string> {
-    // Dynamically import pdfjs-dist
     const pdfjsLib = await import('pdfjs-dist');
-
-    // Point to the worker file served from public/ directory.
-    // The file is copied from node_modules/pdfjs-dist/build/pdf.worker.min.mjs
     pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
     const textPages: string[] = [];
 
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         const page = await pdf.getPage(pageNum);
         const textContent = await page.getTextContent();
-
-        // Group text items by their Y position to reconstruct lines
         const items = textContent.items as Array<{ str: string; transform: number[] }>;
-
-        // Sort by Y position (descending - top of page first) then X position
         const sortedItems = items
             .filter((item) => item.str && item.str.trim())
             .sort((a, b) => {
                 const yDiff = b.transform[5] - a.transform[5];
-                if (Math.abs(yDiff) > 3) return yDiff; // different line
-                return a.transform[4] - b.transform[4]; // same line, sort by X
+                if (Math.abs(yDiff) > 3) return yDiff;
+                return a.transform[4] - b.transform[4];
             });
 
-        // Group items into lines based on Y coordinate proximity
         const lines: string[] = [];
         let currentLine: string[] = [];
         let lastY = -Infinity;
-
         for (const item of sortedItems) {
             const y = item.transform[5];
             if (Math.abs(y - lastY) > 3 && currentLine.length > 0) {
@@ -222,87 +208,67 @@ async function extractTextFromPdf(file: File): Promise<string> {
             currentLine.push(item.str);
             lastY = y;
         }
-        if (currentLine.length > 0) {
-            lines.push(currentLine.join(' '));
-        }
-
+        if (currentLine.length > 0) lines.push(currentLine.join(' '));
         textPages.push(lines.join('\n'));
     }
 
     const fullText = textPages.join('\n\n');
-
     if (fullText.trim().length < 10) {
-        throw new Error('Could not extract text from this PDF. It may be a scanned image. Try pasting the text manually.');
+        throw new Error('Could not extract text from this PDF. It may be a scanned image.');
     }
-
     return fullText;
 }
 
-// ─── Main Component ──────────────────────────────────────────────────────────
+// ─── Component ───────────────────────────────────────────────────────────────
 
-export function ResumeParser({
-    open,
-    onOpenChange,
-}: {
+interface ResumeDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-}) {
-    const [rawText, setRawText] = useState("");
-    const [isParsing, setIsParsing] = useState(false);
-    const [isImporting, setIsImporting] = useState(false);
-    const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-    const [isExtracting, setIsExtracting] = useState(false);
-    const [isDragging, setIsDragging] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [parsed, setParsed] = useState<{
-        experiences: ParsedExperience[];
-        educations: ParsedEducation[];
-    } | null>(null);
+    currentResumeUrl?: string | null;
+}
 
-    const resetState = () => {
-        setParsed(null);
-        setRawText("");
-        setUploadedFileName(null);
-        setIsExtracting(false);
+type Step = 'select' | 'review' | 'done';
+
+export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDialogProps) {
+    const [step, setStep] = useState<Step>('select');
+    const [file, setFile] = useState<File | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [parsed, setParsed] = useState<{ experiences: ParsedExperience[]; educations: ParsedEducation[] } | null>(null);
+    const [isImporting, setIsImporting] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const reset = () => {
+        setStep('select');
+        setFile(null);
         setIsDragging(false);
+        setIsProcessing(false);
+        setParsed(null);
+        setIsImporting(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    // ── Process a PDF file (shared between click-upload and drag-drop) ──
-
-    const processPdfFile = useCallback(async (file: File) => {
-        if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
-            toast.error('Please upload a PDF file.');
-            return;
-        }
-        if (file.size > 15 * 1024 * 1024) {
-            toast.error('File too large. Maximum size is 15MB.');
-            return;
-        }
-
-        setIsExtracting(true);
-        setUploadedFileName(file.name);
-
-        try {
-            const text = await extractTextFromPdf(file);
-            setRawText(text);
-            toast.success(`Extracted ${text.split('\n').filter(l => l.trim()).length} lines from "${file.name}"`);
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to extract text from PDF.');
-            setUploadedFileName(null);
-        } finally {
-            setIsExtracting(false);
-        }
-    }, []);
-
-    // ── File input handler ──
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) await processPdfFile(file);
+    const handleClose = (next: boolean) => {
+        if (!next) reset();
+        onOpenChange(next);
     };
 
-    // ── Drag and drop handlers ──
+    const acceptFile = (selected: File) => {
+        if (selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
+            toast.error('Please choose a PDF file.');
+            return;
+        }
+        if (selected.size > 5 * 1024 * 1024) {
+            toast.error('File size must be less than 5MB.');
+            return;
+        }
+        setFile(selected);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selected = e.target.files?.[0];
+        if (selected) acceptFile(selected);
+    };
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -316,46 +282,55 @@ export function ResumeParser({
         setIsDragging(false);
     }, []);
 
-    const handleDrop = useCallback(async (e: React.DragEvent) => {
+    const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
+        const dropped = e.dataTransfer.files?.[0];
+        if (dropped) acceptFile(dropped);
+    }, []);
 
-        const file = e.dataTransfer.files?.[0];
-        if (file) await processPdfFile(file);
-    }, [processPdfFile]);
+    // Upload + parse together. Upload always; parsing is best-effort.
+    const handleUploadAndParse = async () => {
+        if (!file) return;
+        setIsProcessing(true);
 
-    // ── Parse text ──
-
-    const handleParse = async () => {
-        if (!rawText.trim()) {
-            toast.error("Please paste your resume text or upload a PDF first.");
-            return;
-        }
-        setIsParsing(true);
-        await new Promise(resolve => setTimeout(resolve, 400));
         try {
-            const result = parseResumeText(rawText);
-            if (result.experiences.length === 0 && result.educations.length === 0 && rawText.length > 100) {
-                toast.warning("Could not clearly parse sections. Make sure your resume has 'Experience' and 'Education' headers.");
-            } else {
-                toast.success(`Found ${result.experiences.length} role${result.experiences.length !== 1 ? 's' : ''} and ${result.educations.length} school${result.educations.length !== 1 ? 's' : ''}.`);
+            const formData = new FormData();
+            formData.append('file', file);
+            const result = await uploadResume(formData);
+            if (!result?.success) {
+                toast.error(result?.error || 'Upload failed.');
+                setIsProcessing(false);
+                return;
             }
-            setParsed(result);
-        } catch {
-            toast.error("Error parsing resume.");
+            toast.success('Resume saved to your profile.');
+
+            // Best-effort: try to extract sections to offer auto-import
+            try {
+                const text = await extractTextFromPdf(file);
+                const sections = parseResumeText(text);
+                if (sections.experiences.length === 0 && sections.educations.length === 0) {
+                    handleClose(false);
+                    return;
+                }
+                setParsed(sections);
+                setStep('review');
+            } catch {
+                handleClose(false);
+            }
+        } catch (err: any) {
+            toast.error(err?.message || 'Unexpected error during upload.');
         } finally {
-            setIsParsing(false);
+            setIsProcessing(false);
         }
     };
-
-    // ── Import to profile ── 
 
     const handleImport = async () => {
         if (!parsed) return;
         setIsImporting(true);
         try {
-            let successCount = 0;
+            let count = 0;
             for (const exp of parsed.experiences) {
                 const fd = new FormData();
                 fd.append('company', exp.company);
@@ -365,7 +340,7 @@ export function ResumeParser({
                 if (exp.is_current) fd.append('is_current', 'on');
                 fd.append('description', exp.description);
                 await addExperience(fd);
-                successCount++;
+                count++;
             }
             for (const edu of parsed.educations) {
                 const fd = new FormData();
@@ -376,19 +351,16 @@ export function ResumeParser({
                 if (edu.is_current) fd.append('is_current', 'on');
                 fd.append('description', '');
                 await addEducation(fd);
-                successCount++;
+                count++;
             }
-            toast.success(`Successfully imported ${successCount} items to your profile!`);
-            onOpenChange(false);
-            resetState();
+            toast.success(`Imported ${count} item${count !== 1 ? 's' : ''} to your profile.`);
+            handleClose(false);
         } catch {
-            toast.error("Failed to save some items.");
+            toast.error('Failed to save some items.');
         } finally {
             setIsImporting(false);
         }
     };
-
-    // ── Remove items before importing ──
 
     const removeExperience = (index: number) => {
         if (!parsed) return;
@@ -401,116 +373,118 @@ export function ResumeParser({
     };
 
     return (
-        <Dialog open={open} onOpenChange={(v) => { if (!v) resetState(); onOpenChange(v); }}>
+        <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-[620px] bg-background">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
+                    <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
                         <FileText className="h-5 w-5 text-secondary" />
-                        Import Resume
+                        {currentResumeUrl ? 'Update Resume' : 'Upload Resume'}
                     </DialogTitle>
                     <DialogDescription>
-                        Upload your PDF resume or paste text to automatically extract your experience and education.
+                        Upload your PDF resume. We&apos;ll save it to your profile and offer to import any experience and education we can detect.
                     </DialogDescription>
                 </DialogHeader>
 
-                {!parsed ? (
+                {step === 'select' && (
                     <div className="space-y-4 py-2">
-                        {/* Hidden file input */}
                         <input
                             ref={fileInputRef}
                             type="file"
-                            accept=".pdf"
+                            accept=".pdf,application/pdf"
                             className="hidden"
                             onChange={handleFileChange}
                         />
 
-                        {/* PDF Upload / Drag-Drop Zone */}
-                        {uploadedFileName ? (
-                            <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/10 border border-secondary/20">
-                                <FileText className="h-6 w-6 text-secondary shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold truncate">{uploadedFileName}</p>
-                                    <p className="text-[11px] text-muted-foreground">
-                                        {isExtracting ? 'Extracting text from PDF...' : `${rawText.split('\n').filter(l => l.trim()).length} lines extracted — review and extract below`}
-                                    </p>
-                                </div>
-                                {isExtracting ? (
-                                    <Loader2 className="h-4 w-4 animate-spin text-secondary" />
-                                ) : (
-                                    <button onClick={resetState} className="text-muted-foreground hover:text-foreground transition-colors p-1">
-                                        <X className="h-4 w-4" />
-                                    </button>
-                                )}
-                            </div>
-                        ) : (
+                        {!file ? (
                             <div
                                 onDragOver={handleDragOver}
                                 onDragLeave={handleDragLeave}
                                 onDrop={handleDrop}
                                 onClick={() => fileInputRef.current?.click()}
                                 className={cn(
-                                    "w-full h-32 rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center gap-3 group",
+                                    'w-full h-40 rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center gap-3 group',
                                     isDragging
-                                        ? "border-secondary bg-secondary/10 scale-[1.02]"
-                                        : "border-border/50 hover:border-secondary/50 hover:bg-secondary/5"
+                                        ? 'border-secondary bg-secondary/10 scale-[1.02]'
+                                        : 'border-border/50 hover:border-secondary/50 hover:bg-secondary/5'
                                 )}
                             >
                                 <div className={cn(
-                                    "h-12 w-12 rounded-xl flex items-center justify-center transition-all",
-                                    isDragging ? "bg-secondary/20" : "bg-muted/50 group-hover:bg-secondary/10"
+                                    'h-14 w-14 rounded-xl flex items-center justify-center transition-all',
+                                    isDragging ? 'bg-secondary/20' : 'bg-muted/50 group-hover:bg-secondary/10'
                                 )}>
                                     <FileUp className={cn(
-                                        "h-6 w-6 transition-colors",
-                                        isDragging ? "text-secondary" : "text-muted-foreground group-hover:text-secondary"
+                                        'h-7 w-7 transition-colors',
+                                        isDragging ? 'text-secondary' : 'text-muted-foreground group-hover:text-secondary'
                                     )} />
                                 </div>
                                 <div className="text-center">
-                                    <p className={cn(
-                                        "text-sm font-semibold transition-colors",
-                                        isDragging ? "text-secondary" : "text-muted-foreground group-hover:text-foreground"
-                                    )}>
-                                        {isDragging ? "Drop your PDF here" : "Drag & drop your PDF resume"}
+                                    <p className="text-sm font-semibold">
+                                        {isDragging ? 'Drop your PDF here' : 'Drag & drop your PDF resume'}
                                     </p>
                                     <p className="text-[11px] text-muted-foreground mt-0.5">
-                                        or <span className="text-secondary font-medium">click to browse</span> • PDF up to 15MB
+                                        or <span className="text-secondary font-medium">click to browse</span> &bull; PDF up to 5MB
                                     </p>
                                 </div>
                             </div>
+                        ) : (
+                            <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/5 border border-secondary/20">
+                                <FileText className="h-6 w-6 text-secondary shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold truncate">{file.name}</p>
+                                    <p className="text-[11px] text-muted-foreground">
+                                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setFile(null)}
+                                    className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                                    aria-label="Remove selected file"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            </div>
                         )}
 
-                        {/* Divider */}
-                        <div className="flex items-center gap-3">
-                            <div className="flex-1 h-px bg-border/50" />
-                            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">or paste text</span>
-                            <div className="flex-1 h-px bg-border/50" />
-                        </div>
+                        {currentResumeUrl && !file && (
+                            <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/30 border border-border/40">
+                                <FileText className="h-4 w-4 text-secondary" />
+                                <span className="text-xs font-medium truncate flex-1">Current resume on file</span>
+                                <a
+                                    href={currentResumeUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[10px] font-bold text-secondary uppercase hover:underline"
+                                >
+                                    View
+                                </a>
+                            </div>
+                        )}
 
-                        {/* Text paste area */}
-                        <Textarea
-                            placeholder={"Paste your resume text here...\n\nTip: Copy from LinkedIn, a Word doc, or any text source.\nMake sure it has clear 'Experience' and 'Education' sections."}
-                            className="min-h-[160px] resize-none font-mono text-xs bg-muted/20 leading-relaxed"
-                            value={rawText}
-                            onChange={e => setRawText(e.target.value)}
-                        />
-
-                        {/* Extract button */}
                         <Button
-                            onClick={handleParse}
-                            disabled={isParsing || isExtracting || !rawText.trim()}
-                            className="bg-secondary text-white hover:bg-secondary/90 w-full rounded-xl h-11 text-sm font-semibold"
+                            onClick={handleUploadAndParse}
+                            disabled={!file || isProcessing}
+                            className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
                         >
-                            {isParsing ? (
-                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Extracting...</>
+                            {isProcessing ? (
+                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
                             ) : (
-                                <><Sparkles className="mr-2 h-4 w-4" /> Extract Experience & Education</>
+                                <><Upload className="mr-2 h-4 w-4" /> {currentResumeUrl ? 'Replace Resume' : 'Upload Resume'}</>
                             )}
                         </Button>
                     </div>
-                ) : (
-                    /* ── Results View ── */
+                )}
+
+                {step === 'review' && parsed && (
                     <div className="space-y-5 py-2 animate-in fade-in slide-in-from-bottom-4">
+                        <div className="rounded-xl bg-secondary/5 border border-secondary/15 p-3 flex items-start gap-2">
+                            <Sparkles className="h-4 w-4 text-secondary shrink-0 mt-0.5" />
+                            <p className="text-xs text-muted-foreground">
+                                Your resume was saved. We detected experience and education in the file — review and import what looks correct, or skip.
+                            </p>
+                        </div>
+
                         <div className="space-y-4 max-h-[340px] overflow-y-auto pr-2">
-                            {/* Experiences */}
                             <div>
                                 <h4 className="font-bold text-sm mb-2 text-foreground/80 border-b pb-1">
                                     Work Experience ({parsed.experiences.length})
@@ -542,7 +516,6 @@ export function ResumeParser({
                                 )}
                             </div>
 
-                            {/* Education */}
                             <div>
                                 <h4 className="font-bold text-sm mb-2 text-foreground/80 border-b pb-1">
                                     Education ({parsed.educations.length})
@@ -574,10 +547,9 @@ export function ResumeParser({
                             </div>
                         </div>
 
-                        {/* Action buttons */}
                         <div className="flex gap-3">
-                            <Button variant="outline" className="flex-1" onClick={() => setParsed(null)}>
-                                ← Back
+                            <Button variant="outline" className="flex-1" onClick={() => handleClose(false)} disabled={isImporting}>
+                                Skip
                             </Button>
                             <Button
                                 className="flex-[2] bg-primary text-primary-foreground"

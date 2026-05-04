@@ -13,7 +13,8 @@ import {
     ChevronRight,
     ShieldCheck,
     Star,
-    Sparkles
+    Sparkles,
+    Linkedin
 } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -59,7 +60,10 @@ interface NetworkPerson {
     isPlaceholder?: boolean;
     isVerified?: boolean;
     similarityScore?: number;
+    linkedinUrl?: string;
 }
+
+const LINKEDIN_URL_REGEX = /^https?:\/\/(www\.)?linkedin\.com\/(in|pub|company)\/[A-Za-z0-9_-]+\/?$/;
 
 const PLACEHOLDER_PEOPLE: NetworkPerson[] = [];
 
@@ -297,11 +301,32 @@ export default function NetworkClient({ realUsers, initialSearch, initialSport, 
                                     </Link>
  
                                      <div>
-                                         <Link href={`/profile/${person.id}`} className="hover:underline block">
-                                             <CardTitle className="text-2xl font-bold tracking-tight mb-1 group-hover:text-secondary transition-colors text-primary">
-                                                 {person.name}
-                                             </CardTitle>
-                                         </Link>
+                                         <div className="flex items-center justify-center gap-2 mb-1">
+                                             <Link href={`/profile/${person.id}`} className="hover:underline">
+                                                 <CardTitle className="text-2xl font-bold tracking-tight group-hover:text-secondary transition-colors text-primary">
+                                                     {person.name}
+                                                 </CardTitle>
+                                             </Link>
+                                             {person.linkedinUrl && LINKEDIN_URL_REGEX.test(person.linkedinUrl) && (
+                                                 <Button
+                                                     asChild
+                                                     variant="outline"
+                                                     size="icon"
+                                                     className="h-7 w-7 rounded-full shrink-0"
+                                                     aria-label={`View ${person.name}'s LinkedIn profile`}
+                                                     title="View LinkedIn profile"
+                                                     onClick={(e) => e.stopPropagation()}
+                                                 >
+                                                     <a
+                                                         href={person.linkedinUrl}
+                                                         target="_blank"
+                                                         rel="noopener noreferrer"
+                                                     >
+                                                         <Linkedin className="h-3.5 w-3.5" />
+                                                     </a>
+                                                 </Button>
+                                             )}
+                                         </div>
                                         <CardDescription className="text-sm font-medium text-muted-foreground flex flex-col items-center justify-center gap-1.5 px-4 mb-2">
                                             {person.company && person.position ? (
                                                 <span className="font-semibold text-primary">{person.position} at {person.company}</span>

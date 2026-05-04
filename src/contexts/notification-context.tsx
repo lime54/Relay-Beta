@@ -43,7 +43,7 @@ interface NotificationContextType {
     setUnreadMessages: React.Dispatch<React.SetStateAction<number>>;
     setPendingRequests: React.Dispatch<React.SetStateAction<number>>;
     markRequestsSeen: () => Promise<void>;
-    markMessagesSeen: () => Promise<void>;
+    markMessagesSeen: (requestId?: string) => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType>({
@@ -155,10 +155,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }
     }, []);
 
-    const markMessagesSeen = useCallback(async () => {
+    const markMessagesSeen = useCallback(async (requestId?: string) => {
+        // For a thread-scoped clear we still optimistically zero the count —
+        // the realtime refetch fires after the suppression window and will
+        // re-populate any unread that lives in *other* threads.
         setUnreadMessages(0);
         suppressRefetchUntil.current = Date.now() + 1500;
-        const result = await markMessagesSeenAction();
+        const result = await markMessagesSeenAction(requestId);
         if (!result.ok) {
             console.warn('[notifications] markMessagesSeen failed:', result.error);
         }

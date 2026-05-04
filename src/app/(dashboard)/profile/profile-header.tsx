@@ -88,6 +88,7 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [isResumeUploadOpen, setIsResumeUploadOpen] = useState(false)
     const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
+    const moreMenuRef = useRef<HTMLDivElement>(null)
     const [isEditIndustryOpen, setIsEditIndustryOpen] = useState(false)
     const [isEditLinkedInOpen, setIsEditLinkedInOpen] = useState(false)
     const [isBookingOpen, setIsBookingOpen] = useState(false)
@@ -120,9 +121,20 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
     }, [isOwnProfile, profile?.id])
 
     // Deep-link handling: when ?edit=<target> is present, open the matching editor.
+    // When ?book=1 is present and we're on someone else's profile, open the
+    // booking dialog (used by the Network "Schedule Call" button).
     // Runs once on mount when the param exists, then strips it from the URL so refreshes don't re-trigger.
     const searchParams = useSearchParams()
     useEffect(() => {
+        // Booking deep-link works on anyone's profile (not just our own).
+        if (!isOwnProfile && searchParams?.get('book')) {
+            setIsBookingOpen(true)
+            const params = new URLSearchParams(searchParams.toString())
+            params.delete('book')
+            const qs = params.toString()
+            router.replace(qs ? `/profile/${profile?.id}?${qs}` : `/profile/${profile?.id}`)
+            return
+        }
         if (!isOwnProfile) return
         const target = searchParams?.get(PROFILE_EDIT_PARAM) as ProfileEditTarget | null
         if (!target) return
@@ -157,6 +169,19 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
     // editor is open we strip the param via router.replace and don't re-open.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
+
+    // Close the kebab menu on outside click. We use a document listener instead of
+    // a fixed-inset backdrop so the page beneath the menu remains scrollable.
+    useEffect(() => {
+        if (!isMoreMenuOpen) return
+        const handler = (e: MouseEvent) => {
+            if (!moreMenuRef.current?.contains(e.target as Node)) {
+                setIsMoreMenuOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handler)
+        return () => document.removeEventListener('mousedown', handler)
+    }, [isMoreMenuOpen])
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'cover') => {
         const file = e.target.files?.[0]
@@ -523,10 +548,10 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                             </Button>
                         )}
 
-                        <div className="relative z-50">
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
+                        <div className="relative z-50" ref={moreMenuRef}>
+                            <Button
+                                variant="ghost"
+                                size="icon"
                                 className="rounded-full transition-transform hover:rotate-90"
                                 onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
                             >
@@ -536,9 +561,8 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
 
                             {isMoreMenuOpen && (
                                 <>
-                                    {/* Backdrop */}
-                                    <div className="fixed inset-0 z-40" onClick={() => setIsMoreMenuOpen(false)} />
-                                    {/* Menu */}
+                                    {/* Menu — click-outside is handled via document listener so the
+                                        page underneath remains scrollable while the menu is open. */}
                                     <div className="absolute right-0 top-full mt-2 z-50 w-52 rounded-xl border border-border bg-white dark:bg-card shadow-xl p-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
                                         <button
                                             className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"

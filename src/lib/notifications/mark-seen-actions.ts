@@ -28,17 +28,26 @@ export async function markRequestsSeenAction() {
     return { ok: true }
 }
 
-export async function markMessagesSeenAction() {
+// Mark received messages as read.
+// Pass a requestId to scope to a single thread (when the user opens that
+// conversation). Omit it to clear every unread on /messages mount.
+export async function markMessagesSeenAction(requestId?: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return { ok: false, error: 'unauthenticated' }
 
-    const { error } = await supabase
+    let query = supabase
         .from('messages')
         .update({ is_read: true })
         .eq('receiver_id', user.id)
         .eq('is_read', false)
+
+    if (requestId) {
+        query = query.eq('request_id', requestId)
+    }
+
+    const { error } = await query
 
     if (error) {
         return { ok: false, error: error.message }

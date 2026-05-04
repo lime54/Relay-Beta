@@ -1,7 +1,41 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { markMessagesSeenAction, markRequestsSeenAction } from "@/lib/notifications/mark-seen-actions";
+
+// ---------------------------------------------------------------------------
+// Notification badge data flow
+// ---------------------------------------------------------------------------
+// State of the world:
+// - `unreadMessages` = count of `messages` rows where receiver_id = me AND
+//   is_read = false.
+// - `pendingRequests` = count of `requests` rows where recipient_id = me AND
+//   status = 'pending' AND seen_at IS NULL.
+//   (If the `seen_at` column hasn't been migrated yet we fall back to ignoring
+//   it, so the badge keeps working — it just won't persist clears across
+//   page loads until the migration runs.)
+//
+// Read path:
+//   On mount we fetch both counts once (`fetchCounts`). Realtime is wired up
+//   only as a *trigger* to refetch — every INSERT/UPDATE on either table
+//   re-runs `fetchCounts`. We deliberately don't increment/decrement off the
+//   payload because those events fire while a clear is in flight and create
+//   off-by-one races. A refetch is one extra RTT but is correct.
+//
+// Clear path:
+//   When the user mounts /requests or /messages, <ClearNotificationsOnMount />
+//   calls `markRequestsSeen` / `markMessagesSeen`. Those:
+//     1. Immediately zero the local count so every badge surface (sidebar,
+//        mobile nav) re-renders to 0 within a paint.
+//     2. Call a server action that runs the DB UPDATE under the user's auth
+//        context. If the column or RLS policy is missing it returns an error
+//        — we console.warn and keep the in-memory clear.
+//     3. The realtime UPDATE fired by the server action triggers a refetch,
+//        which returns 0 (because the rows are now seen/read). Confirms the
+//        cleared state. Other tabs in the same browser get the same refetch
+//        signal and update too.
+// ---------------------------------------------------------------------------
 
 interface NotificationContextType {
     unreadMessages: number;
@@ -28,117 +62,92 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const [pendingRequests, setPendingRequests] = useState(0);
     const supabase = createClient();
 
-    useEffect(() => {
-        let isMounted = true;
-        const fetchInitialCounts = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
+    // Tracks whether we should suppress realtime-triggered refetches for a
+    // brief window after a clear. Without this, a clear that produces N row
+    // UPDATEs causes N refetches in quick succession — harmless but wasteful.
+    const suppressRefetchUntil = useRef(0);
 
-            const { count: msgCount } = await supabase
-                .from('messages')
-                .select('*', { count: 'exact', head: true })
-                .eq('receiver_id', user.id)
-                .eq('is_read', false);
+    const fetchCounts = useCallback(async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
-            // Try the seen_at-aware count first; fall back if the column hasn't
-            // been migrated yet so the badge keeps working in either state.
-            let reqCount: number | null = null;
-            const seenAware = await supabase
+        const { count: msgCount } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('receiver_id', user.id)
+            .eq('is_read', false);
+
+        // Try seen_at-aware count first. Fall back if the column doesn't exist
+        // yet so we degrade gracefully when the migration hasn't been applied.
+        let reqCount: number | null = null;
+        const seenAware = await supabase
+            .from('requests')
+            .select('*', { count: 'exact', head: true })
+            .eq('recipient_id', user.id)
+            .eq('status', 'pending')
+            .is('seen_at', null);
+        if (seenAware.error) {
+            console.warn('[notifications] seen_at column missing — falling back to status-only count. Apply supabase_notifications_seen_migration.sql to fix.');
+            const fallback = await supabase
                 .from('requests')
                 .select('*', { count: 'exact', head: true })
                 .eq('recipient_id', user.id)
-                .eq('status', 'pending')
-                .is('seen_at', null);
-            if (seenAware.error) {
-                const fallback = await supabase
-                    .from('requests')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('recipient_id', user.id)
-                    .eq('status', 'pending');
-                reqCount = fallback.count ?? null;
-            } else {
-                reqCount = seenAware.count ?? null;
-            }
+                .eq('status', 'pending');
+            reqCount = fallback.count ?? null;
+        } else {
+            reqCount = seenAware.count ?? null;
+        }
 
-            if (isMounted) {
-                if (msgCount !== null) setUnreadMessages(msgCount);
-                if (reqCount !== null) setPendingRequests(reqCount);
-            }
+        if (msgCount !== null) setUnreadMessages(msgCount);
+        if (reqCount !== null) setPendingRequests(reqCount);
+    }, [supabase]);
+
+    useEffect(() => {
+        let isMounted = true;
+        const safeFetch = () => {
+            if (!isMounted) return;
+            if (Date.now() < suppressRefetchUntil.current) return;
+            fetchCounts();
         };
 
-        fetchInitialCounts();
+        safeFetch();
 
         const channel = supabase.channel('global-notifications')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
-                supabase.auth.getUser().then(({ data: { user } }) => {
-                    if (user && payload.new.receiver_id === user.id && !payload.new.is_read) {
-                        setUnreadMessages(prev => prev + 1);
-                    }
-                });
-            })
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, (payload) => {
-                supabase.auth.getUser().then(({ data: { user } }) => {
-                    if (user && payload.new.receiver_id === user.id && payload.new.is_read && !payload.old.is_read) {
-                        setUnreadMessages(prev => Math.max(0, prev - 1));
-                    }
-                });
-            })
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'requests' }, (payload) => {
-                supabase.auth.getUser().then(({ data: { user } }) => {
-                    if (user && payload.new.recipient_id === user.id && payload.new.status === 'pending' && !payload.new.seen_at) {
-                        setPendingRequests(prev => prev + 1);
-                    }
-                });
-            })
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'requests' }, (payload) => {
-                supabase.auth.getUser().then(({ data: { user } }) => {
-                    if (!user || payload.new.recipient_id !== user.id) return;
-                    const wasUnseenPending = payload.old.status === 'pending' && !payload.old.seen_at;
-                    const isUnseenPending = payload.new.status === 'pending' && !payload.new.seen_at;
-                    if (wasUnseenPending && !isUnseenPending) {
-                        setPendingRequests(prev => Math.max(0, prev - 1));
-                    } else if (!wasUnseenPending && isUnseenPending) {
-                        setPendingRequests(prev => prev + 1);
-                    }
-                });
-            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, safeFetch)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, safeFetch)
             .subscribe();
 
         return () => {
             isMounted = false;
             supabase.removeChannel(channel);
         };
-    }, [supabase]);
+    }, [supabase, fetchCounts]);
 
     const markRequestsSeen = useCallback(async () => {
-        // Clear in-memory immediately so the badge disappears without waiting
-        // for the network round-trip.
+        // Optimistically zero — every badge surface (sidebar, mobile nav)
+        // reads from this state and re-renders immediately.
         setPendingRequests(0);
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { error } = await supabase
-            .from('requests')
-            .update({ seen_at: new Date().toISOString() })
-            .eq('recipient_id', user.id)
-            .eq('status', 'pending')
-            .is('seen_at', null);
-        if (error) {
-            // If seen_at column doesn't exist yet, silently no-op the persistence.
-            // Local state is already cleared so the user still sees the badge clear.
-            console.warn('[notifications] markRequestsSeen:', error.message);
+        // Suppress the refetch storm from the realtime UPDATEs we're about to
+        // generate. A short window is enough; a final refetch will catch up.
+        suppressRefetchUntil.current = Date.now() + 1500;
+
+        const result = await markRequestsSeenAction();
+        if (!result.ok) {
+            // Persistence failed (column missing, RLS missing, etc.). The
+            // session badge is still cleared, but on next page load it will
+            // come back. Log so the cause is visible in the browser console.
+            console.warn('[notifications] markRequestsSeen failed:', result.error);
         }
-    }, [supabase]);
+    }, []);
 
     const markMessagesSeen = useCallback(async () => {
         setUnreadMessages(0);
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        await supabase
-            .from('messages')
-            .update({ is_read: true })
-            .eq('receiver_id', user.id)
-            .eq('is_read', false);
-    }, [supabase]);
+        suppressRefetchUntil.current = Date.now() + 1500;
+        const result = await markMessagesSeenAction();
+        if (!result.ok) {
+            console.warn('[notifications] markMessagesSeen failed:', result.error);
+        }
+    }, []);
 
     return (
         <NotificationContext.Provider value={{

@@ -102,6 +102,7 @@ export default async function NetworkPage({
                 isPlaceholder: false as const,
                 isVerified: profile?.verification_status || false,
                 similarityScore,
+                linkedinUrl: profile?.linkedin_url || undefined,
             }
         })
 

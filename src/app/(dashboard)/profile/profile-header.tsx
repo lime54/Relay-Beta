@@ -22,9 +22,8 @@ import { RequestForm } from "@/app/(dashboard)/requests/new/request-form"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
 import { cn } from "@/lib/utils"
 import { SimilarityScore } from "@/components/profile/similarity-score"
-import { ResumeDropbox } from "@/components/profile/resume-dropbox"
+import { ResumeDialog } from "@/components/profile/resume-dialog"
 import { Linkedin, FileText, Lock, Upload, Calendar, Share2, Link as LinkIcon, ExternalLink, MoreHorizontal, MessageCircle } from "lucide-react"
-import { ResumeParser } from "@/components/profile/resume-parser"
 import { checkConnection } from "./actions"
 import { useEffect } from "react"
 import { EditIndustryDialog } from "@/components/profile/edit-industry-dialog"
@@ -88,7 +87,6 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
     // Request Dialog State
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [isResumeUploadOpen, setIsResumeUploadOpen] = useState(false)
-    const [isResumeParserOpen, setIsResumeParserOpen] = useState(false)
     const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
     const [isEditIndustryOpen, setIsEditIndustryOpen] = useState(false)
     const [isEditLinkedInOpen, setIsEditLinkedInOpen] = useState(false)
@@ -384,23 +382,9 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                                 {profile.athlete_profiles.locations}
                             </span>
                         )}
-                        {profile?.athlete_profiles?.linkedin_url && (
-                            <>
-                                {profile?.athlete_profiles?.locations && <span>•</span>}
-                                <a 
-                                    href={profile.athlete_profiles.linkedin_url} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1 text-secondary hover:underline font-medium"
-                                >
-                                    <Linkedin className="h-3 w-3" />
-                                    LinkedIn
-                                </a>
-                            </>
-                        )}
                         {connectionCount > 0 && (
                             <>
-                                <span>•</span>
+                                {profile?.athlete_profiles?.locations && <span>•</span>}
                                 <span className="font-medium text-primary">{connectionCount} Connection{connectionCount !== 1 ? 's' : ''}</span>
                             </>
                         )}
@@ -451,24 +435,14 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                         )}
 
                         {isOwnProfile ? (
-                            <>
-                                <Button 
-                                    variant="outline" 
-                                    className="rounded-full px-6 transition-all hover:bg-muted gap-2"
-                                    onClick={() => setIsResumeUploadOpen(true)}
-                                >
-                                    <Upload className="h-4 w-4" />
-                                    {profile?.athlete_profiles?.resume_url ? "Update Resume" : "Upload Resume"}
-                                </Button>
-                                <Button 
-                                    variant="outline" 
-                                    className="rounded-full px-6 transition-all border-secondary/30 text-secondary hover:bg-secondary/5 gap-2"
-                                    onClick={() => setIsResumeParserOpen(true)}
-                                >
-                                    <FileText className="h-4 w-4" />
-                                    Import Resume
-                                </Button>
-                            </>
+                            <Button
+                                variant="outline"
+                                className="rounded-full px-6 transition-all hover:bg-muted gap-2"
+                                onClick={() => setIsResumeUploadOpen(true)}
+                            >
+                                <Upload className="h-4 w-4" />
+                                {profile?.athlete_profiles?.resume_url ? "Update Resume" : "Upload Resume"}
+                            </Button>
                         ) : (
                             <Button 
                                 variant="outline" 
@@ -496,8 +470,8 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                         )}
 
                         {profile?.athlete_profiles?.resume_url && isOwnProfile && (
-                            <Button 
-                                variant="ghost" 
+                            <Button
+                                variant="ghost"
                                 className="rounded-full px-4 text-secondary hover:text-secondary/80 flex items-center gap-1.5"
                                 onClick={() => window.open(profile.athlete_profiles?.resume_url, '_blank')}
                             >
@@ -505,7 +479,50 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                                 <span className="text-xs font-bold">Preview</span>
                             </Button>
                         )}
-                        
+
+                        {profile?.athlete_profiles?.linkedin_url && (
+                            <Button
+                                asChild
+                                variant="outline"
+                                size="icon"
+                                className="rounded-full transition-all hover:bg-muted"
+                                aria-label="View LinkedIn profile"
+                                title="View LinkedIn profile"
+                            >
+                                <a
+                                    href={profile.athlete_profiles.linkedin_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <Linkedin className="h-4 w-4" />
+                                </a>
+                            </Button>
+                        )}
+
+                        {isOwnProfile && !profile?.athlete_profiles?.linkedin_url && (
+                            <Button
+                                variant="outline"
+                                className="rounded-full px-6 transition-all hover:bg-muted gap-2"
+                                onClick={() => setIsEditLinkedInOpen(true)}
+                            >
+                                <Linkedin className="h-4 w-4" />
+                                Add LinkedIn
+                            </Button>
+                        )}
+
+                        {isOwnProfile && profile?.athlete_profiles?.linkedin_url && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="rounded-full text-muted-foreground hover:text-secondary"
+                                aria-label="Edit LinkedIn link"
+                                title="Edit LinkedIn link"
+                                onClick={() => setIsEditLinkedInOpen(true)}
+                            >
+                                <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                        )}
+
                         <div className="relative z-50">
                             <Button 
                                 variant="ghost" 
@@ -624,37 +641,12 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                 </DialogContent>
             </Dialog>
 
-            {/* Resume Upload Dialog */}
-            <Dialog open={isResumeUploadOpen} onOpenChange={setIsResumeUploadOpen}>
-                <DialogContent className="max-w-xl p-0 overflow-hidden rounded-[2.5rem] border-none shadow-2xl">
-                    <div className="bg-background p-8 md:p-10 space-y-6">
-                        <DialogHeader>
-                            <DialogTitle className="text-2xl font-bold">Resume Settings</DialogTitle>
-                            <DialogDescription>
-                                Upload your professional resume in PDF format. This will be shared with other users once they successfully connect with you.
-                            </DialogDescription>
-                        </DialogHeader>
-                        
-                        <ResumeDropbox 
-                            currentResumeUrl={profile?.athlete_profiles?.resume_url}
-                            onUploadSuccess={() => {
-                                setIsResumeUploadOpen(false)
-                                // The action revalidates the path, but we might want local feedback
-                            }}
-                        />
-                        
-                        <div className="flex justify-end gap-3 pt-4 border-t border-border/40">
-                            <Button 
-                                variant="ghost" 
-                                className="rounded-xl px-6"
-                                onClick={() => setIsResumeUploadOpen(false)}
-                            >
-                                Close
-                            </Button>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            {/* Resume Upload + Auto-Import Dialog */}
+            <ResumeDialog
+                open={isResumeUploadOpen}
+                onOpenChange={setIsResumeUploadOpen}
+                currentResumeUrl={profile?.athlete_profiles?.resume_url}
+            />
 
             {/* Booking Dialog */}
             <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
@@ -664,11 +656,6 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                     )}
                 </DialogContent>
             </Dialog>
-
-            <ResumeParser 
-                open={isResumeParserOpen} 
-                onOpenChange={setIsResumeParserOpen} 
-            />
 
             <ImageCropper
                 image={imageToCrop}

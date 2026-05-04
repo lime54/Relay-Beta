@@ -238,15 +238,29 @@ export async function uploadResume(formData: FormData) {
     }
 }
 
+// Accepts: https://www.linkedin.com/in/<handle>, /pub/<handle>, /company/<handle>
+// (with or without www, with or without trailing slash). Reject anything else.
+const LINKEDIN_URL_REGEX = /^https?:\/\/(www\.)?linkedin\.com\/(in|pub|company)\/[A-Za-z0-9_-]+\/?$/
+
 export async function updateLinkedInUrl(url: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return { error: 'Not authenticated' }
 
+    const trimmed = (url ?? '').trim()
+    let nextValue: string | null
+    if (trimmed === '') {
+        nextValue = null
+    } else if (LINKEDIN_URL_REGEX.test(trimmed)) {
+        nextValue = trimmed
+    } else {
+        return { error: "That doesn't look like a LinkedIn profile URL. Example: https://www.linkedin.com/in/yourname" }
+    }
+
     const { error } = await supabase
         .from('athlete_profiles')
-        .update({ linkedin_url: url })
+        .update({ linkedin_url: nextValue })
         .eq('user_id', user.id)
 
     if (error) return { error: error.message }

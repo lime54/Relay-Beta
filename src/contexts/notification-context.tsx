@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { markMessagesSeenAction, markRequestsSeenAction } from "@/lib/notifications/mark-seen-actions";
 
@@ -60,7 +60,12 @@ export const useNotifications = () => useContext(NotificationContext);
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
     const [unreadMessages, setUnreadMessages] = useState(0);
     const [pendingRequests, setPendingRequests] = useState(0);
-    const supabase = createClient();
+    // Memoize the client so its identity is stable across renders. Without this,
+    // every render produced a fresh client → fresh `fetchCounts` → the effect
+    // below tore down and rebuilt the realtime subscription on every navigation,
+    // and the resulting refetch raced markRequestsSeen / markMessagesSeen and
+    // brought the badge back even though seen_at had been written.
+    const supabase = useMemo(() => createClient(), []);
 
     // Tracks whether we should suppress realtime-triggered refetches for a
     // brief window after a clear. Without this, a clear that produces N row
@@ -77,8 +82,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             .eq('receiver_id', user.id)
             .eq('is_read', false);
 
-        // Try seen_at-aware count first. Fall back if the column doesn't exist
-        // yet so we degrade gracefully when the migration hasn't been applied.
+        // Unread = recipient_id = me AND status = 'pending' AND seen_at IS NULL.
+        // Mark-seen MUST keep this filter in sync (see mark-seen-actions.ts).
+        // We only fall back to the status-only count when the seen_at column
+        // is genuinely missing (Postgres 42703). On any other error we leave
+        // the count alone so transient failures don't make the badge sticky.
         let reqCount: number | null = null;
         const seenAware = await supabase
             .from('requests')
@@ -87,13 +95,20 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             .eq('status', 'pending')
             .is('seen_at', null);
         if (seenAware.error) {
-            console.warn('[notifications] seen_at column missing — falling back to status-only count. Apply supabase_notifications_seen_migration.sql to fix.');
-            const fallback = await supabase
-                .from('requests')
-                .select('*', { count: 'exact', head: true })
-                .eq('recipient_id', user.id)
-                .eq('status', 'pending');
-            reqCount = fallback.count ?? null;
+            const msg = (seenAware.error.message || '').toLowerCase();
+            const code = seenAware.error.code;
+            const columnMissing = code === '42703' || msg.includes('seen_at') || msg.includes('column');
+            if (columnMissing) {
+                console.warn('[notifications] seen_at column missing — falling back to status-only count. Apply supabase_notifications_seen_migration.sql to fix.');
+                const fallback = await supabase
+                    .from('requests')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('recipient_id', user.id)
+                    .eq('status', 'pending');
+                reqCount = fallback.count ?? null;
+            } else {
+                console.warn('[notifications] pending-requests count failed:', seenAware.error);
+            }
         } else {
             reqCount = seenAware.count ?? null;
         }

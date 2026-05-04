@@ -28,7 +28,7 @@ interface DashboardData {
     userRole: string;
     isVerified: boolean;
     profileStrength: number;
-    missingFields: { label: string, href: string }[];
+    missingFields: { label: string, href: string, key?: string }[];
     sentCount: number;
     receivedCount: number;
     acceptedCount: number;
@@ -218,7 +218,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                                         <p className="text-xs text-muted-foreground font-medium">Complete these to boost visibility:</p>
                                         <div className="flex flex-col gap-2">
                                             {data.missingFields.slice(0, 3).map((field, i) => (
-                                                <Link key={i} href={field.href}>
+                                                <Link key={field.key || i} href={field.href} aria-label={`Add ${field.label} to your profile`}>
                                                     <Button variant="outline" size="sm" className="w-full justify-between h-8 text-xs border-dashed border-border/60 hover:border-secondary/40 hover:bg-secondary/5 group">
                                                         <span className="flex items-center gap-2">
                                                             <div className="h-4 w-4 rounded-full border border-muted-foreground/30 flex items-center justify-center group-hover:border-secondary/50">

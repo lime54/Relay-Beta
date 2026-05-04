@@ -38,7 +38,7 @@ export function EducationSection({ initialEducations }: { initialEducations: Edu
     }
 
     return (
-        <div className="space-y-6">
+        <div id="education-section" className="space-y-6 scroll-mt-24">
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                     <GraduationCap className="h-5 w-5 text-primary" />

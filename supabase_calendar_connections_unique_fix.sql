@@ -52,7 +52,7 @@ BEGIN
           AND t.relname = 'calendar_connections'
           AND c.contype = 'u'
           AND (
-              SELECT array_agg(attname ORDER BY attname)
+              SELECT array_agg(attname::text ORDER BY attname::text)
               FROM pg_attribute
               WHERE attrelid = c.conrelid
                 AND attnum = ANY(c.conkey)

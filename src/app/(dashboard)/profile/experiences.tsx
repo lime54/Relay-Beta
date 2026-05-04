@@ -38,7 +38,7 @@ export function ExperienceList({ initialExperiences }: { initialExperiences: Exp
     }
 
     return (
-        <div className="space-y-6">
+        <div id="experience-section" className="space-y-6 scroll-mt-24">
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                     <Briefcase className="h-5 w-5 text-primary" />

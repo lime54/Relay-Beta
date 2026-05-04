@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useOptimistic, useTransition } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -27,6 +28,8 @@ import { ResumeParser } from "@/components/profile/resume-parser"
 import { checkConnection } from "./actions"
 import { useEffect } from "react"
 import { EditIndustryDialog } from "@/components/profile/edit-industry-dialog"
+import { EditLinkedInDialog } from "@/components/profile/edit-linkedin-dialog"
+import { PROFILE_EDIT_PARAM, type ProfileEditTarget } from "@/lib/profile-edit-targets"
 import { AvailabilityPicker } from "@/components/scheduling/availability-picker"
 
 interface AthleteProfile {
@@ -88,6 +91,7 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
     const [isResumeParserOpen, setIsResumeParserOpen] = useState(false)
     const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
     const [isEditIndustryOpen, setIsEditIndustryOpen] = useState(false)
+    const [isEditLinkedInOpen, setIsEditLinkedInOpen] = useState(false)
     const [isBookingOpen, setIsBookingOpen] = useState(false)
     const [isConnected, setIsConnected] = useState<boolean | null>(null)
     const [connectionCount, setConnectionCount] = useState<number>(0)
@@ -116,6 +120,45 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
         }
         fetchConnectionCount()
     }, [isOwnProfile, profile?.id])
+
+    // Deep-link handling: when ?edit=<target> is present, open the matching editor.
+    // Runs once on mount when the param exists, then strips it from the URL so refreshes don't re-trigger.
+    const searchParams = useSearchParams()
+    useEffect(() => {
+        if (!isOwnProfile) return
+        const target = searchParams?.get(PROFILE_EDIT_PARAM) as ProfileEditTarget | null
+        if (!target) return
+
+        switch (target) {
+            case 'industry_sector':
+                setIsEditIndustryOpen(true)
+                break
+            case 'avatar':
+                avatarInputRef.current?.click()
+                break
+            case 'resume':
+                setIsResumeUploadOpen(true)
+                break
+            case 'linkedin':
+                setIsEditLinkedInOpen(true)
+                break
+            case 'experience': {
+                const el = document.getElementById('experience-section')
+                el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                break
+            }
+            case 'education': {
+                const el = document.getElementById('education-section')
+                el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                break
+            }
+        }
+
+        router.replace('/profile')
+    // We deliberately only react to the first searchParams snapshot — once the
+    // editor is open we strip the param via router.replace and don't re-open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'cover') => {
         const file = e.target.files?.[0]
@@ -636,10 +679,16 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                 title={cropType === 'avatar' ? "Crop Profile Photo" : "Crop Banner Image"}
             />
             
-            <EditIndustryDialog 
+            <EditIndustryDialog
                 isOpen={isEditIndustryOpen}
                 onOpenChange={setIsEditIndustryOpen}
                 currentIndustry={primaryIndustry}
+            />
+
+            <EditLinkedInDialog
+                isOpen={isEditLinkedInOpen}
+                onOpenChange={setIsEditLinkedInOpen}
+                currentUrl={profile?.athlete_profiles?.linkedin_url || null}
             />
         </Card>
     )

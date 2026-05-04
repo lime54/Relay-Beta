@@ -5,6 +5,8 @@ import { EducationSection } from "./education-section"
 import { ProfileHeader } from "./profile-header"
 import { ProfileSidebar } from "./profile-sidebar"
 
+export const dynamic = 'force-dynamic'
+
 export default async function ProfilePage() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

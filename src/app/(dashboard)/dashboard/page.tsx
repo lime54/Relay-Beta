@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import DashboardClient from "./dashboard-client"
+import { profileFieldToHref } from "@/lib/profile-edit-targets"
 
 export const dynamic = 'force-dynamic'
 
@@ -23,28 +24,35 @@ export default async function DashboardPage() {
 
     const isVerified = profile?.verification_status === true
 
-    // Calculate Profile Strength
+    // Calculate Profile Strength.
+    // The backend stores the user's primary industry in `career_sectors[0]`,
+    // so use the same source the matching logic reads from for the "industry sector" check.
     const completionFields = [
         { key: 'school', label: 'University/College', weight: 15 },
         { key: 'sport', label: 'Sport', weight: 15 },
         { key: 'avatar_url', label: 'Profile Picture', weight: 20 },
-        { key: 'industry', label: 'Industry Interest', weight: 15 },
+        { key: 'industry_sector', label: 'Industry Sector', weight: 15 },
         { key: 'resume_url', label: 'Resume', weight: 20 },
         { key: 'linkedin_url', label: 'LinkedIn URL', weight: 15 }
     ];
 
     let profileStrength = 0;
-    const missingFields: { label: string, href: string }[] = [];
+    const missingFields: { label: string, href: string, key: string }[] = [];
 
     if (profile) {
         completionFields.forEach(field => {
-            if (profile[field.key]) {
+            const value = field.key === 'industry_sector'
+                ? (Array.isArray(profile.career_sectors) && profile.career_sectors.length > 0)
+                : profile[field.key];
+
+            if (value) {
                 profileStrength += field.weight;
             } else {
-                let href = '/profile';
-                if (field.key === 'resume_url') href = '/profile?tab=resume';
-                if (field.key === 'avatar_url') href = '/profile';
-                missingFields.push({ label: field.label, href });
+                missingFields.push({
+                    label: field.label,
+                    href: profileFieldToHref(field.key),
+                    key: field.key,
+                });
             }
         });
     }

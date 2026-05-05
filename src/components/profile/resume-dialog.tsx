@@ -3,6 +3,8 @@
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
     Dialog,
     DialogContent,
@@ -21,6 +23,7 @@ import {
     FileText,
     FileUp,
     Loader2,
+    Pencil,
     Sparkles,
     Upload,
     X,
@@ -238,6 +241,10 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
     const [isProcessing, setIsProcessing] = useState(false);
     const [parsed, setParsed] = useState<{ experiences: ParsedExperience[]; educations: ParsedEducation[] } | null>(null);
     const [isImporting, setIsImporting] = useState(false);
+    const [editingExpIdx, setEditingExpIdx] = useState<number | null>(null);
+    const [expDraft, setExpDraft] = useState<ParsedExperience | null>(null);
+    const [editingEduIdx, setEditingEduIdx] = useState<number | null>(null);
+    const [eduDraft, setEduDraft] = useState<ParsedEducation | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const reset = () => {
@@ -247,6 +254,10 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
         setIsProcessing(false);
         setParsed(null);
         setIsImporting(false);
+        setEditingExpIdx(null);
+        setExpDraft(null);
+        setEditingEduIdx(null);
+        setEduDraft(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
@@ -485,11 +496,12 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
                         <div className="rounded-xl bg-secondary/5 border border-secondary/15 p-3 flex items-start gap-2">
                             <Sparkles className="h-4 w-4 text-secondary shrink-0 mt-0.5" />
                             <p className="text-xs text-muted-foreground">
-                                Your resume was saved. We detected experience and education in the file — review and import what looks correct, or skip.
+                                Your resume was saved. Review and edit the detected items before importing, or skip.
                             </p>
                         </div>
 
-                        <div className="space-y-4 max-h-[340px] overflow-y-auto pr-2">
+                        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                            {/* Experiences */}
                             <div>
                                 <h4 className="font-bold text-sm mb-2 text-foreground/80 border-b pb-1">
                                     Work Experience ({parsed.experiences.length})
@@ -499,28 +511,124 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
                                 ) : (
                                     <ul className="space-y-2">
                                         {parsed.experiences.map((exp, i) => (
-                                            <li key={i} className="bg-muted/30 p-3 rounded-lg text-sm flex items-start gap-3 group">
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="font-bold text-foreground">{exp.role}</div>
-                                                    <div className="text-secondary font-medium text-xs">{exp.company}</div>
-                                                    <div className="text-xs text-muted-foreground mt-0.5">
-                                                        {exp.start_date.split('-')[0]} – {exp.is_current ? 'Present' : exp.end_date.split('-')[0]}
+                                            <li key={i} className="bg-muted/30 rounded-lg text-sm group">
+                                                {editingExpIdx === i && expDraft ? (
+                                                    <div className="p-3 space-y-2">
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div>
+                                                                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Role</label>
+                                                                <Input
+                                                                    className="h-7 text-xs mt-0.5"
+                                                                    value={expDraft.role}
+                                                                    onChange={e => setExpDraft({ ...expDraft, role: e.target.value })}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Company</label>
+                                                                <Input
+                                                                    className="h-7 text-xs mt-0.5"
+                                                                    value={expDraft.company}
+                                                                    onChange={e => setExpDraft({ ...expDraft, company: e.target.value })}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div>
+                                                                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Start</label>
+                                                                <Input
+                                                                    className="h-7 text-xs mt-0.5"
+                                                                    type="date"
+                                                                    value={expDraft.start_date}
+                                                                    onChange={e => setExpDraft({ ...expDraft, start_date: e.target.value })}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">End</label>
+                                                                <Input
+                                                                    className="h-7 text-xs mt-0.5"
+                                                                    type="date"
+                                                                    value={expDraft.end_date}
+                                                                    disabled={expDraft.is_current}
+                                                                    onChange={e => setExpDraft({ ...expDraft, end_date: e.target.value })}
+                                                                />
+                                                                <label className="flex items-center gap-1.5 mt-1 cursor-pointer">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        className="rounded border-gray-300"
+                                                                        checked={expDraft.is_current}
+                                                                        onChange={e => setExpDraft({ ...expDraft, is_current: e.target.checked, end_date: e.target.checked ? '' : expDraft.end_date })}
+                                                                    />
+                                                                    <span className="text-[10px] text-muted-foreground">Current</span>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Description</label>
+                                                            <Textarea
+                                                                className="text-xs mt-0.5 min-h-[56px] resize-none"
+                                                                value={expDraft.description}
+                                                                onChange={e => setExpDraft({ ...expDraft, description: e.target.value })}
+                                                            />
+                                                        </div>
+                                                        <div className="flex gap-2 pt-1">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="flex-1 h-7 text-xs"
+                                                                onClick={() => { setEditingExpIdx(null); setExpDraft(null); }}
+                                                            >
+                                                                Cancel
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                className="flex-1 h-7 text-xs"
+                                                                onClick={() => {
+                                                                    const next = [...parsed.experiences];
+                                                                    next[i] = expDraft;
+                                                                    setParsed({ ...parsed, experiences: next });
+                                                                    setEditingExpIdx(null);
+                                                                    setExpDraft(null);
+                                                                }}
+                                                            >
+                                                                Save
+                                                            </Button>
+                                                        </div>
                                                     </div>
-                                                    {exp.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{exp.description}</p>}
-                                                </div>
-                                                <button
-                                                    onClick={() => removeExperience(i)}
-                                                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500 shrink-0 mt-1"
-                                                    title="Remove"
-                                                >
-                                                    <X className="h-3.5 w-3.5" />
-                                                </button>
+                                                ) : (
+                                                    <div className="flex items-start gap-3 p-3">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="font-bold text-foreground">{exp.role}</div>
+                                                            <div className="text-secondary font-medium text-xs">{exp.company}</div>
+                                                            <div className="text-xs text-muted-foreground mt-0.5">
+                                                                {exp.start_date.split('-')[0]} – {exp.is_current ? 'Present' : exp.end_date.split('-')[0]}
+                                                            </div>
+                                                            {exp.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{exp.description}</p>}
+                                                        </div>
+                                                        <div className="flex items-center gap-1 shrink-0 mt-0.5">
+                                                            <button
+                                                                onClick={() => { setEditingExpIdx(i); setExpDraft({ ...exp }); }}
+                                                                className="text-muted-foreground hover:text-foreground p-0.5"
+                                                                title="Edit"
+                                                            >
+                                                                <Pencil className="h-3.5 w-3.5" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => removeExperience(i)}
+                                                                className="text-muted-foreground hover:text-red-500 ml-1 p-0.5"
+                                                                title="Remove"
+                                                            >
+                                                                <X className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </li>
                                         ))}
                                     </ul>
                                 )}
                             </div>
 
+                            {/* Educations */}
                             <div>
                                 <h4 className="font-bold text-sm mb-2 text-foreground/80 border-b pb-1">
                                     Education ({parsed.educations.length})
@@ -530,21 +638,108 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
                                 ) : (
                                     <ul className="space-y-2">
                                         {parsed.educations.map((edu, i) => (
-                                            <li key={i} className="bg-muted/30 p-3 rounded-lg text-sm flex items-start gap-3 group">
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="font-bold text-foreground">{edu.school}</div>
-                                                    {edu.degree && <div className="text-muted-foreground text-xs">{edu.degree}</div>}
-                                                    <div className="text-xs text-muted-foreground mt-0.5">
-                                                        {edu.start_date.split('-')[0]} – {edu.is_current ? 'Present' : edu.end_date.split('-')[0]}
+                                            <li key={i} className="bg-muted/30 rounded-lg text-sm group">
+                                                {editingEduIdx === i && eduDraft ? (
+                                                    <div className="p-3 space-y-2">
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div>
+                                                                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">School</label>
+                                                                <Input
+                                                                    className="h-7 text-xs mt-0.5"
+                                                                    value={eduDraft.school}
+                                                                    onChange={e => setEduDraft({ ...eduDraft, school: e.target.value })}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Degree</label>
+                                                                <Input
+                                                                    className="h-7 text-xs mt-0.5"
+                                                                    value={eduDraft.degree}
+                                                                    onChange={e => setEduDraft({ ...eduDraft, degree: e.target.value })}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div>
+                                                                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Start</label>
+                                                                <Input
+                                                                    className="h-7 text-xs mt-0.5"
+                                                                    type="date"
+                                                                    value={eduDraft.start_date}
+                                                                    onChange={e => setEduDraft({ ...eduDraft, start_date: e.target.value })}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">End</label>
+                                                                <Input
+                                                                    className="h-7 text-xs mt-0.5"
+                                                                    type="date"
+                                                                    value={eduDraft.end_date}
+                                                                    disabled={eduDraft.is_current}
+                                                                    onChange={e => setEduDraft({ ...eduDraft, end_date: e.target.value })}
+                                                                />
+                                                                <label className="flex items-center gap-1.5 mt-1 cursor-pointer">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        className="rounded border-gray-300"
+                                                                        checked={eduDraft.is_current}
+                                                                        onChange={e => setEduDraft({ ...eduDraft, is_current: e.target.checked, end_date: e.target.checked ? '' : eduDraft.end_date })}
+                                                                    />
+                                                                    <span className="text-[10px] text-muted-foreground">Current</span>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex gap-2 pt-1">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="flex-1 h-7 text-xs"
+                                                                onClick={() => { setEditingEduIdx(null); setEduDraft(null); }}
+                                                            >
+                                                                Cancel
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                className="flex-1 h-7 text-xs"
+                                                                onClick={() => {
+                                                                    const next = [...parsed.educations];
+                                                                    next[i] = eduDraft;
+                                                                    setParsed({ ...parsed, educations: next });
+                                                                    setEditingEduIdx(null);
+                                                                    setEduDraft(null);
+                                                                }}
+                                                            >
+                                                                Save
+                                                            </Button>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <button
-                                                    onClick={() => removeEducation(i)}
-                                                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500 shrink-0 mt-1"
-                                                    title="Remove"
-                                                >
-                                                    <X className="h-3.5 w-3.5" />
-                                                </button>
+                                                ) : (
+                                                    <div className="flex items-start gap-3 p-3">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="font-bold text-foreground">{edu.school}</div>
+                                                            {edu.degree && <div className="text-muted-foreground text-xs">{edu.degree}</div>}
+                                                            <div className="text-xs text-muted-foreground mt-0.5">
+                                                                {edu.start_date.split('-')[0]} – {edu.is_current ? 'Present' : edu.end_date.split('-')[0]}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-1 shrink-0 mt-0.5">
+                                                            <button
+                                                                onClick={() => { setEditingEduIdx(i); setEduDraft({ ...edu }); }}
+                                                                className="text-muted-foreground hover:text-foreground p-0.5"
+                                                                title="Edit"
+                                                            >
+                                                                <Pencil className="h-3.5 w-3.5" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => removeEducation(i)}
+                                                                className="text-muted-foreground hover:text-red-500 ml-1 p-0.5"
+                                                                title="Remove"
+                                                            >
+                                                                <X className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </li>
                                         ))}
                                     </ul>

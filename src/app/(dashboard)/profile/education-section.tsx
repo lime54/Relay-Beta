@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog"
 import { Card, CardContent } from "@/components/ui/card"
-import { Plus, Trash2, GraduationCap, Calendar } from "lucide-react"
-import { addEducation, deleteEducation } from './actions'
+import { Plus, Trash2, GraduationCap, Calendar, Pencil } from "lucide-react"
+import { addEducation, updateEducation, deleteEducation } from './actions'
+import { toast } from 'sonner'
 
 type Education = {
     id: string
@@ -20,23 +21,119 @@ type Education = {
     description?: string
 }
 
+function EducationForm({
+    education,
+    onSubmit,
+    isSaving,
+    onCancel,
+}: {
+    education?: Education
+    onSubmit: (fd: FormData) => void
+    isSaving: boolean
+    onCancel?: () => void
+}) {
+    const [isCurrent, setIsCurrent] = useState(education?.is_current ?? false)
+
+    function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault()
+        onSubmit(new FormData(e.currentTarget))
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            {education && <input type="hidden" name="id" value={education.id} readOnly />}
+            <div className="space-y-2">
+                <label className="text-sm font-medium">School / University</label>
+                <Input name="school" required placeholder="e.g. Stanford University" defaultValue={education?.school} />
+            </div>
+            <div className="space-y-2">
+                <label className="text-sm font-medium">Degree / Field of Study</label>
+                <Input name="degree" required placeholder="e.g. BS Computer Science" defaultValue={education?.degree} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Start Date</label>
+                    <Input name="start_date" type="date" required defaultValue={education?.start_date} />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">End Date</label>
+                    <Input name="end_date" type="date" defaultValue={education?.end_date} disabled={isCurrent} />
+                    <div className="flex items-center gap-2 mt-1">
+                        <input
+                            type="checkbox"
+                            name="is_current"
+                            id="is_current_edu"
+                            className="rounded border-gray-300"
+                            checked={isCurrent}
+                            onChange={e => setIsCurrent(e.target.checked)}
+                        />
+                        <label htmlFor="is_current_edu" className="text-xs text-muted-foreground">I currently study here</label>
+                    </div>
+                </div>
+            </div>
+            <div className="space-y-2">
+                <label className="text-sm font-medium">Activities & Societies</label>
+                <Textarea name="description" placeholder="e.g. Varsity Squash, Newspaper Editor..." defaultValue={education?.description} />
+            </div>
+            <div className={onCancel ? "flex gap-3" : ""}>
+                {onCancel && (
+                    <Button type="button" variant="outline" className="flex-1" onClick={onCancel} disabled={isSaving}>
+                        Cancel
+                    </Button>
+                )}
+                <Button type="submit" className={onCancel ? "flex-1" : "w-full"} disabled={isSaving}>
+                    {isSaving ? 'Saving...' : education ? 'Save Changes' : 'Save Education'}
+                </Button>
+            </div>
+        </form>
+    )
+}
+
 export function EducationSection({ initialEducations }: { initialEducations: Education[] }) {
-    const [isOpen, setIsOpen] = useState(false)
-    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isAddOpen, setIsAddOpen] = useState(false)
+    const [isAdding, setIsAdding] = useState(false)
+    const [editingEdu, setEditingEdu] = useState<Education | null>(null)
+    const [isEditing, setIsEditing] = useState(false)
     const router = useRouter()
 
-    async function handleSubmit(formData: FormData) {
-        setIsSubmitting(true)
+    async function handleAdd(formData: FormData) {
+        setIsAdding(true)
         try {
             const result = await addEducation(formData)
             if (result?.error) {
-                alert(result.error)
+                toast.error(result.error)
             } else {
-                setIsOpen(false)
+                setIsAddOpen(false)
                 router.refresh()
             }
         } finally {
-            setIsSubmitting(false)
+            setIsAdding(false)
+        }
+    }
+
+    async function handleEdit(formData: FormData) {
+        setIsEditing(true)
+        try {
+            const result = await updateEducation(formData)
+            if (result?.error) {
+                toast.error(result.error)
+            } else {
+                toast.success('Education updated.')
+                setEditingEdu(null)
+                router.refresh()
+            }
+        } finally {
+            setIsEditing(false)
+        }
+    }
+
+    async function handleDelete(id: string) {
+        if (!confirm('Are you sure you want to delete this education?')) return
+        const result = await deleteEducation(id)
+        if (result?.error) {
+            toast.error(result.error)
+        } else {
+            router.refresh()
         }
     }
 
@@ -47,7 +144,7 @@ export function EducationSection({ initialEducations }: { initialEducations: Edu
                     <GraduationCap className="h-5 w-5 text-primary" />
                     Education
                 </h2>
-                <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                     <DialogTrigger asChild>
                         <Button variant="outline" size="sm" className="gap-2 rounded-full border-dashed">
                             <Plus className="h-4 w-4" />
@@ -57,45 +154,31 @@ export function EducationSection({ initialEducations }: { initialEducations: Edu
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>Add Education</DialogTitle>
-                            <DialogDescription>
-                                Add your schools and degrees.
-                            </DialogDescription>
+                            <DialogDescription>Add your schools and degrees.</DialogDescription>
                         </DialogHeader>
-
-                        <form action={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">School / University</label>
-                                <Input name="school" required placeholder="e.g. Stanford University" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Degree / Field of Study</label>
-                                <Input name="degree" required placeholder="e.g. BS Computer Science" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Start Date</label>
-                                    <Input name="start_date" type="date" required />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">End Date</label>
-                                    <Input name="end_date" type="date" />
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <input type="checkbox" name="is_current" id="is_current" className="rounded border-gray-300" />
-                                        <label htmlFor="is_current" className="text-xs text-muted-foreground">I currently study here</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Activities & Societies</label>
-                                <Textarea name="description" placeholder="e.g. Varsity Squash, Newspaper Editor..." />
-                            </div>
-                            <Button type="submit" className="w-full" loading={isSubmitting}>
-                                Save Education
-                            </Button>
-                        </form>
+                        <EducationForm onSubmit={handleAdd} isSaving={isAdding} />
                     </DialogContent>
                 </Dialog>
             </div>
+
+            {/* Edit dialog — controlled outside of the card list */}
+            <Dialog open={editingEdu !== null} onOpenChange={open => { if (!open) setEditingEdu(null) }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Education</DialogTitle>
+                        <DialogDescription>Update your education details.</DialogDescription>
+                    </DialogHeader>
+                    {editingEdu && (
+                        <EducationForm
+                            key={editingEdu.id}
+                            education={editingEdu}
+                            onSubmit={handleEdit}
+                            isSaving={isEditing}
+                            onCancel={() => setEditingEdu(null)}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
 
             {initialEducations.length === 0 ? (
                 <Card className="border-dashed shadow-none bg-muted/30">
@@ -106,7 +189,7 @@ export function EducationSection({ initialEducations }: { initialEducations: Edu
                         <p className="text-muted-foreground max-w-sm mb-4 text-sm">
                             Add your education history.
                         </p>
-                        <Button variant="outline" size="sm" onClick={() => setIsOpen(true)}>
+                        <Button variant="outline" size="sm" onClick={() => setIsAddOpen(true)}>
                             Add School
                         </Button>
                     </CardContent>
@@ -114,15 +197,14 @@ export function EducationSection({ initialEducations }: { initialEducations: Edu
             ) : (
                 <div className="grid gap-4">
                     {initialEducations.map((edu) => (
-                        <Card key={edu.id} className="group border-l-4 border-l-blue-400 hover:shadow-md transition-all">
+                        <Card key={edu.id} className="border-l-4 border-l-blue-400 hover:shadow-md transition-all">
                             <CardContent className="p-5">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex gap-4">
-                                        {/* School Logo Placeholder */}
-                                        <div className="h-12 w-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center font-bold text-xl">
+                                <div className="flex justify-between items-start gap-3">
+                                    <div className="flex gap-4 flex-1 min-w-0">
+                                        <div className="h-12 w-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center font-bold text-xl shrink-0">
                                             {edu.school.charAt(0)}
                                         </div>
-                                        <div>
+                                        <div className="min-w-0">
                                             <h4 className="font-bold text-lg text-foreground">{edu.school}</h4>
                                             <p className="text-foreground/80">{edu.degree}</p>
                                             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
@@ -135,19 +217,26 @@ export function EducationSection({ initialEducations }: { initialEducations: Edu
                                             </div>
                                         </div>
                                     </div>
-                                    <form action={async () => {
-                                        if (confirm('Are you sure you want to delete this education?')) {
-                                            await deleteEducation(edu.id)
-                                        }
-                                    }}>
+                                    <div className="flex items-center gap-1 shrink-0">
                                         <Button
+                                            type="button"
                                             size="icon"
                                             variant="ghost"
-                                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all"
+                                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                            onClick={() => setEditingEdu(edu)}
+                                        >
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                            onClick={() => handleDelete(edu.id)}
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
-                                    </form>
+                                    </div>
                                 </div>
                                 {edu.description && (
                                     <div className="mt-4 text-sm text-muted-foreground pl-[4rem]">

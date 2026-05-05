@@ -97,6 +97,54 @@ export async function addEducation(formData: FormData) {
     return { success: true }
 }
 
+export async function updateExperience(formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Not authenticated' }
+
+    const id = formData.get('id') as string
+    const company = formData.get('company') as string
+    const role = formData.get('role') as string
+    const description = formData.get('description') as string
+    const start_date = formData.get('start_date') as string
+    const end_date = formData.get('end_date') as string
+    const is_current = formData.get('is_current') === 'on'
+
+    const { error } = await supabase
+        .from('experiences')
+        .update({ company, role, description, start_date, end_date: is_current ? null : (end_date || null), is_current })
+        .eq('id', id)
+        .eq('user_id', user.id)
+
+    if (error) return { error: error.message }
+    revalidatePath('/profile')
+    return { success: true }
+}
+
+export async function updateEducation(formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Not authenticated' }
+
+    const id = formData.get('id') as string
+    const school = formData.get('school') as string
+    const degree = formData.get('degree') as string
+    const start_date = formData.get('start_date') as string
+    const end_date = formData.get('end_date') as string
+    const description = formData.get('description') as string
+    const is_current = formData.get('is_current') === 'on'
+
+    const { error } = await supabase
+        .from('educations')
+        .update({ school, degree, start_date, end_date: is_current ? null : (end_date || null), is_current, description })
+        .eq('id', id)
+        .eq('user_id', user.id)
+
+    if (error) return { error: error.message }
+    revalidatePath('/profile')
+    return { success: true }
+}
+
 export async function deleteEducation(educationId: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

@@ -113,7 +113,17 @@ export function AvailabilityPicker({
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Booking failed");
 
-            toast.success("Meeting booked. We sent a calendar invite if your accounts are connected.");
+            const synced = data?.booking?.calendar_synced;
+            const calErr = data?.booking?.calendar_error;
+            if (synced) {
+                toast.success("Meeting booked! Google Calendar invites sent to both of you.");
+            } else {
+                toast.warning(
+                    calErr ||
+                        "Meeting booked, but couldn't add it to Google Calendar. Connect a calendar in Settings to send invites.",
+                    { duration: 8000 }
+                );
+            }
             setSelectedSlot(null);
             setMessage("");
             fetchAvailability(currentWeekStart);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -230,6 +231,7 @@ interface ResumeDialogProps {
 type Step = 'select' | 'review' | 'done';
 
 export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDialogProps) {
+    const router = useRouter();
     const [step, setStep] = useState<Step>('select');
     const [file, setFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -305,6 +307,7 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
                 return;
             }
             toast.success('Resume saved to your profile.');
+            router.refresh();
 
             // Best-effort: try to extract sections to offer auto-import
             try {
@@ -317,6 +320,7 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
                 setParsed(sections);
                 setStep('review');
             } catch {
+                toast.error('Could not parse your PDF. Your resume was still saved.');
                 handleClose(false);
             }
         } catch (err: any) {
@@ -354,6 +358,7 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
                 count++;
             }
             toast.success(`Imported ${count} item${count !== 1 ? 's' : ''} to your profile.`);
+            router.refresh();
             handleClose(false);
         } catch {
             toast.error('Failed to save some items.');

@@ -469,29 +469,31 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                                 {profile?.athlete_profiles?.resume_url ? "Update Resume" : "Upload Resume"}
                             </Button>
                         ) : (
-                            <Button 
-                                variant="outline" 
-                                className={cn(
-                                    "rounded-full px-6 transition-all gap-2",
-                                    isConnected ? "hover:bg-muted" : "opacity-60 cursor-not-allowed group"
-                                )}
-                                onClick={() => {
-                                    if (isConnected && profile?.athlete_profiles?.resume_url) {
-                                        window.open(profile.athlete_profiles.resume_url, '_blank')
-                                    } else if (!isConnected) {
-                                        toast.info("Connect with this user to view their resume", {
-                                            icon: <Lock className="h-4 w-4" />
-                                        })
-                                    }
-                                }}
-                            >
-                                {isConnected ? (
-                                    <FileText className="h-4 w-4" />
-                                ) : (
-                                    <Lock className="h-4 w-4" />
-                                )}
-                                View Resume
-                            </Button>
+                            (!isConnected || profile?.athlete_profiles?.resume_url) && (
+                                <Button
+                                    variant="outline"
+                                    className={cn(
+                                        "rounded-full px-6 transition-all gap-2",
+                                        isConnected ? "hover:bg-muted" : "opacity-60 cursor-not-allowed group"
+                                    )}
+                                    onClick={() => {
+                                        if (isConnected && profile?.athlete_profiles?.resume_url) {
+                                            window.open(profile.athlete_profiles.resume_url, '_blank')
+                                        } else if (!isConnected) {
+                                            toast.info("Connect with this user to view their resume", {
+                                                icon: <Lock className="h-4 w-4" />
+                                            })
+                                        }
+                                    }}
+                                >
+                                    {isConnected ? (
+                                        <FileText className="h-4 w-4" />
+                                    ) : (
+                                        <Lock className="h-4 w-4" />
+                                    )}
+                                    View Resume
+                                </Button>
+                            )
                         )}
 
                         {profile?.athlete_profiles?.resume_url && isOwnProfile && (

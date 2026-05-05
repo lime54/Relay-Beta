@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -22,6 +23,7 @@ type Experience = {
 export function ExperienceList({ initialExperiences }: { initialExperiences: Experience[] }) {
     const [isOpen, setIsOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const router = useRouter()
 
     async function handleSubmit(formData: FormData) {
         setIsSubmitting(true)
@@ -31,6 +33,7 @@ export function ExperienceList({ initialExperiences }: { initialExperiences: Exp
                 alert(result.error)
             } else {
                 setIsOpen(false)
+                router.refresh()
             }
         } finally {
             setIsSubmitting(false)
@@ -121,9 +124,9 @@ export function ExperienceList({ initialExperiences }: { initialExperiences: Exp
                                         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2 bg-muted/30 inline-flex px-2 py-1 rounded-md">
                                             <Calendar className="h-3 w-3" />
                                             <span>
-                                                {new Date(exp.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                                                {new Date(exp.start_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                                                 {' - '}
-                                                {exp.is_current ? 'Present' : new Date(exp.end_date!).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                                                {exp.is_current ? 'Present' : new Date(exp.end_date! + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                                             </span>
                                         </div>
                                     </div>

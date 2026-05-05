@@ -26,6 +26,13 @@ export class BookingService {
      * Returns a valid access token for a calendar_connection. If the stored token is expired
      * (or about to be), uses the refresh_token to obtain a fresh one and persists it.
      */
+    private static async deactivateConnection(supabase: Awaited<ReturnType<typeof createClient>>, id: string) {
+        await supabase
+            .from('calendar_connections')
+            .update({ is_active: false, updated_at: new Date().toISOString() })
+            .eq('id', id);
+    }
+
     static async getValidToken(connectionId: string): Promise<string | null> {
         const supabase = await createClient();
         const { data: conn } = await supabase
@@ -43,14 +50,18 @@ export class BookingService {
             return conn.access_token;
         }
 
+        // Token is expired (or has unknown expiry). We need a refresh_token to recover.
+        // Never return a stale access_token — Google will reject it with
+        // "invalid authentication credentials" and the booking will fail.
         if (!conn.refresh_token) {
-            console.warn(`[BookingService] connection ${conn.id} has no refresh_token`);
-            return conn.access_token;
+            console.warn(`[BookingService] connection ${conn.id} has no refresh_token; deactivating`);
+            await this.deactivateConnection(supabase, conn.id);
+            return null;
         }
 
         if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
             console.error('[BookingService] Missing GOOGLE_CLIENT_ID/SECRET; cannot refresh');
-            return conn.access_token;
+            return null;
         }
 
         try {
@@ -61,7 +72,12 @@ export class BookingService {
             oauth2Client.setCredentials({ refresh_token: conn.refresh_token });
 
             const { credentials } = await oauth2Client.refreshAccessToken();
-            const newAccess = credentials.access_token || conn.access_token;
+            if (!credentials.access_token) {
+                console.error('[BookingService] Refresh response had no access_token');
+                await this.deactivateConnection(supabase, conn.id);
+                return null;
+            }
+            const newAccess = credentials.access_token;
             const newExpiresAt = credentials.expiry_date
                 ? new Date(credentials.expiry_date).toISOString()
                 : null;
@@ -75,14 +91,11 @@ export class BookingService {
                 })
                 .eq('id', conn.id);
 
-            return newAccess ?? null;
+            return newAccess;
         } catch (err) {
             console.error('[BookingService] Failed to refresh token', err);
-            // Mark the connection as inactive so the user is prompted to reconnect.
-            await supabase
-                .from('calendar_connections')
-                .update({ is_active: false, updated_at: new Date().toISOString() })
-                .eq('id', conn.id);
+            // invalid_grant means the refresh token itself was revoked / expired.
+            await this.deactivateConnection(supabase, conn.id);
             return null;
         }
     }
@@ -158,16 +171,19 @@ export class BookingService {
         }
 
         for (const conn of orderedConnections) {
+            const isOwnerRequester = conn.user_id === requesterId;
+            const ownerLabel = isOwnerRequester ? 'your' : "the recipient's";
+
             const token = await this.getValidToken(conn.id);
             if (!token) {
-                calendarError = 'Calendar token expired. Reconnect Google Calendar in Settings.';
+                calendarError = `${isOwnerRequester ? 'Your' : "The recipient's"} Google Calendar connection has expired. ${isOwnerRequester ? 'Please reconnect it in Settings → Calendar.' : 'Ask them to reconnect it in Settings → Calendar, or connect your own.'}`;
                 continue;
             }
 
             // The connection owner's verified Google email is the most reliable address.
             // Fall back to public.users for the OTHER user.
             const ownerEmail = conn.provider_account_id;
-            const otherUserId = conn.user_id === requesterId ? recipientId : requesterId;
+            const otherUserId = isOwnerRequester ? recipientId : requesterId;
             const otherEmail = emailByUser.get(otherUserId);
 
             const attendeeEmails = [ownerEmail, otherEmail].filter(
@@ -201,7 +217,24 @@ export class BookingService {
                 break;
             } catch (err) {
                 console.error('[BookingService] Calendar event creation failed', err);
-                calendarError = err instanceof Error ? err.message : 'Unknown calendar error';
+                const errMsg = err instanceof Error ? err.message : String(err);
+
+                // Detect auth/credential errors from Google. The token Supabase had on file
+                // was rejected by Google — deactivate so the user is prompted to reconnect
+                // and we don't keep retrying with a dead connection.
+                const isAuthError =
+                    /invalid authentication credentials/i.test(errMsg) ||
+                    /invalid_grant/i.test(errMsg) ||
+                    /unauthorized/i.test(errMsg) ||
+                    /\b401\b/.test(errMsg) ||
+                    /\b403\b/.test(errMsg);
+
+                if (isAuthError) {
+                    await this.deactivateConnection(supabase, conn.id);
+                    calendarError = `${isOwnerRequester ? 'Your' : "The recipient's"} Google Calendar connection was rejected by Google and has been disconnected. ${isOwnerRequester ? 'Please reconnect it in Settings → Calendar.' : 'Ask them to reconnect it, or connect your own.'}`;
+                } else {
+                    calendarError = `Couldn't create the event on ${ownerLabel} calendar: ${errMsg}`;
+                }
                 // Try the next connection if available.
             }
         }

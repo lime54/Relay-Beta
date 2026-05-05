@@ -206,7 +206,11 @@ export default async function NetworkPage({
         })
 
     const finalUsers = realUsers.filter(u => {
-        const sportMatch = !sport || (u.sport === sport);
+        const sportMatch = !sport || (
+            sport === 'Track & Field'
+                ? u.sport.startsWith('Track & Field')
+                : u.sport === sport
+        );
         const industryMatch = !industry || (u.industry === industry);
         return sportMatch && industryMatch;
     })

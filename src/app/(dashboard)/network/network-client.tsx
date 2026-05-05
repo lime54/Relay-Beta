@@ -43,7 +43,7 @@ import { RequestForm } from "@/app/(dashboard)/requests/new/request-form";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { cn } from "@/lib/utils";
 
-type Sport = "Squash" | "Tennis" | "Golf" | "Hockey" | "Basketball" | "Football";
+type Sport = "Squash" | "Tennis" | "Golf" | "Hockey" | "Basketball" | "Football" | "Track & Field";
 
 interface NetworkPerson {
     id: string;
@@ -193,7 +193,7 @@ export default function NetworkClient({ realUsers, initialSearch, initialSport, 
                         />
                         <div className="flex flex-col sm:flex-row gap-3">
                             <div className="flex flex-wrap gap-2 flex-1">
-                                {["All", "Squash", "Tennis", "Golf"].map((s) => (
+                                {["All", "Squash", "Tennis", "Golf", "Track & Field"].map((s) => (
                                     <button
                                         key={s}
                                         onClick={() => handleSportChange(s as any)}

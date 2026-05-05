@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 
         const hasAnySchedule = Object.values(schedule).some((arr) => arr && arr.length > 0);
         if (!hasAnySchedule) {
-            return NextResponse.json({ slots: [] });
+            return NextResponse.json({ slots: [], reason: 'no_schedule' });
         }
 
         // 2. Free/busy from the recipient's connected calendar (best-effort).

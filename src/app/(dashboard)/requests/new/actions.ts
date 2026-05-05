@@ -1,7 +1,5 @@
 'use server';
 
-import { createClient } from "@/lib/supabase/server";
-
 export async function refineRequestDraft(context: string, offer: string) {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 800));

@@ -15,10 +15,9 @@ export async function GET(request: Request) {
 
             if (user) {
                 const metadata = user.user_metadata || {}
-                const sport = metadata.sport
-                const school = metadata.school
+                const sport = typeof metadata.sport === 'string' ? metadata.sport.slice(0, 100) : null
+                const school = typeof metadata.school === 'string' ? metadata.school.slice(0, 200) : null
 
-                // Create athlete_profiles row if sport and school are provided
                 if (sport && school) {
                     await supabase.from('athlete_profiles').upsert({
                         user_id: user.id,

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Clock, Check, X, ShieldCheck, Trophy, GraduationCap } from "lucide-react"
+import { Clock, Check, X, ShieldCheck, Trophy, GraduationCap, Eye } from "lucide-react"
 import Link from "next/link"
 
 type AthleteProfile = {
@@ -105,10 +105,12 @@ export function AthleteConnectionCard({ request, currentUserProfile, onAccept, o
                             </div>
                         </div>
                         <div className="text-center">
-                            <h3 className="font-bold text-slate-900 text-sm flex items-center justify-center gap-1">
-                                {requester?.name}
-                                {isVerified && <ShieldCheck className="h-3 w-3 text-blue-500" />}
-                            </h3>
+                            <Link href={`/requests/${request.id}`} className="hover:underline">
+                                <h3 className="font-bold text-slate-900 text-sm flex items-center justify-center gap-1">
+                                    {requester?.name}
+                                    {isVerified && <ShieldCheck className="h-3 w-3 text-blue-500" />}
+                                </h3>
+                            </Link>
                             <p className="text-xs text-slate-500 font-medium mt-1">
                                 {profile?.school || 'Unknown School'}
                             </p>
@@ -152,6 +154,12 @@ export function AthleteConnectionCard({ request, currentUserProfile, onAccept, o
 
                         {/* D. Actions */}
                         <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 border-t border-slate-50 sm:border-t-0 sm:pt-0">
+                            <Link href={`/requests/${request.id}`} className="sm:w-auto">
+                                <Button variant="outline" size="sm" className="w-full sm:w-auto text-slate-500 hover:text-primary hover:border-primary/50">
+                                    <Eye className="h-4 w-4 mr-1.5" />
+                                    View Details
+                                </Button>
+                            </Link>
                             {onPass ? (
                                 <Button
                                     variant="ghost"

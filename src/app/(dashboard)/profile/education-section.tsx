@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -22,6 +23,7 @@ type Education = {
 export function EducationSection({ initialEducations }: { initialEducations: Education[] }) {
     const [isOpen, setIsOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const router = useRouter()
 
     async function handleSubmit(formData: FormData) {
         setIsSubmitting(true)
@@ -31,6 +33,7 @@ export function EducationSection({ initialEducations }: { initialEducations: Edu
                 alert(result.error)
             } else {
                 setIsOpen(false)
+                router.refresh()
             }
         } finally {
             setIsSubmitting(false)
@@ -125,9 +128,9 @@ export function EducationSection({ initialEducations }: { initialEducations: Edu
                                             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                                                 <Calendar className="h-3 w-3" />
                                                 <span>
-                                                    {new Date(edu.start_date).getFullYear()}
+                                                    {new Date(edu.start_date + 'T12:00:00').getFullYear()}
                                                     {' - '}
-                                                    {edu.is_current ? 'Present' : new Date(edu.end_date!).getFullYear()}
+                                                    {edu.is_current ? 'Present' : new Date(edu.end_date! + 'T12:00:00').getFullYear()}
                                                 </span>
                                             </div>
                                         </div>

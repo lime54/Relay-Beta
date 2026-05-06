@@ -8,22 +8,26 @@ import { resend } from '@/lib/resend'
 export async function login(formData: FormData) {
     const supabase = await createClient()
 
-    // type-casting here for convenience
-    // in a real app, you might want to validate this with Zod
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const captchaToken = formData.get('captchaToken') as string
+    const email = formData.get('email')
+    const password = formData.get('password')
+    const captchaToken = formData.get('captchaToken')
     const isDev = process.env.NODE_ENV === 'development'
-    
+
+    if (typeof email !== 'string' || !email.trim()) {
+        return redirect('/login?error=Email is required')
+    }
+    if (typeof password !== 'string' || !password) {
+        return redirect('/login?error=Password is required')
+    }
     if (!captchaToken && !isDev) {
         return redirect('/login?error=Please complete the captcha')
     }
 
     const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
         options: {
-            captchaToken: isDev && captchaToken === 'dev-mock-token' ? undefined : captchaToken,
+            captchaToken: isDev && captchaToken === 'dev-mock-token' ? undefined : (captchaToken as string),
         },
     })
 
@@ -38,22 +42,31 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
     const supabase = await createClient()
 
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const name = formData.get('name') as string
-    const role = formData.get('role') as 'student' | 'alum'
-    const sport = formData.get('sport') as string
-    const school = formData.get('school') as string
-    const captchaToken = formData.get('captchaToken') as string
+    const email = formData.get('email')
+    const password = formData.get('password')
+    const name = formData.get('name')
+    const role = formData.get('role') as 'student' | 'alum' | null
+    const sport = formData.get('sport')
+    const school = formData.get('school')
+    const captchaToken = formData.get('captchaToken')
     const isDev = process.env.NODE_ENV === 'development'
 
+    if (typeof email !== 'string' || !email.trim()) {
+        return redirect('/signup?error=Email is required')
+    }
+    if (typeof password !== 'string' || !password) {
+        return redirect('/signup?error=Password is required')
+    }
+    if (typeof name !== 'string' || !name.trim()) {
+        return redirect('/signup?error=Name is required')
+    }
     if (!captchaToken && !isDev) {
         return redirect('/signup?error=Please complete the captcha')
     }
 
-    // Enforce .edu email requirement
+    // Enforce .edu email requirement for current student-athletes only
     const emailDomain = email.toLowerCase().trim()
-    if (!emailDomain.endsWith('.edu')) {
+    if (role !== 'alum' && !emailDomain.endsWith('.edu')) {
         return redirect('/signup?error=' + encodeURIComponent('Please use your .edu email address. Relay requires a valid university email for verification.'))
     }
 
@@ -73,7 +86,7 @@ export async function signup(formData: FormData) {
                 school,
             },
             emailRedirectTo: `${origin}/auth/callback`,
-            captchaToken: isDev && captchaToken === 'dev-mock-token' ? undefined : captchaToken,
+            captchaToken: isDev && captchaToken === 'dev-mock-token' ? undefined : (captchaToken as string),
         }
     })
 

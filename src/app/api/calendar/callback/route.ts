@@ -45,11 +45,11 @@ export async function GET(request: Request) {
 
     // Validate the CSRF nonce from the cookie set in /api/calendar/auth
     const cookieHeader = request.headers.get('cookie') || '';
-    const cookieNonce = cookieHeader
+    const nonceCookie = cookieHeader
         .split(';')
         .map((c) => c.trim())
-        .find((c) => c.startsWith('gcal_oauth_nonce='))
-        ?.split('=')[1];
+        .find((c) => c.startsWith('gcal_oauth_nonce='));
+    const cookieNonce = nonceCookie ? nonceCookie.substring('gcal_oauth_nonce='.length) : undefined;
 
     if (!stateNonce || !cookieNonce || stateNonce !== cookieNonce) {
         return NextResponse.redirect(appUrl(`${SETTINGS_PATH}?error=state_mismatch`));

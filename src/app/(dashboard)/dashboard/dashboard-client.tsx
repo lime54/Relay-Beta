@@ -242,16 +242,18 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                         <Card className="border-border/50 shadow-lg overflow-hidden">
                             <div className="h-2 bg-secondary" />
                             <CardHeader className="pb-3">
-                                <CardTitle className="text-lg font-bold flex items-center gap-2">
-                                    <Clock className="h-5 w-5 text-secondary" />
-                                    Upcoming Meetings
-                                </CardTitle>
+                                <Link href="/meetings" className="flex items-center justify-between group">
+                                    <CardTitle className="text-lg font-bold flex items-center gap-2">
+                                        <Clock className="h-5 w-5 text-secondary" />
+                                        Upcoming Meetings
+                                    </CardTitle>
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                </Link>
                             </CardHeader>
                             <CardContent>
                                 {data.upcomingMeetings && data.upcomingMeetings.length > 0 ? (
                                     <div className="space-y-3">
                                         {data.upcomingMeetings.map((meeting: any) => {
-                                            // Determine the other person
                                             const isRequester = meeting.requester.name === data.userName;
                                             const otherPerson = isRequester ? meeting.recipient : meeting.requester;
                                             const otherAvatar = otherPerson?.athlete_profiles?.avatar_url;
@@ -260,23 +262,31 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                                             const formattedTime = dateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 
                                             return (
-                                                <div key={meeting.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-card hover:bg-muted/50 transition-colors">
-                                                    <Avatar className="h-10 w-10 border border-border">
-                                                        <AvatarImage src={otherAvatar} />
-                                                        <AvatarFallback>{otherPerson?.name?.charAt(0) || 'U'}</AvatarFallback>
-                                                    </Avatar>
-                                                    <div className="flex-1 overflow-hidden">
-                                                        <h4 className="text-sm font-bold truncate">{otherPerson?.name}</h4>
-                                                        <p className="text-xs text-muted-foreground truncate">{formattedDate} at {formattedTime}</p>
+                                                <Link key={meeting.id} href="/meetings">
+                                                    <div className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-card hover:bg-muted/50 hover:border-primary/30 transition-all cursor-pointer">
+                                                        <Avatar className="h-10 w-10 border border-border">
+                                                            <AvatarImage src={otherAvatar} />
+                                                            <AvatarFallback>{otherPerson?.name?.charAt(0) || 'U'}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex-1 overflow-hidden">
+                                                            <h4 className="text-sm font-bold truncate">{otherPerson?.name}</h4>
+                                                            <p className="text-xs text-muted-foreground truncate">{formattedDate} at {formattedTime}</p>
+                                                        </div>
+                                                        {meeting.meeting_link && (
+                                                            <Button size="sm" variant="outline" className="h-8 border-secondary/30 text-secondary hover:bg-secondary/10 shrink-0" onClick={(e) => { e.preventDefault(); window.open(meeting.meeting_link, '_blank'); }}>
+                                                                Join
+                                                            </Button>
+                                                        )}
                                                     </div>
-                                                    {meeting.meeting_link && (
-                                                        <Button size="sm" variant="outline" className="h-8 border-secondary/30 text-secondary hover:bg-secondary/10 shrink-0" onClick={() => window.open(meeting.meeting_link, '_blank')}>
-                                                            Join
-                                                        </Button>
-                                                    )}
-                                                </div>
+                                                </Link>
                                             );
                                         })}
+                                        <Link href="/meetings" className="block">
+                                            <Button variant="ghost" size="sm" className="w-full text-muted-foreground hover:text-primary mt-1">
+                                                View all meetings
+                                                <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                                            </Button>
+                                        </Link>
                                     </div>
                                 ) : (
                                     <div className="text-center py-6 text-muted-foreground space-y-2 bg-muted/20 rounded-xl border border-dashed border-border/60">

@@ -2,19 +2,19 @@
 
 export const RELAY_PRO_PRICING = {
     monthly: {
-        amount: 9,
+        amount: 15,
         currency: "USD",
         cadence: "month" as const,
-        label: "$9",
+        label: "$15",
     },
     yearly: {
-        amount: 79,
+        amount: 120,
         currency: "USD",
         cadence: "year" as const,
-        label: "$79",
-        // Effective monthly rate ($79 / 12 ≈ $6.58)
-        equivalentMonthly: 6.58,
-        savingsPct: 27, // ~$108/year vs. $79/year
+        label: "$120",
+        // Effective monthly rate ($120 / 12 = $10)
+        equivalentMonthly: 10,
+        savingsPct: 33, // $180/year vs. $120/year
     },
 } as const
 

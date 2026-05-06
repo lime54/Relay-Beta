@@ -30,6 +30,7 @@ export function AvailabilityPicker({
     const [slots, setSlots] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [noSchedule, setNoSchedule] = useState(false);
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
     const [message, setMessage] = useState("");
     const [booking, setBooking] = useState(false);
@@ -38,6 +39,7 @@ export function AvailabilityPicker({
         async (startDate: Date) => {
             setLoading(true);
             setErrorMsg(null);
+            setNoSchedule(false);
             try {
                 const endDate = new Date(startDate);
                 endDate.setDate(endDate.getDate() + 7);
@@ -57,6 +59,7 @@ export function AvailabilityPicker({
                     throw new Error(data.error || "Failed to fetch availability");
                 }
                 setSlots(data.slots || []);
+                if (data.reason === 'no_schedule') setNoSchedule(true);
             } catch (err: unknown) {
                 console.error(err);
                 setSlots([]);
@@ -113,7 +116,17 @@ export function AvailabilityPicker({
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Booking failed");
 
-            toast.success("Meeting booked. We sent a calendar invite if your accounts are connected.");
+            const synced = data?.booking?.calendar_synced;
+            const calErr = data?.booking?.calendar_error;
+            if (synced) {
+                toast.success("Meeting booked! Google Calendar invites sent to both of you.");
+            } else {
+                toast.warning(
+                    calErr ||
+                        "Meeting booked, but couldn't add it to Google Calendar. Connect a calendar in Settings to send invites.",
+                    { duration: 8000 }
+                );
+            }
             setSelectedSlot(null);
             setMessage("");
             fetchAvailability(currentWeekStart);
@@ -203,10 +216,10 @@ export function AvailabilityPicker({
                     <div className="flex flex-col items-center justify-center py-16 text-muted-foreground px-6 text-center">
                         <CalendarIcon className="h-8 w-8 mb-3 text-muted-foreground/60" />
                         <p className="text-sm font-medium text-foreground mb-1">
-                            No times available this week
+                            {noSchedule ? `${recipientName} hasn't set up their availability yet` : 'No times available this week'}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                            Try the next week, or reach out to {recipientName} directly.
+                            {noSchedule ? 'Reach out to them directly to schedule a meeting.' : `Try the next week, or reach out to ${recipientName} directly.`}
                         </p>
                     </div>
                 ) : (

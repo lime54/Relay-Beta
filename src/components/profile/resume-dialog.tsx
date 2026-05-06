@@ -49,33 +49,108 @@ interface ParsedEducation {
 
 // ─── Resume Text Parsing ─────────────────────────────────────────────────────
 
+const MONTHS: Record<string, string> = {
+    jan: '01', january: '01', feb: '02', february: '02', mar: '03', march: '03',
+    apr: '04', april: '04', may: '05', jun: '06', june: '06',
+    jul: '07', july: '07', aug: '08', august: '08', sep: '09', sept: '09', september: '09',
+    oct: '10', october: '10', nov: '11', november: '11', dec: '12', december: '12',
+};
+
 function isEducationLine(line: string): boolean {
-    const lower = line.toLowerCase();
     return (
-        /\b(bachelor|master|associate|doctorate|ph\.?d|m\.?b\.?a|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|degree|diploma|certificate|coursework|gpa|cum laude|magna|summa|honors)\b/i.test(lower) ||
-        /\b(university|college|institute|school of|academy)\b/i.test(lower)
+        /\b(bachelor|master|associate|doctorate|ph\.?d|m\.?b\.?a|b\.?s\.?c?|b\.?a\.?|m\.?s\.?c?|m\.?a\.?|degree|diploma|certificate|coursework|gpa|cum laude|magna|summa|honors)\b/i.test(line) ||
+        /\b(university|college|institute|school of|academy|polytechnic)\b/i.test(line)
     );
 }
 
+const ROLE_TITLES = /^(senior|junior|lead|staff|principal|associate|analyst|manager|director|vp|vice president|intern|engineer|developer|consultant|coordinator|founder|co-founder|head of|specialist|assistant|executive|officer|architect|designer|researcher|scientist|professor|lecturer|teacher|counsel|attorney|paralegal|nurse|physician|therapist|accountant|auditor|trader|advisor|planner|recruiter|editor|producer|strategist)/i;
+
 function detectSection(line: string): string | null {
-    const lower = line.toLowerCase().trim();
-    if (['experience', 'work experience', 'employment', 'employment history', 'professional experience', 'work history', 'relevant experience'].includes(lower)) return 'experience';
-    if (['education', 'education history', 'academic background', 'academics'].includes(lower)) return 'education';
-    if (['skills', 'technical skills', 'projects', 'certifications', 'awards', 'activities', 'volunteer', 'interests', 'publications', 'references', 'languages', 'leadership', 'organizations', 'extracurricular'].includes(lower)) return 'other';
-    if (/^(?:work\s+)?experience/i.test(lower)) return 'experience';
-    if (/^education/i.test(lower)) return 'education';
-    if (/^(?:skills|projects|certifications|awards|activities)/i.test(lower)) return 'other';
+    const lower = line.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+    if (/^(work\s+)?experience|^professional\s+experience|^employment(\s+history)?|^work\s+history|^relevant\s+experience|^career\s+history/.test(lower)) return 'experience';
+    if (/^education(\s+history)?|^academic\s+(background|history)|^academics/.test(lower)) return 'education';
+    if (/^(skills|technical\s+skills|projects|certifications|awards|activities|volunteer|interests|publications|references|languages|leadership|organizations|extracurricular|summary|objective|profile|professional\s+summary|about\s+me|core\s+competencies|training|licenses|hobbies|additional)/.test(lower)) return 'other';
     return null;
 }
 
-function extractDateRange(line: string): { startYear: string; endYear: string; isCurrent: boolean } | null {
+interface DateRange {
+    startDate: string;
+    endDate: string;
+    isCurrent: boolean;
+}
+
+function monthToNum(m: string): string {
+    return MONTHS[m.toLowerCase().replace(/\.$/, '')] || '01';
+}
+
+function extractDateRange(line: string): DateRange | null {
     const lower = line.toLowerCase();
-    const isCurrent = lower.includes('present') || lower.includes('current') || lower.includes('ongoing') || lower.includes('now');
-    const yearMatch = line.match(/((?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+)?(?:20|19)\d{2})/gi);
-    if (!yearMatch || yearMatch.length === 0) return null;
-    const years = yearMatch.map(m => { const y = m.match(/(20\d{2}|19\d{2})/); return y ? y[1] : ''; }).filter(Boolean);
-    if (years.length === 0) return null;
-    return { startYear: years[0], endYear: years.length > 1 ? years[1] : (isCurrent ? '' : years[0]), isCurrent };
+    const isCurrent = /\b(present|current|ongoing|now)\b/i.test(lower);
+
+    // Match patterns like "Jan 2020 – Mar 2022", "January 2020 - Present", "2019 - 2023", "05/2020 – 12/2022"
+    const monthYearPat = /(?:(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+)?((?:19|20)\d{2})/gi;
+    const numericPat = /(\d{1,2})\/((?:19|20)\d{2})/g;
+
+    interface DatePart { month: string; year: string }
+    const parts: DatePart[] = [];
+
+    let match;
+    while ((match = monthYearPat.exec(line)) !== null) {
+        parts.push({ month: match[1] ? monthToNum(match[1]) : '01', year: match[2] });
+    }
+    while ((match = numericPat.exec(line)) !== null) {
+        const m = match[1].padStart(2, '0');
+        if (parseInt(m) >= 1 && parseInt(m) <= 12) {
+            parts.push({ month: m, year: match[2] });
+        }
+    }
+
+    if (parts.length === 0) return null;
+
+    parts.sort((a, b) => {
+        const diff = parseInt(a.year) - parseInt(b.year);
+        return diff !== 0 ? diff : parseInt(a.month) - parseInt(b.month);
+    });
+
+    const start = parts[0];
+    const end = parts.length > 1 ? parts[parts.length - 1] : (isCurrent ? null : start);
+
+    return {
+        startDate: `${start.year}-${start.month}-01`,
+        endDate: end ? `${end.year}-${end.month}-01` : '',
+        isCurrent,
+    };
+}
+
+function stripDates(line: string): string {
+    return line
+        .replace(/(?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+)?(?:19|20)\d{2}/gi, '')
+        .replace(/\d{1,2}\/(?:19|20)\d{2}/g, '')
+        .replace(/\b(present|current|ongoing|now)\b/gi, '')
+        .replace(/[–—\-|,]/g, ' ')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+}
+
+function splitRoleCompany(text: string): { role: string; company: string } {
+    // Try common separators: "Role at Company", "Role, Company", "Role | Company", "Role – Company"
+    const atSplit = text.split(/\s+at\s+/i);
+    if (atSplit.length === 2 && atSplit[0].length > 2 && atSplit[1].length > 2) {
+        return { role: atSplit[0].trim(), company: atSplit[1].trim() };
+    }
+    const sepSplit = text.split(/\s*[|•·–—,]\s*/).map(p => p.trim()).filter(p => p.length > 1);
+    if (sepSplit.length >= 2) {
+        // Heuristic: if the first part looks like a role title, it's the role
+        if (ROLE_TITLES.test(sepSplit[0])) {
+            return { role: sepSplit[0], company: sepSplit.slice(1).join(', ') };
+        }
+        if (ROLE_TITLES.test(sepSplit[1])) {
+            return { role: sepSplit[1], company: sepSplit[0] };
+        }
+        // Default: first = company, second = role (common resume layout)
+        return { role: sepSplit[1], company: sepSplit[0] };
+    }
+    return { role: text, company: '' };
 }
 
 function parseResumeText(text: string): { experiences: ParsedExperience[]; educations: ParsedEducation[] } {
@@ -94,6 +169,7 @@ function parseResumeText(text: string): { experiences: ParsedExperience[]; educa
         if (dateInfo && currentSection === 'experience') {
             if (isEducationLine(line)) continue;
 
+            // Gather context lines above the date line (role, company)
             const contextLines: string[] = [];
             for (let j = i - 1; j >= Math.max(0, i - 3); j--) {
                 const candidate = lines[j];
@@ -104,78 +180,117 @@ function parseResumeText(text: string): { experiences: ParsedExperience[]; educa
             }
             contextLines.reverse();
 
-            const dateLineRest = line.replace(/((?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+)?(?:20|19)\d{2})/gi, '')
-                .replace(/present|current|now/gi, '')
-                .replace(/[^a-zA-Z\s]/g, ' ')
-                .trim();
+            const dateLineRest = stripDates(line);
 
             let roleStr = '';
             let companyStr = '';
 
             if (contextLines.length >= 2) {
-                companyStr = contextLines[0];
-                roleStr = contextLines[1];
+                // Two lines above: could be Company then Role, or Role then Company
+                const first = contextLines[0];
+                const second = contextLines[1];
+                if (ROLE_TITLES.test(second) || isEducationLine(first)) {
+                    companyStr = first;
+                    roleStr = second;
+                } else if (ROLE_TITLES.test(first)) {
+                    roleStr = first;
+                    companyStr = second;
+                } else {
+                    companyStr = first;
+                    roleStr = second;
+                }
             } else if (contextLines.length === 1) {
-                roleStr = contextLines[0];
+                const parsed = splitRoleCompany(contextLines[0]);
+                roleStr = parsed.role;
+                companyStr = parsed.company;
             } else if (dateLineRest.length > 3) {
-                roleStr = dateLineRest;
-            } else {
-                roleStr = 'Unknown Role';
+                const parsed = splitRoleCompany(dateLineRest);
+                roleStr = parsed.role;
+                companyStr = parsed.company;
             }
 
-            if (roleStr && !companyStr) {
-                const parts = roleStr.split(/\s*(?:[,|•·–—]|\s+at\s+)\s*/i).map(p => p.trim()).filter(Boolean);
-                companyStr = parts[0] || 'Unknown Company';
-                roleStr = parts.length > 1 ? parts[1] : companyStr;
-            }
-
-            if (/^(senior|junior|lead|staff|principal|associate|analyst|manager|director|vp|intern|engineer|developer|consultant|coordinator|founder|co-founder|head of|specialist|assistant)/i.test(companyStr) && roleStr !== companyStr) {
+            // If role looks like a company name and company looks like a role, swap
+            if (companyStr && ROLE_TITLES.test(companyStr) && !ROLE_TITLES.test(roleStr)) {
                 [companyStr, roleStr] = [roleStr, companyStr];
             }
 
-            if (!roleStr || roleStr === 'Unknown Role') {
-                if (dateLineRest.length > 3) roleStr = dateLineRest;
-            }
+            if (!roleStr) roleStr = dateLineRest.length > 3 ? dateLineRest : 'Unknown Role';
+            if (!companyStr) companyStr = 'Unknown Company';
 
+            // Collect bullet points / description below
             let description = '';
-            for (let j = i + 1; j < Math.min(lines.length, i + 6); j++) {
+            for (let j = i + 1; j < Math.min(lines.length, i + 10); j++) {
                 const descLine = lines[j];
                 if (detectSection(descLine) !== null) break;
-                if (extractDateRange(descLine)) break;
-                const isList = descLine.startsWith('•') || descLine.startsWith('-') || descLine.startsWith('–') || descLine.startsWith('*');
-                if (isList) {
+                if (extractDateRange(descLine) && !descLine.startsWith('•') && !descLine.startsWith('-')) break;
+                const isBullet = /^[•\-–*▪◦]/.test(descLine);
+                if (isBullet || descLine.length > 30) {
                     description += (description ? '\n' : '') + descLine;
-                } else if (descLine.length > 40 && !isList) {
-                    description += (description ? '\n' : '') + descLine;
-                }
-            }
-
-            experiences.push({ company: companyStr, role: roleStr, start_date: `${dateInfo.startYear}-01-01`, end_date: dateInfo.isCurrent ? '' : `${dateInfo.endYear}-01-01`, is_current: dateInfo.isCurrent, description });
-        } else if (dateInfo && currentSection === 'education') {
-            let schoolStr = '';
-            for (let j = i - 1; j >= Math.max(0, i - 3); j--) {
-                const candidate = lines[j];
-                if (detectSection(candidate) !== null) break;
-                if (extractDateRange(candidate)) break;
-                if (candidate.length > 2) { schoolStr = candidate; break; }
-            }
-            if (!schoolStr) {
-                const dateLineRest = line.replace(/((?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+)?(?:20|19)\d{2})/gi, '')
-                    .replace(/present|current|now/gi, '')
-                    .replace(/[^a-zA-Z\s]/g, ' ')
-                    .trim();
-                schoolStr = dateLineRest.length > 3 ? dateLineRest : 'Unknown School';
-            }
-
-            let degree = '';
-            for (let j = Math.max(0, i - 2); j <= Math.min(lines.length - 1, i + 2); j++) {
-                if (/\b(bachelor|master|associate|doctorate|ph\.?d|m\.?b\.?a|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|degree|diploma|certificate|B\.?S\.?|B\.?A\.?)\b/i.test(lines[j])) {
-                    degree = lines[j];
+                } else if (descLine.length <= 30 && !isBullet) {
                     break;
                 }
             }
 
-            educations.push({ school: schoolStr, degree, start_date: `${dateInfo.startYear}-09-01`, end_date: dateInfo.isCurrent ? '' : `${dateInfo.endYear || parseInt(dateInfo.startYear) + 4}-05-01`, is_current: dateInfo.isCurrent });
+            // Deduplicate: skip if we already have an entry with same company + role
+            const isDupe = experiences.some(e =>
+                e.company.toLowerCase() === companyStr.toLowerCase() &&
+                e.role.toLowerCase() === roleStr.toLowerCase()
+            );
+            if (!isDupe) {
+                experiences.push({ company: companyStr, role: roleStr, start_date: dateInfo.startDate, end_date: dateInfo.endDate, is_current: dateInfo.isCurrent, description });
+            }
+        } else if (dateInfo && currentSection === 'education') {
+            // Look for school name above the date line
+            let schoolStr = '';
+            let degree = '';
+            for (let j = i - 1; j >= Math.max(0, i - 4); j--) {
+                const candidate = lines[j];
+                if (detectSection(candidate) !== null) break;
+                if (extractDateRange(candidate)) break;
+                if (candidate.length < 3) continue;
+
+                if (!schoolStr && /\b(university|college|institute|school|academy|polytechnic)\b/i.test(candidate)) {
+                    schoolStr = candidate;
+                } else if (!degree && /\b(bachelor|master|associate|doctorate|ph\.?d|m\.?b\.?a|b\.?s\.?c?|b\.?a\.?|m\.?s\.?c?|m\.?a\.?|degree|diploma|certificate)\b/i.test(candidate)) {
+                    degree = candidate;
+                }
+            }
+
+            // Also check lines below for degree
+            if (!degree) {
+                for (let j = i + 1; j <= Math.min(lines.length - 1, i + 3); j++) {
+                    if (detectSection(lines[j]) !== null) break;
+                    if (/\b(bachelor|master|associate|doctorate|ph\.?d|m\.?b\.?a|b\.?s\.?c?|b\.?a\.?|m\.?s\.?c?|m\.?a\.?|degree|diploma|certificate)\b/i.test(lines[j])) {
+                        degree = lines[j];
+                        break;
+                    }
+                }
+            }
+
+            if (!schoolStr) {
+                const rest = stripDates(line);
+                schoolStr = rest.length > 3 ? rest : 'Unknown School';
+            }
+
+            const isDupe = educations.some(e => e.school.toLowerCase() === schoolStr.toLowerCase());
+            if (!isDupe) {
+                educations.push({
+                    school: schoolStr,
+                    degree,
+                    start_date: dateInfo.startDate,
+                    end_date: dateInfo.endDate || (dateInfo.isCurrent ? '' : `${parseInt(dateInfo.startDate) + 4}-05-01`),
+                    is_current: dateInfo.isCurrent,
+                });
+            }
+        } else if (dateInfo && currentSection === 'unknown') {
+            // No section header yet — infer from content
+            if (isEducationLine(line) || (i > 0 && isEducationLine(lines[i - 1]))) {
+                currentSection = 'education';
+                i--;
+            } else {
+                currentSection = 'experience';
+                i--;
+            }
         }
     }
     return { experiences, educations };
@@ -266,9 +381,13 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
         onOpenChange(next);
     };
 
+    const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+    const ALLOWED_EXTS = ['.pdf', '.jpg', '.jpeg', '.png'];
+
     const acceptFile = (selected: File) => {
-        if (selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
-            toast.error('Please choose a PDF file.');
+        const ext = selected.name.toLowerCase().slice(selected.name.lastIndexOf('.'));
+        if (!ALLOWED_TYPES.includes(selected.type) && !ALLOWED_EXTS.includes(ext)) {
+            toast.error('Please choose a PDF, JPEG, or PNG file.');
             return;
         }
         if (selected.size > 5 * 1024 * 1024) {
@@ -277,6 +396,8 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
         }
         setFile(selected);
     };
+
+    const isImageFile = (f: File) => f.type.startsWith('image/') || /\.(jpe?g|png)$/i.test(f.name);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selected = e.target.files?.[0];
@@ -320,7 +441,12 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
             toast.success('Resume saved to your profile.');
             router.refresh();
 
-            // Best-effort: try to extract sections to offer auto-import
+            if (isImageFile(file)) {
+                toast.info('Image resume saved. Upload a PDF to auto-import experience and education.');
+                handleClose(false);
+                return;
+            }
+
             try {
                 const text = await extractTextFromPdf(file);
                 const sections = parseResumeText(text);
@@ -397,7 +523,7 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
                         {currentResumeUrl ? 'Update Resume' : 'Upload Resume'}
                     </DialogTitle>
                     <DialogDescription>
-                        Upload your PDF resume. We&apos;ll save it to your profile and offer to import any experience and education we can detect.
+                        Upload your resume as a PDF, JPEG, or PNG. PDFs will be scanned to auto-import experience and education.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -406,7 +532,7 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
                         <input
                             ref={fileInputRef}
                             type="file"
-                            accept=".pdf,application/pdf"
+                            accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                             className="hidden"
                             onChange={handleFileChange}
                         />
@@ -435,10 +561,10 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
                                 </div>
                                 <div className="text-center">
                                     <p className="text-sm font-semibold">
-                                        {isDragging ? 'Drop your PDF here' : 'Drag & drop your PDF resume'}
+                                        {isDragging ? 'Drop your file here' : 'Drag & drop your resume'}
                                     </p>
                                     <p className="text-[11px] text-muted-foreground mt-0.5">
-                                        or <span className="text-secondary font-medium">click to browse</span> &bull; PDF up to 5MB
+                                        or <span className="text-secondary font-medium">click to browse</span> &bull; PDF, JPEG, or PNG up to 5MB
                                     </p>
                                 </div>
                             </div>

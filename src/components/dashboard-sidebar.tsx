@@ -11,7 +11,8 @@ import {
     ShieldCheck,
     Users,
     Settings,
-    Sparkles
+    Sparkles,
+    Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,12 @@ const navItems = [
         href: "/network",
         icon: Users,
         id: "network"
+    },
+    {
+        title: "Meetings",
+        href: "/meetings",
+        icon: Calendar,
+        id: "meetings"
     },
     {
         title: "Messages",

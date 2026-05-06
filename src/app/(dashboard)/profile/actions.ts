@@ -237,17 +237,19 @@ export async function uploadResume(formData: FormData) {
         const file = formData.get('file') as File
         if (!file) return { success: false, error: 'No file provided' }
 
-        if (file.type !== 'application/pdf') {
-            return { success: false, error: 'Only PDF files are allowed' }
+        const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
+        const ALLOWED_EXTS = ['pdf', 'jpg', 'jpeg', 'png']
+        const fileExt = file.name.split('.').pop()?.toLowerCase() || ''
+
+        if (!ALLOWED_TYPES.includes(file.type) && !ALLOWED_EXTS.includes(fileExt)) {
+            return { success: false, error: 'Only PDF, JPEG, and PNG files are allowed' }
         }
 
-        // Limit file size to 5MB
         if (file.size > 5 * 1024 * 1024) {
             return { success: false, error: 'File size must be less than 5MB' }
         }
 
-        const fileExt = 'pdf'
-        const filePath = `${user.id}/resume_${crypto.randomUUID()}.${fileExt}`
+        const filePath = `${user.id}/resume_${crypto.randomUUID()}.${fileExt || 'pdf'}`
 
         const { error: uploadError } = await supabase.storage
             .from('profiles')

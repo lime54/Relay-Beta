@@ -14,7 +14,7 @@ export default function Captcha({ onVerify }: CaptchaProps) {
     return (
         <div className="flex flex-col items-center gap-2 my-4">
             <HCaptcha
-                sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!}
+                sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || '77aa5102-3b9c-40b8-ae7a-44dca8e6a5e6'}
                 onVerify={onVerify}
                 ref={captchaRef}
             />

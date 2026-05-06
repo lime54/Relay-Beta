@@ -36,19 +36,22 @@ export async function submitOnboarding(rawData: OnboardingPayload) {
     const data = validation.data
 
     try {
+        // Build profile payload, omitting empty fields to avoid NOT NULL violations
+        const profilePayload: Record<string, unknown> = {
+            user_id: user.id,
+            status: data.status,
+            grad_year: data.grad_year,
+            career_sectors: data.sectors,
+        }
+        if (data.preferred_name) profilePayload.preferred_name = data.preferred_name
+        if (data.school) profilePayload.school = data.school
+        if (data.sport) profilePayload.sport = data.sport
+        if (data.aspiration) profilePayload.aspiration = data.aspiration
+
         // Update athlete_profiles
         const { error: profileError } = await supabase
             .from('athlete_profiles')
-            .upsert({
-                user_id: user.id,
-                preferred_name: data.preferred_name || null,
-                status: data.status,
-                school: data.school || null,
-                sport: data.sport || null,
-                grad_year: data.grad_year,
-                career_sectors: data.sectors,
-                aspiration: data.aspiration || null,
-            })
+            .upsert(profilePayload)
 
         if (profileError) {
             console.error("Profile update error:", profileError)

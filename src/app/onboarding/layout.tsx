@@ -11,7 +11,7 @@ export default function OnboardingLayout({
       <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container flex h-full items-center px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2 group transition-opacity hover:opacity-90">
-            <span className="text-xl font-bold tracking-tight text-primary">Relay</span>
+            <img src="/relay-logo.png" alt="Relay" className="h-8 w-auto" />
           </Link>
           <div className="ml-auto flex items-center gap-4">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest hidden sm:block">

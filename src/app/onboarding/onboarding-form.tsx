@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { Loader2, ArrowRight, ArrowLeft, Sparkles, Trophy, Target, Check, Rocket } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { submitOnboarding } from "./actions";
@@ -30,9 +29,6 @@ const SECTORS = [
   "Nonprofit & Social Impact", "Entrepreneurship / Startups",
   "Engineering", "Sales & Business Development",
 ];
-
-const currentYear = new Date().getFullYear();
-const gradYears = Array.from({ length: 12 }, (_, i) => (currentYear - 4 + i).toString());
 
 const STEP_COUNT = 3;
 
@@ -90,7 +86,7 @@ export function OnboardingForm({ user }: { user: any }) {
     if (data.step === 1) {
       if (!data.first_name.trim()) return "First name is required";
       if (!data.last_name.trim()) return "Last name is required";
-      if (!data.grad_year) return "Please select your graduation year";
+      if (!/^\d{4}$/.test(data.grad_year)) return "Enter a valid 4-digit graduation year";
       return null;
     }
     if (data.step === 2) {
@@ -233,10 +229,16 @@ export function OnboardingForm({ user }: { user: any }) {
                       </div>
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Graduation year</label>
-                        <Select value={data.grad_year} onChange={(e) => update({ grad_year: e.target.value })}>
-                          <option value="" disabled>Select year</option>
-                          {gradYears.map((y) => <option key={y} value={y}>{y}</option>)}
-                        </Select>
+                        <Input
+                          value={data.grad_year}
+                          onChange={(e) => {
+                            const v = e.target.value.replace(/\D/g, "").slice(0, 4);
+                            update({ grad_year: v });
+                          }}
+                          placeholder="2027"
+                          inputMode="numeric"
+                          maxLength={4}
+                        />
                       </div>
                     </div>
                   </div>

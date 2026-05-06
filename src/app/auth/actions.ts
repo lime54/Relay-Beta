@@ -64,9 +64,9 @@ export async function signup(formData: FormData) {
         return redirect('/signup?error=Please complete the captcha')
     }
 
-    // Enforce .edu email requirement
+    // Enforce .edu email requirement for current student-athletes only
     const emailDomain = email.toLowerCase().trim()
-    if (!emailDomain.endsWith('.edu')) {
+    if (role !== 'alum' && !emailDomain.endsWith('.edu')) {
         return redirect('/signup?error=' + encodeURIComponent('Please use your .edu email address. Relay requires a valid university email for verification.'))
     }
 

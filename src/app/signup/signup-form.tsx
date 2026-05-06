@@ -31,6 +31,8 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
 
 export default function SignupForm() {
     const [captchaToken, setCaptchaToken] = useState<string>('')
+    const [role, setRole] = useState<string>('')
+    const isAlum = role === 'alum'
 
     return (
         <form action={signup} className="space-y-4">
@@ -39,27 +41,32 @@ export default function SignupForm() {
                 <Input id="name" name="name" type="text" required placeholder="Your full name" />
             </div>
             <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">University Email</label>
-                <Input id="email" name="email" type="email" required placeholder="you@university.edu" />
-                <p className="text-[11px] text-muted-foreground">A valid <strong>.edu</strong> email is required to join Relay. This is how we verify your school affiliation.</p>
-            </div>
-            <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium">Password</label>
-                <Input id="password" name="password" type="password" required placeholder="Create a password" />
-            </div>
-            <div className="space-y-2">
                 <label htmlFor="role" className="text-sm font-medium">I am a...</label>
                 <select
                     id="role"
                     name="role"
                     required
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
-                    defaultValue=""
+                    value={role}
+                    onChange={e => setRole(e.target.value)}
                 >
                     <option value="" disabled>Select your role</option>
                     <option value="student">Current Student-Athlete</option>
                     <option value="alum">Former Student-Athlete (Alumni)</option>
                 </select>
+            </div>
+            <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium">{isAlum ? 'Email' : 'University Email'}</label>
+                <Input id="email" name="email" type="email" required placeholder={isAlum ? 'you@email.com' : 'you@university.edu'} />
+                <p className="text-[11px] text-muted-foreground">
+                    {isAlum
+                        ? 'You can use any email address. Alumni are verified separately.'
+                        : <>A valid <strong>.edu</strong> email is required to join Relay. This is how we verify your school affiliation.</>}
+                </p>
+            </div>
+            <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-medium">Password</label>
+                <Input id="password" name="password" type="password" required placeholder="Create a password" />
             </div>
             <div className="space-y-2">
                 <label htmlFor="sport" className="text-sm font-medium">Sport</label>

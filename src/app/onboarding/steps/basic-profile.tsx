@@ -15,14 +15,6 @@ const countries = [
   "Germany", "France", "Japan", "Brazil", "India", "Other"
 ];
 
-const statuses = [
-  { id: "current", label: "Current college student-athlete" },
-  { id: "former", label: "Former college student-athlete" },
-  { id: "pro", label: "Current high-level athlete (non-NCAA or international)" },
-  { id: "alumni", label: "Alumni / professional (non-athlete)" },
-  { id: "staff", label: "Coach or staff" },
-  { id: "other", label: "Other" },
-];
 
 export function BasicProfileStep({ data, updateData }: BasicProfileStepProps) {
   return (
@@ -110,36 +102,6 @@ export function BasicProfileStep({ data, updateData }: BasicProfileStepProps) {
         />
       </div>
 
-      <div className="space-y-4 pt-4 border-t border-border/40">
-        <label className="text-sm font-medium">Which best describes you right now?</label>
-        <div className="grid grid-cols-1 gap-2">
-          {statuses.map((status) => (
-            <button
-              key={status.id}
-              type="button"
-              onClick={() => updateData({ status: status.id })}
-              className={`flex items-center justify-between p-4 rounded-lg border-2 text-left transition-all ${
-                data.status === status.id
-                  ? "border-primary bg-primary/5 shadow-md"
-                  : "border-border/40 hover:border-border hover:bg-muted/30"
-              }`}
-            >
-              <span className={`text-sm font-medium ${data.status === status.id ? "text-primary" : "text-foreground"}`}>
-                {status.label}
-              </span>
-              <div
-                className={`h-4 w-4 rounded-full border-2 transition-all ${
-                  data.status === status.id ? "border-primary bg-primary" : "border-border"
-                }`}
-              >
-                {data.status === status.id && (
-                  <div className="h-1.5 w-1.5 m-auto translate-y-[3px] rounded-full bg-white" />
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

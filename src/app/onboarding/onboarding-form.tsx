@@ -156,6 +156,8 @@ export function OnboardingForm({ user }: { user: any }) {
     const fullName = user?.user_metadata?.name || "";
     const [first_name, ...lastParts] = fullName.split(" ");
     const last_name = lastParts.join(" ");
+    const signupRole = user?.user_metadata?.role;
+    const status = signupRole === 'alum' ? 'former' : signupRole === 'student' ? 'current' : '';
 
     return {
       ...initialData,
@@ -164,6 +166,7 @@ export function OnboardingForm({ user }: { user: any }) {
         first_name: first_name || "",
         last_name: last_name || "",
         email: user?.email || "",
+        status,
       }
     };
   });
@@ -182,7 +185,6 @@ export function OnboardingForm({ user }: { user: any }) {
       if (data.profile.first_name.trim() === "") return { valid: false, message: "First name is required" };
       if (data.profile.last_name.trim() === "") return { valid: false, message: "Last name is required" };
       if (data.profile.email.trim() === "") return { valid: false, message: "Email is required" };
-      if (data.profile.status === "") return { valid: false, message: "Please select your current status" };
       return { valid: true };
     }
     if (data.step === 2) {

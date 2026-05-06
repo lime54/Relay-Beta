@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
     LayoutDashboard,
@@ -16,6 +17,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { resetOnboarding } from "@/app/onboarding/dev-actions";
+import { toast } from "sonner";
 
 import { useNotifications } from "@/contexts/notification-context";
 
@@ -66,7 +69,31 @@ const navItems = [
 
 export function DashboardSidebar({ className }: { className?: string }) {
     const pathname = usePathname();
+    const router = useRouter();
     const { unreadMessages, pendingRequests } = useNotifications();
+    const [tapCount, setTapCount] = useState(0);
+    const [showDevReset, setShowDevReset] = useState(false);
+
+    const handleVersionTap = () => {
+        const next = tapCount + 1;
+        setTapCount(next);
+        if (next >= 5) {
+            setShowDevReset(true);
+            setTapCount(0);
+        }
+        setTimeout(() => setTapCount(0), 2000);
+    };
+
+    const handleResetOnboarding = async () => {
+        const res = await resetOnboarding();
+        if (res.error) {
+            toast.error(res.error);
+        } else {
+            toast.success("Onboarding reset — redirecting...");
+            setTimeout(() => router.push("/onboarding"), 500);
+        }
+        setShowDevReset(false);
+    };
 
     return (
         <div className={cn("flex flex-col h-full bg-card border-r border-border/50 w-64", className, "hidden md:flex flex")}>
@@ -157,6 +184,22 @@ export function DashboardSidebar({ className }: { className?: string }) {
                         Sign Out
                     </button>
                 </form>
+
+                {showDevReset && (
+                    <button
+                        onClick={handleResetOnboarding}
+                        className="mt-2 w-full text-[10px] text-red-400 hover:text-red-500 py-1 rounded transition-colors"
+                    >
+                        Reset Onboarding
+                    </button>
+                )}
+
+                <p
+                    onClick={handleVersionTap}
+                    className="text-[10px] text-muted-foreground/40 text-center mt-3 cursor-default select-none"
+                >
+                    v0.1.0-beta
+                </p>
             </div>
         </div>
     );

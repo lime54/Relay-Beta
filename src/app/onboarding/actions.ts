@@ -48,7 +48,6 @@ export async function submitOnboarding(rawData: OnboardingPayload) {
                 grad_year: data.grad_year,
                 career_sectors: data.sectors,
                 aspiration: data.aspiration || null,
-                updated_at: new Date().toISOString(),
             })
 
         if (profileError) {

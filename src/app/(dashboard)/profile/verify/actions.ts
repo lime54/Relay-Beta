@@ -24,7 +24,6 @@ export async function submitVerification(formData: FormData) {
             user_id: user.id,
             school,
             sport,
-            proof_details: { ncaa_level, years_active, verification_type },
             verification_status: false // Always starts false
         })
 
@@ -44,7 +43,6 @@ export async function submitVerification(formData: FormData) {
                 user_id: user.id,
                 school,
                 sport,
-                proof_details: { ncaa_level, years_active, verification_type },
                 verification_status: false
             })
         } else {

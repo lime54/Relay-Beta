@@ -112,6 +112,7 @@ export class BookingService {
 
         // 1. Insert the booking. The DB constraint on idempotency_key + (recipient_id, start_time)
         //    prevents double-booking and duplicate submits.
+        // 1. Insert the booking as PENDING — recipient must approve before it's confirmed.
         const { data: booking, error } = await supabase
             .from('bookings')
             .insert({
@@ -120,7 +121,7 @@ export class BookingService {
                 start_time: start.toISOString(),
                 end_time: end.toISOString(),
                 idempotency_key: idempotencyKey,
-                status: 'CONFIRMED',
+                status: 'PENDING',
                 message: message ?? null,
             })
             .select()
@@ -133,10 +134,46 @@ export class BookingService {
             throw error;
         }
 
-        // 2. Look up calendar connections for BOTH users. We'll try the requester first
-        //    (they initiated the booking, so they're likeliest to expect it on their calendar)
-        //    and fall back to the recipient. As long as ONE user has Google Calendar connected,
-        //    Google emails invites to both via sendUpdates: 'all'.
+        return {
+            ...booking,
+            calendar_synced: false,
+            calendar_error: null,
+            meeting_link: null,
+        };
+    }
+
+    /**
+     * Confirms a PENDING booking: updates status to CONFIRMED and syncs to Google Calendar.
+     * Only the recipient of the booking may confirm it.
+     */
+    static async confirmBooking(bookingId: string, userId: string) {
+        const supabase = await createClient();
+
+        // Fetch the booking
+        const { data: booking, error: fetchErr } = await supabase
+            .from('bookings')
+            .select('*')
+            .eq('id', bookingId)
+            .single();
+
+        if (fetchErr || !booking) throw new Error('Booking not found');
+        if (booking.recipient_id !== userId) throw new Error('Only the recipient can approve this meeting');
+        if (booking.status !== 'PENDING') throw new Error(`Booking is already ${booking.status.toLowerCase()}`);
+
+        // Update to CONFIRMED
+        const { error: updateErr } = await supabase
+            .from('bookings')
+            .update({ status: 'CONFIRMED' })
+            .eq('id', bookingId);
+
+        if (updateErr) throw updateErr;
+
+        // Now sync to Google Calendar
+        const requesterId = booking.requester_id;
+        const recipientId = booking.recipient_id;
+        const start = new Date(booking.start_time);
+        const end = new Date(booking.end_time);
+
         const { data: conns } = await supabase
             .from('calendar_connections')
             .select('*')
@@ -150,7 +187,6 @@ export class BookingService {
             return 0;
         });
 
-        // 3. Gather attendee emails from public.users (best effort under RLS).
         const { data: usersRows } = await supabase
             .from('users')
             .select('id, email')
@@ -165,30 +201,14 @@ export class BookingService {
         let calendarError: string | undefined;
         let meetingLink: string | undefined;
 
-        if (orderedConnections.length === 0) {
-            calendarError =
-                'Neither account has Google Calendar connected. Connect your calendar in Settings to send invites automatically.';
-        }
-
         for (const conn of orderedConnections) {
-            const isOwnerRequester = conn.user_id === requesterId;
-            const ownerLabel = isOwnerRequester ? 'your' : "the recipient's";
-
             const token = await this.getValidToken(conn.id);
-            if (!token) {
-                calendarError = `${isOwnerRequester ? 'Your' : "The recipient's"} Google Calendar connection has expired. ${isOwnerRequester ? 'Please reconnect it in Settings → Calendar.' : 'Ask them to reconnect it in Settings → Calendar, or connect your own.'}`;
-                continue;
-            }
+            if (!token) continue;
 
-            // The connection owner's verified Google email is the most reliable address.
-            // Fall back to public.users for the OTHER user.
             const ownerEmail = conn.provider_account_id;
-            const otherUserId = isOwnerRequester ? recipientId : requesterId;
+            const otherUserId = conn.user_id === requesterId ? recipientId : requesterId;
             const otherEmail = emailByUser.get(otherUserId);
-
-            const attendeeEmails = [ownerEmail, otherEmail].filter(
-                (e): e is string => Boolean(e)
-            );
+            const attendeeEmails = [ownerEmail, otherEmail].filter((e): e is string => Boolean(e));
 
             try {
                 const provider = this.getProvider(conn.provider);
@@ -196,8 +216,8 @@ export class BookingService {
                     startTime: start,
                     endTime: end,
                     title: 'Relay Meeting',
-                    description: message
-                        ? `Message from requester:\n\n${message}`
+                    description: booking.message
+                        ? `Message from requester:\n\n${booking.message}`
                         : 'A meeting booked through Relay.',
                     attendeeEmails,
                 });
@@ -207,43 +227,48 @@ export class BookingService {
                     .update({
                         provider_event_id: event.providerEventId,
                         meeting_link: event.meetLink,
-                        updated_at: new Date().toISOString(),
                     })
-                    .eq('id', booking.id);
+                    .eq('id', bookingId);
 
                 calendarSynced = true;
                 meetingLink = event.meetLink;
                 calendarError = undefined;
                 break;
             } catch (err) {
-                console.error('[BookingService] Calendar event creation failed', err);
+                console.error('[BookingService] Calendar sync on confirm failed', err);
                 const errMsg = err instanceof Error ? err.message : String(err);
-
-                // Detect auth/credential errors from Google. The token Supabase had on file
-                // was rejected by Google — deactivate so the user is prompted to reconnect
-                // and we don't keep retrying with a dead connection.
-                const isAuthError =
-                    /invalid authentication credentials/i.test(errMsg) ||
-                    /invalid_grant/i.test(errMsg) ||
-                    /unauthorized/i.test(errMsg) ||
-                    /\b401\b/.test(errMsg) ||
-                    /\b403\b/.test(errMsg);
-
-                if (isAuthError) {
-                    await this.deactivateConnection(supabase, conn.id);
-                    calendarError = `${isOwnerRequester ? 'Your' : "The recipient's"} Google Calendar connection was rejected by Google and has been disconnected. ${isOwnerRequester ? 'Please reconnect it in Settings → Calendar.' : 'Ask them to reconnect it, or connect your own.'}`;
-                } else {
-                    calendarError = `Couldn't create the event on ${ownerLabel} calendar: ${errMsg}`;
-                }
-                // Try the next connection if available.
+                const isAuthError = /invalid authentication credentials|invalid_grant|unauthorized|\b401\b|\b403\b/i.test(errMsg);
+                if (isAuthError) await this.deactivateConnection(supabase, conn.id);
+                calendarError = `Calendar sync failed: ${errMsg}`;
             }
         }
 
-        return {
-            ...booking,
-            meeting_link: meetingLink ?? booking.meeting_link ?? null,
-            calendar_synced: calendarSynced,
-            calendar_error: calendarError ?? null,
-        };
+        return { success: true, calendar_synced: calendarSynced, calendar_error: calendarError ?? null, meeting_link: meetingLink ?? null };
+    }
+
+    /**
+     * Declines a PENDING booking.
+     * Only the recipient may decline.
+     */
+    static async declineBooking(bookingId: string, userId: string) {
+        const supabase = await createClient();
+
+        const { data: booking, error: fetchErr } = await supabase
+            .from('bookings')
+            .select('id, recipient_id, status')
+            .eq('id', bookingId)
+            .single();
+
+        if (fetchErr || !booking) throw new Error('Booking not found');
+        if (booking.recipient_id !== userId) throw new Error('Only the recipient can decline this meeting');
+        if (booking.status !== 'PENDING') throw new Error(`Booking is already ${booking.status.toLowerCase()}`);
+
+        const { error } = await supabase
+            .from('bookings')
+            .update({ status: 'DECLINED' })
+            .eq('id', bookingId);
+
+        if (error) throw error;
+        return { success: true };
     }
 }

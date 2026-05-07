@@ -100,24 +100,12 @@ export function ConnectionsList({ connections }: { connections: Connection[] }) 
                                         Message
                                     </Button>
                                 </Link>
-                                {hasScheduling ? (
-                                    <Link href={`/profile/${conn.id}?book=1`} className="flex-1 min-w-[7rem]">
-                                        <Button size="sm" className="w-full rounded-full bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5">
-                                            <Calendar className="h-3.5 w-3.5" />
-                                            Schedule Call
-                                        </Button>
-                                    </Link>
-                                ) : (
-                                    <Button
-                                        size="sm"
-                                        disabled
-                                        className="flex-1 min-w-[7rem] rounded-full gap-1.5 cursor-not-allowed"
-                                        title="This user hasn't connected their calendar yet"
-                                    >
+                                <Link href={`/profile/${conn.id}?book=1`} className="flex-1 min-w-[7rem]">
+                                    <Button size="sm" className="w-full rounded-full bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5">
                                         <Calendar className="h-3.5 w-3.5" />
-                                        Calendar not connected
+                                        Schedule Call
                                     </Button>
-                                )}
+                                </Link>
                             </div>
                         </CardContent>
                     </Card>

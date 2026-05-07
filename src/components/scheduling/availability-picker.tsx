@@ -116,17 +116,10 @@ export function AvailabilityPicker({
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Booking failed");
 
-            const synced = data?.booking?.calendar_synced;
-            const calErr = data?.booking?.calendar_error;
-            if (synced) {
-                toast.success("Meeting booked! Google Calendar invites sent to both of you.");
-            } else {
-                toast.warning(
-                    calErr ||
-                        "Meeting booked, but couldn't add it to Google Calendar. Connect a calendar in Settings to send invites.",
-                    { duration: 8000 }
-                );
-            }
+            toast.success(
+                `Meeting request sent to ${recipientName}! They'll be notified and can approve or decline.`,
+                { duration: 5000 }
+            );
             setSelectedSlot(null);
             setMessage("");
             fetchAvailability(currentWeekStart);
@@ -309,7 +302,7 @@ export function AvailabilityPicker({
                                 disabled={booking}
                                 className="min-w-[120px] rounded-full shadow-lg shadow-primary/20"
                             >
-                                {booking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm Booking"}
+                                {booking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Meeting Request"}
                             </Button>
                         </div>
                     </div>

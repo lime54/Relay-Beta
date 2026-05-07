@@ -100,7 +100,7 @@ export function DashboardSidebar({ className }: { className?: string }) {
             <div className="p-6">
                 <Link href="/" className="flex items-center gap-2">
                     <img src="/relay-logo.png" alt="Relay" className="h-8 w-auto" />
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 bg-muted/50 px-1.5 py-0.5 rounded-md">beta</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 bg-muted/50 px-1.5 py-0.5 rounded-md self-end mb-0.5">beta</span>
                 </Link>
             </div>
 

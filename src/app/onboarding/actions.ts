@@ -36,22 +36,48 @@ export async function submitOnboarding(rawData: OnboardingPayload) {
     const data = validation.data
 
     try {
-        // Build profile payload, omitting empty fields to avoid NOT NULL violations
-        const profilePayload: Record<string, unknown> = {
-            user_id: user.id,
-            status: data.status,
-            grad_year: data.grad_year,
-            career_sectors: data.sectors,
-        }
-        if (data.preferred_name) profilePayload.preferred_name = data.preferred_name
-        if (data.school) profilePayload.school = data.school
-        if (data.sport) profilePayload.sport = data.sport
-        if (data.aspiration) profilePayload.aspiration = data.aspiration
-
-        // Update athlete_profiles
-        const { error: profileError } = await supabase
+        // Check if profile row already exists
+        const { data: existing } = await supabase
             .from('athlete_profiles')
-            .upsert(profilePayload)
+            .select('user_id')
+            .eq('user_id', user.id)
+            .single()
+
+        let profileError: { message: string } | null = null
+
+        if (existing) {
+            // UPDATE — only set fields we have values for
+            const updates: Record<string, unknown> = {
+                status: data.status,
+                grad_year: data.grad_year,
+                career_sectors: data.sectors,
+            }
+            if (data.preferred_name) updates.preferred_name = data.preferred_name
+            if (data.school) updates.school = data.school
+            if (data.sport) updates.sport = data.sport
+            if (data.aspiration) updates.aspiration = data.aspiration
+
+            const res = await supabase
+                .from('athlete_profiles')
+                .update(updates)
+                .eq('user_id', user.id)
+            profileError = res.error
+        } else {
+            // INSERT — include school/sport with fallback to empty string
+            const res = await supabase
+                .from('athlete_profiles')
+                .insert({
+                    user_id: user.id,
+                    status: data.status,
+                    school: data.school || '',
+                    sport: data.sport || '',
+                    grad_year: data.grad_year,
+                    career_sectors: data.sectors,
+                    preferred_name: data.preferred_name || '',
+                    aspiration: data.aspiration || '',
+                })
+            profileError = res.error
+        }
 
         if (profileError) {
             console.error("Profile update error:", profileError)

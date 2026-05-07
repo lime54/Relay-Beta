@@ -12,7 +12,7 @@ export default function OnboardingLayout({
         <div className="container flex h-full items-center px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2 group transition-opacity hover:opacity-90">
             <img src="/relay-logo.png" alt="Relay" className="h-8 w-auto" />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 bg-muted/50 px-1.5 py-0.5 rounded-md">beta</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 bg-muted/50 px-1.5 py-0.5 rounded-md self-end mb-0.5">beta</span>
           </Link>
           <div className="ml-auto flex items-center gap-4">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest hidden sm:block">

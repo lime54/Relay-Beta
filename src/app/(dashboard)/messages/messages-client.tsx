@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -377,20 +378,32 @@ export default function MessagesClient({
                                     {otherPerson?.athlete_profiles?.school || "University"}
                                 </p>
                             </div>
-                            <Button
-                                variant={showRequestDetails ? "secondary" : "outline"}
-                                size="sm"
-                                className={cn(
-                                    "rounded-full gap-1.5 text-xs font-semibold transition-all",
-                                    showRequestDetails && "bg-secondary text-secondary-foreground"
-                                )}
-                                onClick={() =>
-                                    setShowRequestDetails(!showRequestDetails)
-                                }
-                            >
-                                <FileText className="h-3.5 w-3.5" />
-                                Request Details
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <Link href={`/profile/${selectedConnection?.requester_id === userId ? selectedConnection?.recipient_id : selectedConnection?.requester_id}?book=1`}>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="rounded-full gap-1.5 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/5"
+                                    >
+                                        <Calendar className="h-3.5 w-3.5" />
+                                        Schedule Meeting
+                                    </Button>
+                                </Link>
+                                <Button
+                                    variant={showRequestDetails ? "secondary" : "outline"}
+                                    size="sm"
+                                    className={cn(
+                                        "rounded-full gap-1.5 text-xs font-semibold transition-all",
+                                        showRequestDetails && "bg-secondary text-secondary-foreground"
+                                    )}
+                                    onClick={() =>
+                                        setShowRequestDetails(!showRequestDetails)
+                                    }
+                                >
+                                    <FileText className="h-3.5 w-3.5" />
+                                    Request Details
+                                </Button>
+                            </div>
                         </div>
 
                         {/* Sliding request details panel */}

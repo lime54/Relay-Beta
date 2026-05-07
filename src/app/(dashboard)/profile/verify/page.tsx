@@ -57,19 +57,12 @@ export default async function VerifyPage({ searchParams }: { searchParams: Promi
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Verification Method</label>
-                            <select name="verification_type" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                                <option value="roster_url">Link to Roster (Preferred)</option>
-                                <option value="upload">Upload Proof (Photo/ID)</option>
-                                <option value="email">.edu Email Confirmation</option>
-                            </select>
-                        </div>
+                        <input type="hidden" name="verification_type" value="roster_url" />
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Proof URL</label>
-                            <Input name="proof_url" placeholder="https://gostanford.com/sports/..." />
-                            <p className="text-xs text-muted-foreground">If uploading, please upload to a host and paste link here (Demo).</p>
+                            <label className="text-sm font-medium">Link to Online Roster</label>
+                            <Input name="proof_url" required placeholder="https://gostanford.com/sports/..." />
+                            <p className="text-xs text-muted-foreground">Paste the link to your team's official roster page where your name appears.</p>
                         </div>
 
                         <SubmitButton className="w-full" loadingText="Submitting...">Submit for Review</SubmitButton>

@@ -80,12 +80,12 @@ export async function POST(request: Request) {
             }
         }
 
-        // 3. Existing CONFIRMED bookings on Relay are also busy.
+        // 3. Existing CONFIRMED and PENDING bookings on Relay are also busy.
         const { data: existingBookings } = await supabase
             .from('bookings')
             .select('start_time, end_time')
             .eq('recipient_id', userId)
-            .eq('status', 'CONFIRMED')
+            .in('status', ['CONFIRMED', 'PENDING'])
             .gte('end_time', start.toISOString())
             .lte('start_time', end.toISOString());
 

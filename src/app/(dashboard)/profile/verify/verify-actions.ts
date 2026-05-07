@@ -81,16 +81,6 @@ export async function runVerification(
         .from('athlete_profiles')
         .update({
             verification_status: isVerified,
-            proof_details: {
-                edu_verified: eduVerified,
-                roster_verified: rosterVerified,
-                roster_matched_name: matchedName,
-                roster_url_checked: urlToCheck,
-                roster_details: rosterDetails,
-                verification_tier: tier,
-                verified_at: isVerified ? new Date().toISOString() : null,
-                auto_verified: true,
-            },
         })
         .eq('user_id', user.id)
 

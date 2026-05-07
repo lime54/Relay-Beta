@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 
 interface DashboardData {
+    userId: string;
     userName: string;
     userRole: string;
     isVerified: boolean;
@@ -254,7 +255,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                                 {data.upcomingMeetings && data.upcomingMeetings.length > 0 ? (
                                     <div className="space-y-3">
                                         {data.upcomingMeetings.map((meeting: any) => {
-                                            const isRequester = meeting.requester.name === data.userName;
+                                            const isRequester = meeting.requester?.id === data.userId;
                                             const otherPerson = isRequester ? meeting.recipient : meeting.requester;
                                             const otherAvatar = otherPerson?.athlete_profiles?.avatar_url;
                                             const dateObj = new Date(meeting.start_time);

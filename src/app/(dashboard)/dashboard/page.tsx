@@ -108,8 +108,8 @@ export default async function DashboardPage() {
             end_time,
             status,
             meeting_link,
-            requester:requester_id (name, athlete_profiles(avatar_url)),
-            recipient:recipient_id (name, athlete_profiles(avatar_url))
+            requester:requester_id (id, name, athlete_profiles(avatar_url)),
+            recipient:recipient_id (id, name, athlete_profiles(avatar_url))
         `)
         .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .eq('status', 'CONFIRMED')
@@ -120,6 +120,7 @@ export default async function DashboardPage() {
     return (
         <DashboardClient
             data={{
+                userId: user.id,
                 userName,
                 userRole,
                 isVerified,

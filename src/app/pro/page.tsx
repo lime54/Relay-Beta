@@ -1,7 +1,7 @@
 import Link from "next/link"
 import Navbar from "@/components/navbar"
-import { RELAY_PRO_PRICING } from "@/lib/pricing"
 import { ProUpgradeCTA } from "./pro-upgrade-cta"
+import { ProCard } from "./pro-card"
 import { ProFAQ } from "./pro-faq"
 import { Check, X, Sparkles, ArrowRight } from "lucide-react"
 
@@ -70,9 +70,6 @@ function FeatureCell({ value }: { value: boolean | string }) {
 }
 
 export default function ProPage() {
-    const monthly = RELAY_PRO_PRICING.monthly
-    const yearly = RELAY_PRO_PRICING.yearly
-
     return (
         <div className="flex flex-col min-h-screen bg-background">
             <Navbar />
@@ -126,45 +123,7 @@ export default function ProPage() {
                         </div>
 
                         {/* Pro */}
-                        <div className="rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 text-white p-8 flex flex-col relative shadow-xl shadow-slate-900/20 ring-1 ring-white/10 overflow-hidden">
-                            <div className="absolute top-0 right-0 w-48 h-48 bg-secondary/20 rounded-full blur-3xl pointer-events-none" />
-                            <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-                            <div className="relative z-10 flex flex-col flex-1">
-                                <div className="mb-6 flex items-center justify-between">
-                                    <div>
-                                        <h2 className="text-2xl font-bold flex items-center gap-2">
-                                            Relay Pro
-                                            <Sparkles className="h-5 w-5 text-yellow-400" />
-                                        </h2>
-                                        <p className="text-sm text-white/70 mt-1">For athletes who are serious about their next chapter.</p>
-                                    </div>
-                                    <span className="text-[10px] uppercase tracking-wider font-bold bg-yellow-400/20 text-yellow-300 px-2 py-1 rounded-full ring-1 ring-yellow-400/30">
-                                        Save {yearly.savingsPct}%
-                                    </span>
-                                </div>
-                                <div className="mb-2">
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-5xl font-bold">{monthly.label}</span>
-                                        <span className="text-sm text-white/60">/ {monthly.cadence}</span>
-                                    </div>
-                                </div>
-                                <p className="text-xs text-white/60 mb-6">
-                                    or {yearly.label}/year (${yearly.equivalentMonthly.toFixed(2)}/mo, billed annually)
-                                </p>
-                                <ul className="space-y-3 text-sm mb-8 flex-1">
-                                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" /> Unlimited outbound requests</li>
-                                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" /> Priority placement in network search</li>
-                                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" /> Advanced verification badge</li>
-                                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" /> Profile analytics + view tracking</li>
-                                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" /> Google Calendar integration</li>
-                                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" /> Priority email support</li>
-                                </ul>
-                                <ProUpgradeCTA />
-                                <p className="text-[11px] text-white/50 text-center mt-3">
-                                    Cancel anytime. No long-term commitment.
-                                </p>
-                            </div>
-                        </div>
+                        <ProCard />
                     </div>
                 </section>
 

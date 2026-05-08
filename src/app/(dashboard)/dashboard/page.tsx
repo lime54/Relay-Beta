@@ -91,10 +91,17 @@ export default async function DashboardPage() {
         .eq('requester_id', user.id)
         .eq('status', 'pending')
 
-    // Fetch recent requests (last 5)
+    // Fetch recent requests (last 5) with recipient details
     const { data: recentRequests } = await supabase
         .from('requests')
-        .select('id, request_type, status, created_at')
+        .select(`
+            id,
+            request_type,
+            status,
+            created_at,
+            context,
+            recipient:recipient_id (id, name, athlete_profiles(avatar_url, school, sport))
+        `)
         .eq('requester_id', user.id)
         .order('created_at', { ascending: false })
         .limit(5)

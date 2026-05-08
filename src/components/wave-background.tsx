@@ -18,12 +18,12 @@ interface WaveLine {
 }
 
 const LINES: WaveLine[] = [
-    { amplitude: 18, frequency: 1.2, phase: 0,     speed: 0.25, yOffset: 0.22, opacity: 0.12, width: 1.5 },
-    { amplitude: 24, frequency: 0.9, phase: 1.2,   speed: 0.18, yOffset: 0.35, opacity: 0.10, width: 1.2 },
-    { amplitude: 14, frequency: 1.6, phase: 2.8,   speed: 0.30, yOffset: 0.48, opacity: 0.08, width: 1.0 },
-    { amplitude: 30, frequency: 0.7, phase: 0.6,   speed: 0.15, yOffset: 0.60, opacity: 0.11, width: 1.4 },
-    { amplitude: 20, frequency: 1.1, phase: 4.0,   speed: 0.22, yOffset: 0.74, opacity: 0.09, width: 1.1 },
-    { amplitude: 12, frequency: 1.8, phase: 3.2,   speed: 0.28, yOffset: 0.86, opacity: 0.07, width: 0.9 },
+    { amplitude: 18, frequency: 1.2, phase: 0,     speed: 0.7,  yOffset: 0.22, opacity: 0.14, width: 2.8 },
+    { amplitude: 24, frequency: 0.9, phase: 1.2,   speed: 0.55, yOffset: 0.35, opacity: 0.12, width: 2.4 },
+    { amplitude: 14, frequency: 1.6, phase: 2.8,   speed: 0.85, yOffset: 0.48, opacity: 0.10, width: 2.0 },
+    { amplitude: 30, frequency: 0.7, phase: 0.6,   speed: 0.45, yOffset: 0.60, opacity: 0.13, width: 2.6 },
+    { amplitude: 20, frequency: 1.1, phase: 4.0,   speed: 0.65, yOffset: 0.74, opacity: 0.11, width: 2.2 },
+    { amplitude: 12, frequency: 1.8, phase: 3.2,   speed: 0.80, yOffset: 0.86, opacity: 0.09, width: 1.8 },
 ];
 
 // Number of cubic-bezier segments per line (more = smoother)

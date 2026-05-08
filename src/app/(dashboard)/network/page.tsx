@@ -19,7 +19,6 @@ export default async function NetworkPage({
     if (!user) redirect('/login')
 
     const sp = await searchParams
-    const search = sp.search || ''
     const sport = sp.sport && sp.sport !== 'All' ? sp.sport : null
     const industry = sp.industry && sp.industry !== 'All' ? sp.industry : null
     const activeTab = sp.tab === 'mine' ? 'mine' : 'discover'
@@ -130,17 +129,11 @@ export default async function NetworkPage({
         )
     }
 
-    // ---- Discover tab (existing logic) ----
-    let query = supabase
+    // ---- Discover tab — fetch all users, filtering is done client-side ----
+    const { data: users, error } = await supabase
         .from('users')
         .select('id, name, email, role, avatar_url, athlete_profiles(*)')
-        .neq('id', user.id)
-
-    if (search) {
-        query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`)
-    }
-
-    const { data: users, error } = await query;
+        .neq('id', user.id);
 
     if (error) {
         console.error('Error fetching users:', error)
@@ -216,7 +209,6 @@ export default async function NetworkPage({
             {TabsNav}
             <NetworkClient
                 realUsers={finalUsers}
-                initialSearch={search}
                 initialSport={sport || 'All'}
                 initialIndustry={industry || 'All'}
             />

@@ -115,7 +115,6 @@ interface NetworkPerson {
 
 interface NetworkClientProps {
     realUsers: NetworkPerson[];
-    initialSearch: string;
     initialSport: string;
     initialIndustry: string;
 }
@@ -143,7 +142,6 @@ const item = {
 
 export default function NetworkClient({
     realUsers,
-    initialSearch,
     initialSport,
     initialIndustry,
 }: NetworkClientProps) {
@@ -153,7 +151,7 @@ export default function NetworkClient({
 
     const [sportFilter, setSportFilter] = useState(initialSport || "All");
     const [industryFilter, setIndustryFilter] = useState(initialIndustry || "All");
-    const [searchQuery, setSearchQuery] = useState(initialSearch || "");
+    const [searchQuery, setSearchQuery] = useState("");
     const [connected, setConnected] = useState<Set<string>>(new Set());
     const [selectedPerson, setSelectedPerson] = useState<NetworkPerson | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -174,9 +172,8 @@ export default function NetworkClient({
         [searchParams, router, pathname]
     );
 
-    // Client-side filtering for instant feedback (server already pre-filters
-    // by search on Enter, but sport/industry dropdowns filter here too so
-    // the grid updates immediately without a round-trip).
+    // All filtering happens client-side for instant results across
+    // name, school, sport, and industry.
     const filteredPeople = useMemo(() => {
         return realUsers.filter((person) => {
             const sportMatch =
@@ -192,12 +189,6 @@ export default function NetworkClient({
             return sportMatch && industryMatch && searchMatch;
         });
     }, [realUsers, sportFilter, industryFilter, searchQuery]);
-
-    const handleSearchKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter") {
-            updateParams({ search: searchQuery });
-        }
-    };
 
     const handleSportChange = (value: string) => {
         setSportFilter(value);
@@ -272,7 +263,6 @@ export default function NetworkClient({
                             className="bg-white/5 border-white/10 text-white placeholder:text-white/40 mb-3 rounded-xl h-12 focus-visible:ring-secondary/50"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={handleSearchKeyDown}
                         />
                         <div className="flex flex-col sm:flex-row gap-3">
                             <div className="flex-1">

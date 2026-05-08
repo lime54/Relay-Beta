@@ -92,27 +92,40 @@ export default async function DashboardPage() {
         .eq('status', 'pending')
 
     // Fetch recent requests (last 5) — both sent AND received
-    const { data: sentRequests } = await supabase
+    const { data: rawRecentRequests } = await supabase
         .from('requests')
-        .select(`
-            id,
-            request_type,
-            status,
-            created_at,
-            context,
-            requester_id,
-            recipient_id,
-            requester:requester_id (id, name, athlete_profiles(avatar_url, school, sport)),
-            recipient:recipient_id (id, name, athlete_profiles(avatar_url, school, sport))
-        `)
+        .select('id, request_type, status, created_at, context, requester_id, recipient_id')
         .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
         .limit(5)
 
-    // Normalize: figure out who the "other person" is for each request
-    const recentRequests = (sentRequests || []).map((r: any) => {
+    // Collect the "other person" user IDs and bulk-fetch their profiles
+    const otherPersonIds = (rawRecentRequests || []).map((r: any) =>
+        r.requester_id === user.id ? r.recipient_id : r.requester_id
+    ).filter(Boolean)
+
+    let personMap: Record<string, any> = {}
+    if (otherPersonIds.length > 0) {
+        const uniqueIds = [...new Set(otherPersonIds)]
+        const { data: personUsers } = await supabase
+            .from('users')
+            .select('id, name, athlete_profiles(avatar_url, school, sport)')
+            .in('id', uniqueIds)
+
+        if (personUsers) {
+            personUsers.forEach((u: any) => {
+                personMap[u.id] = u
+            })
+        }
+    }
+
+    // Stitch person data into requests
+    const recentRequests = (rawRecentRequests || []).map((r: any) => {
         const isSender = r.requester_id === user.id
-        const otherPerson = isSender ? r.recipient : r.requester
+        const otherId = isSender ? r.recipient_id : r.requester_id
+        const otherUser = personMap[otherId] || null
+        const profiles = otherUser?.athlete_profiles
+        const profile = Array.isArray(profiles) ? profiles[0] : profiles
         return {
             id: r.id,
             request_type: r.request_type,
@@ -120,7 +133,11 @@ export default async function DashboardPage() {
             created_at: r.created_at,
             context: r.context,
             direction: isSender ? 'sent' as const : 'received' as const,
-            otherPerson,
+            otherPerson: otherUser ? {
+                id: otherUser.id,
+                name: otherUser.name,
+                athlete_profiles: profile,
+            } : null,
         }
     })
 

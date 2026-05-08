@@ -8,7 +8,7 @@ import { Compass, Users } from "lucide-react"
 
 export const dynamic = 'force-dynamic'
 
-type Sport = "Squash" | "Tennis" | "Golf" | "Hockey" | "Basketball" | "Football"
+type Sport = string
 
 export default async function NetworkPage({
     searchParams
@@ -207,9 +207,7 @@ export default async function NetworkPage({
 
     const finalUsers = realUsers.filter(u => {
         const sportMatch = !sport || (
-            sport === 'Track & Field'
-                ? u.sport.startsWith('Track & Field')
-                : u.sport === sport
+            u.sport.toLowerCase() === sport.toLowerCase()
         );
         const industryMatch = !industry || (u.industry === industry);
         return sportMatch && industryMatch;

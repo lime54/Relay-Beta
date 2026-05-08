@@ -43,7 +43,35 @@ import { RequestForm } from "@/app/(dashboard)/requests/new/request-form";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { cn } from "@/lib/utils";
 
-type Sport = "Squash" | "Tennis" | "Golf" | "Hockey" | "Basketball" | "Football" | "Track & Field";
+const SPORTS = [
+    "All",
+    "Baseball",
+    "Basketball",
+    "Cross Country",
+    "Fencing",
+    "Field Hockey",
+    "Football",
+    "Golf",
+    "Gymnastics",
+    "Ice Hockey",
+    "Lacrosse",
+    "Rowing",
+    "Rugby",
+    "Sailing",
+    "Skiing",
+    "Soccer",
+    "Softball",
+    "Squash",
+    "Swimming & Diving",
+    "Tennis",
+    "Track & Field",
+    "Volleyball",
+    "Water Polo",
+    "Wrestling",
+    "Other",
+];
+
+type Sport = (typeof SPORTS)[number];
 
 interface NetworkPerson {
     id: string;
@@ -192,25 +220,20 @@ export default function NetworkClient({ realUsers, initialSearch, initialSport, 
                             onKeyDown={handleKeyDown}
                         />
                         <div className="flex flex-col sm:flex-row gap-3">
-                            <div className="flex flex-wrap gap-2 flex-1">
-                                {["All", "Squash", "Tennis", "Golf", "Track & Field"].map((s) => (
-                                    <button
-                                        key={s}
-                                        onClick={() => handleSportChange(s as any)}
-                                        className={cn(
-                                            "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
-                                            filter === s
-                                                ? "bg-secondary text-secondary-foreground"
-                                                : "bg-white/5 hover:bg-white/10"
-                                        )}
-                                    >
-                                        {s}
-                                    </button>
-                                ))}
+                            <div className="sm:w-48">
+                                <Select
+                                    value={filter}
+                                    onChange={(e) => handleSportChange(e.target.value as Sport | "All")}
+                                    className="h-8 text-xs bg-white/5 border-white/10 text-white rounded-full focus-visible:ring-secondary/50"
+                                >
+                                    {SPORTS.map(s => (
+                                        <option key={s} value={s} className="text-black">{s === "All" ? "All Sports" : s}</option>
+                                    ))}
+                                </Select>
                             </div>
                             <div className="sm:w-48">
-                                <Select 
-                                    value={industryFilter} 
+                                <Select
+                                    value={industryFilter}
                                     onChange={handleIndustryChange}
                                     className="h-8 text-xs bg-white/5 border-white/10 text-white rounded-full focus-visible:ring-secondary/50"
                                 >

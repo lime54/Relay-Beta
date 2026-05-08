@@ -23,7 +23,7 @@ export function LoginShell({ children }: { children: React.ReactNode }) {
                         Your network is your&nbsp;net&nbsp;worth.
                     </h2>
                     <p className="text-primary-foreground/60 text-lg leading-relaxed">
-                        Connect with fellow student-athletes, build professional relationships, and unlock career opportunities.
+                        Thank you for being one of our first users. Your feedback as a beta tester is shaping the future of athlete networking.
                     </p>
                 </div>
 

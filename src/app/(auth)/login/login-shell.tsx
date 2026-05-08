@@ -12,7 +12,7 @@ export function LoginShell({ children }: { children: React.ReactNode }) {
                 {/* Top: logo */}
                 <div className="relative z-10 flex items-center gap-3">
                     <img src="/relay-logo.png" alt="Relay" className="h-10 w-auto brightness-0 invert" />
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-primary-foreground/50 bg-white/10 px-1.5 py-0.5 rounded-md">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-primary-foreground/50 bg-white/10 px-1.5 py-0.5 rounded-md self-end mb-0.5">
                         beta
                     </span>
                 </div>

@@ -12,7 +12,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
                 {/* Mobile logo — visible only on small screens */}
                 <div className="flex items-center justify-center gap-3 lg:hidden">
                     <img src="/relay-logo.png" alt="Relay" className="h-9 w-auto" />
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 bg-muted/50 px-1.5 py-0.5 rounded-md">beta</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 bg-muted/50 px-1.5 py-0.5 rounded-md self-end mb-0.5">beta</span>
                 </div>
 
                 <div className="space-y-2 text-center lg:text-left">

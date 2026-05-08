@@ -8,8 +8,6 @@ import { Compass, Users } from "lucide-react"
 
 export const dynamic = 'force-dynamic'
 
-type Sport = string
-
 export default async function NetworkPage({
     searchParams
 }: {
@@ -92,7 +90,7 @@ export default async function NetworkPage({
 
     const TabsNav = (
         <div className="max-w-7xl mx-auto px-4 mb-6">
-            <div className="flex gap-1 p-1 bg-slate-100 rounded-2xl w-full md:w-fit">
+            <div className="flex gap-1 p-1 bg-muted rounded-2xl w-full md:w-fit">
                 {tabs.map(t => {
                     const Icon = t.icon
                     const href = t.id === 'discover' ? '/network' : '/network?tab=mine'
@@ -102,14 +100,14 @@ export default async function NetworkPage({
                             key={t.id}
                             href={href}
                             className={`flex items-center justify-center gap-2 py-2.5 px-5 rounded-xl text-sm font-bold transition-all ${
-                                isActive ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                                isActive ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                             }`}
                         >
                             <Icon className="h-4 w-4" />
                             {t.label}
                             {'count' in t && t.count !== undefined && t.count > 0 && (
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                                    isActive ? 'bg-primary text-white' : 'bg-slate-200 text-slate-600'
+                                    isActive ? 'bg-primary text-primary-foreground' : 'bg-muted-foreground/20 text-muted-foreground'
                                 }`}>
                                     {t.count}
                                 </span>
@@ -192,13 +190,11 @@ export default async function NetworkPage({
                 name: u.name || u.email || 'Unknown User',
                 role: u.role === 'student' ? 'Student-Athlete' : 'Alumni',
                 school: profile?.school || 'Unknown School',
-                sport: displaySport as Sport,
-                level: profile?.year || undefined,
+                sport: displaySport,
                 imageUrl: u.avatar_url || profile?.avatar_url || '',
                 industry: profile?.career_sectors?.[0] || undefined,
                 company: experiencesMap[u.id]?.company,
                 position: experiencesMap[u.id]?.role,
-                isPlaceholder: false as const,
                 isVerified: profile?.verification_status || false,
                 similarityScore,
                 linkedinUrl: profile?.linkedin_url || undefined,

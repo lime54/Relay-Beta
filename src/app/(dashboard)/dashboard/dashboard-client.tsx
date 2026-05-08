@@ -14,9 +14,9 @@ import {
     Calendar,
     Send,
     Users,
-    Sparkles,
     MessageCircle,
 } from "lucide-react";
+import { WaveBackground } from "@/components/wave-background";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -159,9 +159,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                 variants={item}
                 className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-10 text-primary-foreground"
             >
-                <div className="absolute top-0 right-0 opacity-[0.07] blur-2xl">
-                    <Sparkles className="h-64 w-64" />
-                </div>
+                <WaveBackground className="absolute inset-0 text-primary-foreground pointer-events-none" />
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div className="space-y-2">
                         <div className="flex items-center gap-3">

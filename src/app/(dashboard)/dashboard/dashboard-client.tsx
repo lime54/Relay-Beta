@@ -283,10 +283,15 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                                         REQUEST_TYPE_LABELS[req.request_type] ||
                                         req.request_type?.replace("_", " ");
 
+                                    const linkHref =
+                                        req.status === "accepted" && recipient?.id
+                                            ? `/messages?user=${recipient.id}`
+                                            : `/requests/${req.id}`;
+
                                     return (
                                         <Link
                                             key={req.id}
-                                            href={`/requests`}
+                                            href={linkHref}
                                         >
                                             <div className="flex items-center gap-4 p-4 rounded-2xl bg-background border border-border/50 hover:border-secondary/30 hover:shadow-sm transition-all group cursor-pointer">
                                                 {/* Avatar */}

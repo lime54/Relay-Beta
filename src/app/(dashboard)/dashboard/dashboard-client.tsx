@@ -34,7 +34,8 @@ interface RecentRequest {
     status: string;
     created_at: string;
     context?: string;
-    recipient?: any;
+    direction: "sent" | "received";
+    otherPerson?: any;
 }
 
 interface DashboardData {
@@ -233,7 +234,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                                     Recent Requests
                                 </CardTitle>
                                 <CardDescription className="text-xs">
-                                    Your latest connection activity
+                                    Your latest sent &amp; received requests
                                 </CardDescription>
                             </div>
                             <Link href="/requests">
@@ -272,21 +273,24 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                                 </div>
                             ) : (
                                 data.recentRequests.map((req) => {
-                                    const recipient = req.recipient;
-                                    const profile = Array.isArray(recipient?.athlete_profiles)
-                                        ? recipient?.athlete_profiles?.[0]
-                                        : recipient?.athlete_profiles;
+                                    const person = req.otherPerson;
+                                    const profile = Array.isArray(person?.athlete_profiles)
+                                        ? person?.athlete_profiles?.[0]
+                                        : person?.athlete_profiles;
                                     const statusCfg =
                                         STATUS_CONFIG[req.status] || STATUS_CONFIG.pending;
                                     const StatusIcon = statusCfg.icon;
                                     const typeLabel =
                                         REQUEST_TYPE_LABELS[req.request_type] ||
                                         req.request_type?.replace("_", " ");
+                                    const isSent = req.direction === "sent";
 
                                     const linkHref =
-                                        req.status === "accepted" && recipient?.id
-                                            ? `/messages?user=${recipient.id}`
-                                            : `/requests/${req.id}`;
+                                        req.status === "accepted" && person?.id
+                                            ? `/messages?user=${person.id}`
+                                            : isSent
+                                              ? `/requests?tab=sent`
+                                              : `/requests/${req.id}`;
 
                                     return (
                                         <Link
@@ -300,7 +304,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                                                         src={profile?.avatar_url}
                                                     />
                                                     <AvatarFallback className="bg-secondary/10 text-secondary text-xs font-bold">
-                                                        {getInitials(recipient?.name)}
+                                                        {getInitials(person?.name)}
                                                     </AvatarFallback>
                                                 </Avatar>
 
@@ -308,8 +312,19 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 mb-0.5">
                                                         <span className="font-semibold text-sm truncate">
-                                                            {recipient?.name || "Unknown"}
+                                                            {person?.name || "Unknown"}
                                                         </span>
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={cn(
+                                                                "text-[9px] px-1.5 py-0 h-4 rounded-full font-semibold shrink-0",
+                                                                isSent
+                                                                    ? "bg-blue-500/10 text-blue-600 border-blue-200"
+                                                                    : "bg-purple-500/10 text-purple-600 border-purple-200"
+                                                            )}
+                                                        >
+                                                            {isSent ? "Sent" : "Received"}
+                                                        </Badge>
                                                         <span className="text-[10px] text-muted-foreground shrink-0">
                                                             {timeAgo(req.created_at)}
                                                         </span>

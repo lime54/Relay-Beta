@@ -91,8 +91,8 @@ export default async function DashboardPage() {
         .eq('requester_id', user.id)
         .eq('status', 'pending')
 
-    // Fetch recent requests (last 5) with recipient details
-    const { data: recentRequests } = await supabase
+    // Fetch recent requests (last 5) — both sent AND received
+    const { data: sentRequests } = await supabase
         .from('requests')
         .select(`
             id,
@@ -100,11 +100,29 @@ export default async function DashboardPage() {
             status,
             created_at,
             context,
+            requester_id,
+            recipient_id,
+            requester:requester_id (id, name, athlete_profiles(avatar_url, school, sport)),
             recipient:recipient_id (id, name, athlete_profiles(avatar_url, school, sport))
         `)
-        .eq('requester_id', user.id)
+        .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
         .limit(5)
+
+    // Normalize: figure out who the "other person" is for each request
+    const recentRequests = (sentRequests || []).map((r: any) => {
+        const isSender = r.requester_id === user.id
+        const otherPerson = isSender ? r.recipient : r.requester
+        return {
+            id: r.id,
+            request_type: r.request_type,
+            status: r.status,
+            created_at: r.created_at,
+            context: r.context,
+            direction: isSender ? 'sent' as const : 'received' as const,
+            otherPerson,
+        }
+    })
 
     // Fetch Upcoming Meetings
     const { data: upcomingMeetingsData } = await supabase

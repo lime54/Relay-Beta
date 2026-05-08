@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useOptimistic, useTransition } from "react"
+import { useRef, useState, useOptimistic, useTransition, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -252,19 +252,89 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
         })
     }
 
+    // ---- Drag & Drop ----
+    const [coverDragActive, setCoverDragActive] = useState(false)
+    const [avatarDragActive, setAvatarDragActive] = useState(false)
+    const coverDragCounter = useRef(0)
+    const avatarDragCounter = useRef(0)
+
+    const handleDrop = useCallback((e: React.DragEvent, type: 'avatar' | 'cover') => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (type === 'cover') { coverDragCounter.current = 0; setCoverDragActive(false) }
+        else { avatarDragCounter.current = 0; setAvatarDragActive(false) }
+
+        const file = e.dataTransfer.files?.[0]
+        if (!file || !file.type.startsWith('image/')) {
+            toast.error('Please drop an image file')
+            return
+        }
+
+        const reader = new FileReader()
+        reader.addEventListener('load', () => {
+            setImageToCrop(reader.result as string)
+            setCropType(type)
+            setCropperOpen(true)
+        })
+        reader.readAsDataURL(file)
+    }, [])
+
+    const handleDragEnter = useCallback((e: React.DragEvent, type: 'avatar' | 'cover') => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (type === 'cover') { coverDragCounter.current++; setCoverDragActive(true) }
+        else { avatarDragCounter.current++; setAvatarDragActive(true) }
+    }, [])
+
+    const handleDragLeave = useCallback((e: React.DragEvent, type: 'avatar' | 'cover') => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (type === 'cover') { coverDragCounter.current--; if (coverDragCounter.current <= 0) { coverDragCounter.current = 0; setCoverDragActive(false) } }
+        else { avatarDragCounter.current--; if (avatarDragCounter.current <= 0) { avatarDragCounter.current = 0; setAvatarDragActive(false) } }
+    }, [])
+
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+    }, [])
+
     return (
         <Card className="rounded-2xl border-none shadow-sm bg-white dark:bg-card">
-            {/* Banner Image */}
+            {/* Banner Image — drop zone for cover photo */}
             <motion.div
                 initial={false}
                 animate={{
                     backgroundImage: optimisticCover ? `url(${optimisticCover})` : 'none'
                 }}
-                className={`h-40 md:h-52 bg-gradient-to-r ${themeGradient} relative transition-all duration-500 rounded-t-2xl overflow-hidden`}
+                className={cn(
+                    `h-40 md:h-52 bg-gradient-to-r ${themeGradient} relative transition-all duration-500 rounded-t-2xl overflow-hidden`,
+                    isOwnProfile && coverDragActive && 'ring-4 ring-inset ring-secondary/60'
+                )}
                 style={{ backgroundSize: 'cover', backgroundPosition: 'center' }}
+                onDragEnter={isOwnProfile ? (e) => handleDragEnter(e, 'cover') : undefined}
+                onDragLeave={isOwnProfile ? (e) => handleDragLeave(e, 'cover') : undefined}
+                onDragOver={isOwnProfile ? handleDragOver : undefined}
+                onDrop={isOwnProfile ? (e) => handleDrop(e, 'cover') : undefined}
             >
+                {/* Drop overlay */}
+                <AnimatePresence>
+                    {isOwnProfile && coverDragActive && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 z-20 bg-secondary/20 backdrop-blur-[2px] flex items-center justify-center"
+                        >
+                            <div className="flex flex-col items-center gap-2 text-white drop-shadow-lg">
+                                <Upload className="h-8 w-8" />
+                                <span className="text-sm font-bold">Drop to set cover photo</span>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {isOwnProfile && (
-                    <div className="absolute top-4 right-4 flex gap-2">
+                    <div className="absolute top-4 right-4 flex gap-2 z-30">
                         {optimisticCover && (
                             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                 <Button
@@ -296,9 +366,18 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
             </motion.div>
 
             <CardContent className="px-6 pb-8 relative -mt-16 flex flex-col items-center text-center">
-                {/* Profile Picture */}
-                <div className="relative group">
-                    <Avatar className="h-32 w-32 border-[6px] border-white shadow-md transition-transform group-hover:scale-95 duration-300">
+                {/* Profile Picture — drop zone for avatar */}
+                <div
+                    className="relative group"
+                    onDragEnter={isOwnProfile ? (e) => handleDragEnter(e, 'avatar') : undefined}
+                    onDragLeave={isOwnProfile ? (e) => handleDragLeave(e, 'avatar') : undefined}
+                    onDragOver={isOwnProfile ? handleDragOver : undefined}
+                    onDrop={isOwnProfile ? (e) => handleDrop(e, 'avatar') : undefined}
+                >
+                    <Avatar className={cn(
+                        "h-32 w-32 border-[6px] border-white shadow-md transition-all group-hover:scale-95 duration-300",
+                        isOwnProfile && avatarDragActive && "ring-4 ring-secondary/60 scale-105"
+                    )}>
                         <AvatarImage src={optimisticAvatar || undefined} />
                         <AvatarFallback className="text-4xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400">
                             {profile?.name?.charAt(0) || 'U'}
@@ -314,6 +393,20 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                                 className="absolute inset-0 z-10 flex items-center justify-center bg-black/20 rounded-full backdrop-blur-[2px]"
                             >
                                 <Loader2 className="w-8 h-8 text-white animate-spin" />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Avatar drag overlay */}
+                    <AnimatePresence>
+                        {isOwnProfile && avatarDragActive && !isUploading && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="absolute inset-0 z-20 flex items-center justify-center bg-secondary/30 rounded-full backdrop-blur-[2px]"
+                            >
+                                <Upload className="h-8 w-8 text-white drop-shadow-lg" />
                             </motion.div>
                         )}
                     </AnimatePresence>

@@ -78,7 +78,7 @@ const slides: Slide[] = [
                         {/* Quote */}
                         <div className="space-y-4">
                             <p className=”text-2xl sm:text-3xl font-bold text-white/90 leading-snug italic max-w-md”>
-                                {“””}I train 20+ hours a week. I have no time for internships or networking.{“””}
+                                {“””}I train 20+ hours a week. I have no time for internships or networking. I feel behind.{“””}
                             </p>
                             <p className=”text-sm text-white/40 font-medium tracking-wide”>
                                 {“—“} D1 Student-Athlete

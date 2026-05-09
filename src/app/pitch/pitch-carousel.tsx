@@ -402,7 +402,7 @@ const slides: Slide[] = [
                 <div className="flex flex-col items-center text-center space-y-5">
                     <span className="text-xs font-bold uppercase tracking-widest text-sky-500">Real-time Chat</span>
                     <h2 className="text-3xl font-black text-gray-900 leading-tight">
-                        Chat like<br />it&rsquo;s 2025.
+                        Messages that<br />move careers.
                     </h2>
 
                     {/* Mini mockup: chat screen (matches /messages) */}

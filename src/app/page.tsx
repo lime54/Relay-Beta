@@ -18,30 +18,6 @@ export default function LandingPage() {
           <AnimatedHero />
         </section>
 
-        {/* Social Proof / Stats */}
-        <section className="py-12 bg-muted/50 border-y border-border">
-          <div className="container px-4 mx-auto">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-              <div>
-                <div className="text-3xl font-bold text-primary mb-1">5,000+</div>
-                <div className="text-sm text-muted-foreground uppercase tracking-wider">Verified Athletes</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-primary mb-1">200+</div>
-                <div className="text-sm text-muted-foreground uppercase tracking-wider">Universities</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-primary mb-1">10,000+</div>
-                <div className="text-sm text-muted-foreground uppercase tracking-wider">Connections Made</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-primary mb-1">98%</div>
-                <div className="text-sm text-muted-foreground uppercase tracking-wider">Success Rate</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Features / Accordion Section */}
         <section className="py-24 bg-background overflow-hidden">
           <div className="container px-4 mx-auto">

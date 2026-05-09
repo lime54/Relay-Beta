@@ -140,17 +140,6 @@ export default function HeroSection() {
                                     </div>
                                 </div>
 
-                                {/* Progress Bar Section */}
-                                <div className="space-y-3 mb-8">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-zinc-400">Response Rate</span>
-                                        <span className="text-white font-medium">94%</span>
-                                    </div>
-                                    <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-800/50">
-                                        <div className="h-full w-[94%] rounded-full bg-gradient-to-r from-white to-zinc-400" />
-                                    </div>
-                                </div>
-
                                 <div className="h-px w-full bg-white/10 mb-6" />
 
                                 {/* Mini Stats Grid */}

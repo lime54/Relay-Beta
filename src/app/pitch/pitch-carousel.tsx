@@ -113,33 +113,44 @@ const slides: Slide[] = [
         ),
     },
 
-    // 3 — Solution intro
+    // 3 — Solution intro (vibrant gradient)
     {
         id: "solution",
-        bg: "bg-primary",
+        bg: "bg-gradient-to-br from-violet-600 via-blue-600 to-cyan-500",
         content: (
             <SlideWrapper>
-                <WaveBackground className="absolute inset-0 text-primary-foreground pointer-events-none" />
+                {/* Decorative orbs */}
+                <div className="absolute top-10 left-10 h-64 w-64 rounded-full bg-white/10 blur-3xl pointer-events-none" />
+                <div className="absolute bottom-20 right-10 h-48 w-48 rounded-full bg-cyan-300/20 blur-3xl pointer-events-none" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-blue-400/10 blur-3xl pointer-events-none" />
+
                 <div className="relative z-10 flex flex-col items-center text-center space-y-8">
-                    <div className="h-20 w-20 rounded-3xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
-                        <Handshake className="h-10 w-10 text-white" />
+                    {/* Logo icon with glow */}
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-white/30 rounded-3xl blur-xl scale-150 pointer-events-none" />
+                        <div className="relative h-20 w-20 rounded-3xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-2xl">
+                            <img src="/relay-logo.png" alt="Relay" className="h-10 w-auto brightness-0 invert" />
+                        </div>
                     </div>
-                    <h2 className="text-4xl font-black text-white leading-tight">
+                    <h2 className="text-5xl font-black text-white leading-tight drop-shadow-lg">
                         Meet Relay.
                     </h2>
-                    <p className="text-xl text-white/60 max-w-xs leading-relaxed font-medium">
+                    <p className="text-xl text-white/80 max-w-sm leading-relaxed font-medium">
                         A verified, athlete-only platform that makes professional networking effortless.
                     </p>
-                    <div className="grid grid-cols-2 gap-4 w-full max-w-xs pt-4">
+                    <div className="grid grid-cols-2 gap-4 w-full max-w-sm pt-4">
                         {[
-                            { num: "100%", label: "Verified Athletes" },
-                            { num: ".edu", label: "Email Required" },
-                            { num: "24", label: "Sports Supported" },
-                            { num: "Free", label: "During Beta" },
+                            { num: "100%", label: "Verified Athletes", emoji: "✓" },
+                            { num: ".edu", label: "Email Required", emoji: "🎓" },
+                            { num: "24+", label: "Sports Supported", emoji: "⚡" },
+                            { num: "Free", label: "During Beta", emoji: "🚀" },
                         ].map((stat, i) => (
-                            <div key={i} className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
-                                <p className="text-2xl font-black text-white">{stat.num}</p>
-                                <p className="text-xs text-white/50 font-semibold mt-1">{stat.label}</p>
+                            <div key={i} className="bg-white/15 backdrop-blur-md rounded-2xl p-5 border border-white/20 hover:bg-white/20 transition-colors shadow-lg">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-lg">{stat.emoji}</span>
+                                    <p className="text-2xl font-black text-white">{stat.num}</p>
+                                </div>
+                                <p className="text-xs text-white/60 font-semibold text-left">{stat.label}</p>
                             </div>
                         ))}
                     </div>
@@ -151,69 +162,85 @@ const slides: Slide[] = [
     // 4 — Verified Community + demo (matches actual signup form)
     {
         id: "verified",
-        bg: "bg-gradient-to-b from-blue-50 to-white",
+        bg: "bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900",
         content: (
             <SlideWrapper>
-                <div className="flex flex-col items-center text-center space-y-6">
-                    <span className="text-xs font-bold uppercase tracking-widest text-blue-500">Verified Community</span>
-                    <h2 className="text-3xl font-black text-gray-900 leading-tight">
-                        Only real<br />student-athletes.
-                    </h2>
-                    <p className="text-sm text-gray-500 max-w-xs leading-relaxed font-medium">
-                        Every member is verified with a <strong className="text-gray-700">.edu email</strong> and linked to their team roster.
-                    </p>
+                {/* Background accents */}
+                <div className="absolute top-20 right-0 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
+                <div className="absolute bottom-20 left-0 h-56 w-56 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
 
-                    {/* Mini mockup: signup form (matches /signup) */}
-                    <PhoneMock>
-                        <div className="p-4 space-y-2.5">
-                            <div className="text-center mb-1">
-                                <p className="text-[12px] font-bold text-gray-900">Join the Team</p>
-                                <p className="text-[8px] text-gray-400">Create your Relay account to get started</p>
-                            </div>
-                            {/* Full Name */}
-                            <div>
-                                <p className="text-[8px] font-medium text-gray-500 mb-0.5">Full Name</p>
-                                <div className="bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-200">
-                                    <span className="text-[9px] text-gray-800">Marcus Johnson</span>
-                                </div>
-                            </div>
-                            {/* Role select */}
-                            <div>
-                                <p className="text-[8px] font-medium text-gray-500 mb-0.5">I am a...</p>
-                                <div className="bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-200 flex justify-between items-center">
-                                    <span className="text-[9px] text-gray-800">Current Student-Athlete</span>
-                                    <ChevronRight className="h-2.5 w-2.5 text-gray-400 rotate-90" />
-                                </div>
-                            </div>
-                            {/* University Email */}
-                            <div>
-                                <p className="text-[8px] font-medium text-gray-500 mb-0.5">University Email</p>
-                                <div className="bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-200">
-                                    <span className="text-[9px] text-gray-800">mjohnson@duke.edu</span>
-                                </div>
-                                <p className="text-[7px] text-gray-400 mt-0.5">A valid .edu email is required</p>
-                            </div>
-                            {/* Sport */}
-                            <div>
-                                <p className="text-[8px] font-medium text-gray-500 mb-0.5">Sport</p>
-                                <div className="bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-200 flex justify-between items-center">
-                                    <span className="text-[9px] text-gray-800">Tennis</span>
-                                    <ChevronRight className="h-2.5 w-2.5 text-gray-400 rotate-90" />
-                                </div>
-                            </div>
-                            {/* School */}
-                            <div>
-                                <p className="text-[8px] font-medium text-gray-500 mb-0.5">School / University</p>
-                                <div className="bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-200">
-                                    <span className="text-[9px] text-gray-800">Duke University</span>
-                                </div>
-                            </div>
-                            {/* CTA */}
-                            <div className="bg-gray-900 text-white text-[10px] font-bold text-center py-2.5 rounded-lg mt-1">
-                                Create Account
-                            </div>
+                <div className="relative z-10 flex flex-col items-center text-center space-y-6">
+                    {/* Header area */}
+                    <div className="space-y-3">
+                        <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-400/20 rounded-full px-4 py-1.5 backdrop-blur-sm">
+                            <ShieldCheck className="h-3.5 w-3.5 text-blue-400" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-300">Verified Community</span>
                         </div>
-                    </PhoneMock>
+                        <h2 className="text-4xl font-black text-white leading-tight">
+                            Only real<br />student-athletes.
+                        </h2>
+                        <p className="text-sm text-blue-200/60 max-w-xs leading-relaxed font-medium mx-auto">
+                            Every member is verified with a <strong className="text-blue-300">.edu email</strong> and linked to their team roster.
+                        </p>
+                    </div>
+
+                    {/* Phone mockup with glow effect */}
+                    <div className="relative">
+                        <div className="absolute -inset-4 bg-gradient-to-b from-blue-500/20 to-cyan-500/10 rounded-[32px] blur-xl pointer-events-none" />
+                        <PhoneMock>
+                            <div className="p-4 space-y-2.5">
+                                <div className="text-center mb-1">
+                                    <p className="text-[12px] font-bold text-gray-900">Join the Team</p>
+                                    <p className="text-[8px] text-gray-400">Create your Relay account to get started</p>
+                                </div>
+                                {/* Full Name */}
+                                <div>
+                                    <p className="text-[8px] font-medium text-gray-500 mb-0.5">Full Name</p>
+                                    <div className="bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-200">
+                                        <span className="text-[9px] text-gray-800">Marcus Johnson</span>
+                                    </div>
+                                </div>
+                                {/* Role select */}
+                                <div>
+                                    <p className="text-[8px] font-medium text-gray-500 mb-0.5">I am a...</p>
+                                    <div className="bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-200 flex justify-between items-center">
+                                        <span className="text-[9px] text-gray-800">Current Student-Athlete</span>
+                                        <ChevronRight className="h-2.5 w-2.5 text-gray-400 rotate-90" />
+                                    </div>
+                                </div>
+                                {/* University Email — highlighted as the key verification step */}
+                                <div>
+                                    <p className="text-[8px] font-medium text-gray-500 mb-0.5">University Email</p>
+                                    <div className="bg-blue-50 rounded-lg px-2.5 py-1.5 border border-blue-200 ring-2 ring-blue-100">
+                                        <span className="text-[9px] text-gray-800">mjohnson@duke.edu</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 mt-0.5">
+                                        <Shield className="h-2 w-2 text-blue-500" />
+                                        <p className="text-[7px] text-blue-500 font-medium">A valid .edu email is required for verification</p>
+                                    </div>
+                                </div>
+                                {/* Sport */}
+                                <div>
+                                    <p className="text-[8px] font-medium text-gray-500 mb-0.5">Sport</p>
+                                    <div className="bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-200 flex justify-between items-center">
+                                        <span className="text-[9px] text-gray-800">Tennis</span>
+                                        <ChevronRight className="h-2.5 w-2.5 text-gray-400 rotate-90" />
+                                    </div>
+                                </div>
+                                {/* School */}
+                                <div>
+                                    <p className="text-[8px] font-medium text-gray-500 mb-0.5">School / University</p>
+                                    <div className="bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-200">
+                                        <span className="text-[9px] text-gray-800">Duke University</span>
+                                    </div>
+                                </div>
+                                {/* CTA */}
+                                <div className="bg-gray-900 text-white text-[10px] font-bold text-center py-2.5 rounded-lg mt-1">
+                                    Create Account
+                                </div>
+                            </div>
+                        </PhoneMock>
+                    </div>
                 </div>
             </SlideWrapper>
         ),

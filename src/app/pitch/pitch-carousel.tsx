@@ -100,11 +100,6 @@ const slides: Slide[] = [
                         </div>
                     </div>
 
-                    {/* Bottom: swipe hint */}
-                    <div className="flex items-center gap-2 mt-8 opacity-60">
-                        <ChevronRight className="h-4 w-4 text-white animate-pulse" />
-                        <span className="text-xs text-white/60 font-medium uppercase tracking-widest">Swipe</span>
-                    </div>
                 </div>
             </SlideWrapper>
         ),
@@ -673,18 +668,6 @@ export function PitchCarousel() {
                 <ChevronRight className="h-5 w-5" />
             </button>
 
-            {/* Dots */}
-            <div className="absolute bottom-8 inset-x-0 z-30 flex items-center justify-center gap-2">
-                {slides.map((_, i) => (
-                    <button
-                        key={i}
-                        onClick={() => { setDirection(i > current ? 1 : -1); setCurrent(i) }}
-                        className={`h-2 rounded-full transition-all duration-300 ${
-                            i === current ? "w-8 bg-white" : "w-2 bg-white/40 hover:bg-white/60"
-                        }`}
-                    />
-                ))}
-            </div>
         </div>
     )
 }

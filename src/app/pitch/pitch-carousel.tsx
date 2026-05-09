@@ -148,7 +148,7 @@ const slides: Slide[] = [
         ),
     },
 
-    // 4 — Verified Community + demo
+    // 4 — Verified Community + demo (matches actual signup form)
     {
         id: "verified",
         bg: "bg-gradient-to-b from-blue-50 to-white",
@@ -163,42 +163,54 @@ const slides: Slide[] = [
                         Every member is verified with a <strong className="text-gray-700">.edu email</strong> and linked to their team roster.
                     </p>
 
-                    {/* Mini mockup: verification flow */}
+                    {/* Mini mockup: signup form (matches /signup) */}
                     <PhoneMock>
-                        <div className="p-4 space-y-3">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Shield className="h-4 w-4 text-blue-500" />
-                                <span className="text-xs font-bold text-gray-900">Verification</span>
+                        <div className="p-4 space-y-2.5">
+                            <div className="text-center mb-1">
+                                <p className="text-[12px] font-bold text-gray-900">Join the Team</p>
+                                <p className="text-[8px] text-gray-400">Create your Relay account to get started</p>
                             </div>
-                            {/* Step 1 — done */}
-                            <div className="flex items-center gap-3 bg-green-50 rounded-xl p-3 border border-green-100">
-                                <div className="h-7 w-7 rounded-lg bg-green-500 text-white flex items-center justify-center shrink-0">
-                                    <Check className="h-4 w-4" />
-                                </div>
-                                <div className="text-left">
-                                    <p className="text-[10px] font-bold text-gray-800">.edu Email Verified</p>
-                                    <p className="text-[9px] text-gray-400">max@stanford.edu</p>
+                            {/* Full Name */}
+                            <div>
+                                <p className="text-[8px] font-medium text-gray-500 mb-0.5">Full Name</p>
+                                <div className="bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-200">
+                                    <span className="text-[9px] text-gray-800">Marcus Johnson</span>
                                 </div>
                             </div>
-                            {/* Step 2 — done */}
-                            <div className="flex items-center gap-3 bg-green-50 rounded-xl p-3 border border-green-100">
-                                <div className="h-7 w-7 rounded-lg bg-green-500 text-white flex items-center justify-center shrink-0">
-                                    <Check className="h-4 w-4" />
-                                </div>
-                                <div className="text-left">
-                                    <p className="text-[10px] font-bold text-gray-800">Roster Link Submitted</p>
-                                    <p className="text-[9px] text-gray-400">gostanford.com/roster/tennis</p>
+                            {/* Role select */}
+                            <div>
+                                <p className="text-[8px] font-medium text-gray-500 mb-0.5">I am a...</p>
+                                <div className="bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-200 flex justify-between items-center">
+                                    <span className="text-[9px] text-gray-800">Current Student-Athlete</span>
+                                    <ChevronRight className="h-2.5 w-2.5 text-gray-400 rotate-90" />
                                 </div>
                             </div>
-                            {/* Step 3 — result */}
-                            <div className="flex items-center gap-3 bg-blue-50 rounded-xl p-3 border border-blue-200">
-                                <div className="h-7 w-7 rounded-lg bg-blue-500 text-white flex items-center justify-center shrink-0">
-                                    <ShieldCheck className="h-4 w-4" />
+                            {/* University Email */}
+                            <div>
+                                <p className="text-[8px] font-medium text-gray-500 mb-0.5">University Email</p>
+                                <div className="bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-200">
+                                    <span className="text-[9px] text-gray-800">mjohnson@duke.edu</span>
                                 </div>
-                                <div className="text-left">
-                                    <p className="text-[10px] font-bold text-blue-700">Verified Athlete</p>
-                                    <p className="text-[9px] text-blue-400">Badge active on profile</p>
+                                <p className="text-[7px] text-gray-400 mt-0.5">A valid .edu email is required</p>
+                            </div>
+                            {/* Sport */}
+                            <div>
+                                <p className="text-[8px] font-medium text-gray-500 mb-0.5">Sport</p>
+                                <div className="bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-200 flex justify-between items-center">
+                                    <span className="text-[9px] text-gray-800">Tennis</span>
+                                    <ChevronRight className="h-2.5 w-2.5 text-gray-400 rotate-90" />
                                 </div>
+                            </div>
+                            {/* School */}
+                            <div>
+                                <p className="text-[8px] font-medium text-gray-500 mb-0.5">School / University</p>
+                                <div className="bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-200">
+                                    <span className="text-[9px] text-gray-800">Duke University</span>
+                                </div>
+                            </div>
+                            {/* CTA */}
+                            <div className="bg-gray-900 text-white text-[10px] font-bold text-center py-2.5 rounded-lg mt-1">
+                                Create Account
                             </div>
                         </div>
                     </PhoneMock>
@@ -207,7 +219,7 @@ const slides: Slide[] = [
         ),
     },
 
-    // 5 — Discover & Connect + demo
+    // 5 — Discover & Connect + demo (matches actual /network page)
     {
         id: "network",
         bg: "bg-gradient-to-b from-purple-50 to-white",
@@ -219,40 +231,55 @@ const slides: Slide[] = [
                         Find athletes<br />who get it.
                     </h2>
 
-                    {/* Mini mockup: network discover page */}
+                    {/* Mini mockup: network discover page (matches /network) */}
                     <PhoneMock>
                         <div className="p-3 space-y-2.5">
                             {/* Search bar */}
-                            <div className="flex items-center bg-gray-100 rounded-xl px-3 py-2 gap-2">
+                            <div className="flex items-center bg-gray-100/50 rounded-xl px-3 py-2 gap-2">
                                 <Search className="h-3 w-3 text-gray-400" />
-                                <span className="text-[10px] text-gray-400">Search athletes...</span>
+                                <span className="text-[10px] text-gray-400">Search by name, school, sport...</span>
                             </div>
-                            {/* Filters */}
+                            {/* Filter dropdowns */}
                             <div className="flex gap-1.5">
-                                <span className="text-[8px] bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-bold">Tennis</span>
-                                <span className="text-[8px] bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-bold">All Industries</span>
+                                <div className="flex-1 text-[8px] bg-gray-100/50 text-gray-600 px-2 py-1.5 rounded-lg font-medium text-center border border-gray-200/50">All Sports</div>
+                                <div className="flex-1 text-[8px] bg-gray-100/50 text-gray-600 px-2 py-1.5 rounded-lg font-medium text-center border border-gray-200/50">All Industries</div>
                             </div>
-                            {/* Athlete cards */}
+                            {/* Athlete cards (matches actual Card styling: rounded-2rem, border, badges) */}
                             {[
-                                { name: "Sarah Chen", school: "Stanford", sport: "Tennis", match: "92%", initials: "SC" },
-                                { name: "Marcus Johnson", school: "Duke", sport: "Tennis", match: "87%", initials: "MJ" },
-                                { name: "Emily Rodriguez", school: "UCLA", sport: "Tennis", match: "81%", initials: "ER" },
+                                { name: "Sarah Chen", school: "Stanford", sport: "Tennis", match: 92, initials: "SC", role: "Analyst @ McKinsey" },
+                                { name: "Marcus Johnson", school: "Duke", sport: "Tennis", match: 87, initials: "MJ", role: "SWE Intern @ Google" },
+                                { name: "Emily Rodriguez", school: "UCLA", sport: "Tennis", match: 74, initials: "ER", role: "Student-Athlete" },
                             ].map((person, i) => (
-                                <div key={i} className="flex items-center gap-2.5 p-2.5 rounded-xl border border-gray-100 bg-white">
-                                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center shrink-0">
-                                        <span className="text-[9px] font-bold text-purple-600">{person.initials}</span>
+                                <div key={i} className="relative rounded-2xl border border-gray-200/40 bg-white/80 p-3 space-y-2">
+                                    {/* Top badges */}
+                                    <div className="flex items-center justify-end gap-1">
+                                        <span className="text-[7px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full font-bold border border-blue-100">Verified</span>
+                                        <span className={`text-[7px] px-1.5 py-0.5 rounded-full font-bold border ${person.match >= 80 ? "bg-green-50 text-green-600 border-green-100" : "bg-amber-50 text-amber-600 border-amber-100"}`}>{person.match}% Match</span>
                                     </div>
-                                    <div className="flex-1 text-left min-w-0">
-                                        <div className="flex items-center gap-1">
-                                            <p className="text-[10px] font-bold text-gray-900 truncate">{person.name}</p>
-                                            <ShieldCheck className="h-2.5 w-2.5 text-blue-500 shrink-0" />
+                                    {/* Avatar + info */}
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center shrink-0 ring-2 ring-white shadow-sm">
+                                            <span className="text-[9px] font-bold text-purple-600">{person.initials}</span>
                                         </div>
-                                        <p className="text-[8px] text-gray-400">{person.sport} &middot; {person.school}</p>
+                                        <div className="flex-1 text-left min-w-0">
+                                            <p className="text-[10px] font-bold text-gray-900 truncate">{person.name}</p>
+                                            <p className="text-[8px] text-gray-500">{person.role}</p>
+                                        </div>
                                     </div>
-                                    <div className="text-right shrink-0">
-                                        <span className="text-[9px] font-black text-purple-600">{person.match}</span>
-                                        <p className="text-[7px] text-gray-400">match</p>
+                                    {/* Sport + school badges */}
+                                    <div className="flex gap-1">
+                                        <span className="text-[7px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                            <Trophy className="h-2 w-2" />{person.sport}
+                                        </span>
+                                        <span className="text-[7px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                            <School className="h-2 w-2" />{person.school}
+                                        </span>
                                     </div>
+                                    {/* CTA button */}
+                                    <button className="w-full bg-gray-900 text-white text-[8px] font-bold py-2 rounded-xl flex items-center justify-center gap-1 shadow-sm">
+                                        <Send className="h-2.5 w-2.5" />
+                                        Send Personal Request
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -262,7 +289,7 @@ const slides: Slide[] = [
         ),
     },
 
-    // 6 — Structured Requests + demo
+    // 6 — Structured Requests + demo (matches actual request form)
     {
         id: "requests",
         bg: "bg-gradient-to-b from-green-50 to-white",
@@ -274,40 +301,65 @@ const slides: Slide[] = [
                         Not just<br />&ldquo;let&rsquo;s connect.&rdquo;
                     </h2>
 
-                    {/* Mini mockup: request form */}
+                    {/* Mini mockup: request form (matches /requests/new) */}
                     <PhoneMock>
-                        <div className="p-4 space-y-3">
-                            <p className="text-[11px] font-bold text-gray-900">New Request to Sarah Chen</p>
-
-                            {/* Type selector */}
-                            <div>
-                                <p className="text-[9px] font-semibold text-gray-500 mb-1.5">Request Type</p>
-                                <div className="grid grid-cols-2 gap-1.5">
-                                    {[
-                                        { label: "Career Advice", active: true },
-                                        { label: "Mentorship", active: false },
-                                        { label: "Job Referral", active: false },
-                                        { label: "Internship", active: false },
-                                    ].map((t, i) => (
-                                        <div key={i} className={`text-[8px] font-bold px-2 py-2 rounded-lg text-center border ${t.active ? "bg-green-500 text-white border-green-500" : "bg-gray-50 text-gray-600 border-gray-200"}`}>
-                                            {t.label}
-                                        </div>
-                                    ))}
+                        <div className="p-4 space-y-2.5">
+                            {/* Recipient card */}
+                            <div className="flex items-center gap-2.5 bg-gray-50 rounded-xl p-2.5 border border-gray-100">
+                                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center shrink-0">
+                                    <span className="text-[8px] font-bold text-purple-600">SC</span>
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-[10px] font-bold text-gray-900">Sarah Chen</p>
+                                    <p className="text-[8px] text-gray-400">Analyst @ McKinsey &middot; Stanford</p>
                                 </div>
                             </div>
 
-                            {/* Context */}
-                            <div>
-                                <p className="text-[9px] font-semibold text-gray-500 mb-1">Your Message</p>
-                                <div className="bg-gray-50 rounded-lg p-2 border border-gray-200 text-left">
-                                    <p className="text-[9px] text-gray-700 leading-relaxed">Hi Sarah! I&rsquo;m a junior tennis player at Duke interested in transitioning into consulting. Would love to hear about your experience at McKinsey...</p>
+                            {/* Dropdowns row */}
+                            <div className="grid grid-cols-2 gap-1.5">
+                                <div>
+                                    <p className="text-[8px] font-medium text-gray-500 mb-0.5">Request Type</p>
+                                    <div className="bg-gray-50/50 rounded-xl px-2 py-1.5 border border-gray-200/50 flex justify-between items-center">
+                                        <span className="text-[8px] text-gray-800">Career Advice</span>
+                                        <ChevronRight className="h-2 w-2 text-gray-400 rotate-90" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-[8px] font-medium text-gray-500 mb-0.5">Time Commitment</p>
+                                    <div className="bg-gray-50/50 rounded-xl px-2 py-1.5 border border-gray-200/50 flex justify-between items-center">
+                                        <span className="text-[8px] text-gray-800">15 min Coffee Chat</span>
+                                        <ChevronRight className="h-2 w-2 text-gray-400 rotate-90" />
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Send button */}
-                            <div className="bg-green-500 text-white text-[10px] font-bold text-center py-2.5 rounded-xl flex items-center justify-center gap-1">
-                                <Send className="h-3 w-3" />
-                                Send Request
+                            {/* Message textarea */}
+                            <div>
+                                <p className="text-[8px] font-medium text-gray-500 mb-0.5">Tell Sarah why you&rsquo;re reaching out</p>
+                                <div className="bg-gray-50/20 rounded-2xl p-2.5 border border-gray-200/50 text-left min-h-[60px]">
+                                    <p className="text-[8px] text-gray-700 leading-relaxed">Hi Sarah! I&rsquo;m a junior tennis player at Duke interested in transitioning into consulting. Would love to hear about your experience at McKinsey and any advice for breaking in...</p>
+                                </div>
+                            </div>
+
+                            {/* Offer in return */}
+                            <div>
+                                <p className="text-[8px] font-medium text-gray-500 mb-0.5">What You Offer in Return</p>
+                                <div className="bg-gray-50/20 rounded-xl px-2.5 py-1.5 border border-gray-200/50 text-left">
+                                    <p className="text-[8px] text-gray-700">I can share my experience with the recruiting process at Duke</p>
+                                </div>
+                                <p className="text-[6px] text-gray-400 uppercase tracking-wider mt-0.5">Reciprocity builds long-term mentorship</p>
+                            </div>
+
+                            {/* Action buttons */}
+                            <div className="flex gap-1.5 pt-1">
+                                <button className="flex-1 border border-gray-200 text-gray-600 text-[8px] font-bold py-2 rounded-xl flex items-center justify-center gap-1">
+                                    <Zap className="h-2.5 w-2.5" />
+                                    AI Refine Draft
+                                </button>
+                                <button className="flex-1 bg-gray-900 text-white text-[8px] font-bold py-2 rounded-xl flex items-center justify-center gap-1 shadow-lg">
+                                    <Send className="h-2.5 w-2.5" />
+                                    Send Personal Request
+                                </button>
                             </div>
                         </div>
                     </PhoneMock>
@@ -316,7 +368,7 @@ const slides: Slide[] = [
         ),
     },
 
-    // 7 — Messaging + demo
+    // 7 — Messaging + demo (matches actual /messages chat UI)
     {
         id: "messaging",
         bg: "bg-gradient-to-b from-sky-50 to-white",
@@ -328,50 +380,50 @@ const slides: Slide[] = [
                         Chat like<br />it&rsquo;s 2025.
                     </h2>
 
-                    {/* Mini mockup: chat screen */}
+                    {/* Mini mockup: chat screen (matches /messages) */}
                     <PhoneMock>
                         <div className="flex flex-col h-[360px]">
                             {/* Chat header */}
-                            <div className="px-3 py-2.5 border-b border-gray-100 flex items-center gap-2.5 bg-white">
-                                <div className="h-7 w-7 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                            <div className="px-3 py-2.5 border-b border-gray-200/50 flex items-center gap-2.5 bg-white">
+                                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
                                     <span className="text-[8px] font-bold text-purple-600">SC</span>
                                 </div>
-                                <div>
+                                <div className="flex-1">
                                     <p className="text-[10px] font-bold text-gray-900">Sarah Chen</p>
-                                    <p className="text-[8px] text-green-500 font-medium">Online</p>
+                                    <p className="text-[8px] text-gray-400 font-semibold uppercase tracking-wider">Career Advice</p>
                                 </div>
                             </div>
 
                             {/* Messages */}
-                            <div className="flex-1 p-3 space-y-2.5 bg-gray-50/50 overflow-hidden">
-                                {/* Received */}
+                            <div className="flex-1 p-3 space-y-2.5 bg-white overflow-hidden">
+                                {/* Received — bg-muted, rounded-tl-none, border */}
                                 <div className="flex justify-start">
-                                    <div className="bg-white rounded-2xl rounded-bl-md px-3 py-2 max-w-[78%] shadow-sm border border-gray-100">
-                                        <p className="text-[10px] text-gray-800 text-left leading-relaxed">Hey Marcus! Thanks for reaching out. I&rsquo;d love to chat about consulting!</p>
+                                    <div className="bg-gray-100 text-gray-900 rounded-2xl rounded-tl-none px-3 py-2 max-w-[78%] border border-gray-200/40">
+                                        <p className="text-[10px] text-left leading-relaxed">Hey Marcus! Thanks for reaching out. I&rsquo;d love to chat about consulting!</p>
                                         <p className="text-[7px] text-gray-400 mt-1 text-right">2:30 PM</p>
                                     </div>
                                 </div>
-                                {/* Sent */}
+                                {/* Sent — bg-secondary (dark), rounded-tr-none, white text */}
                                 <div className="flex justify-end">
-                                    <div className="bg-blue-500 rounded-2xl rounded-br-md px-3 py-2 max-w-[78%] shadow-sm">
+                                    <div className="bg-gray-900 rounded-2xl rounded-tr-none px-3 py-2 max-w-[78%]">
                                         <p className="text-[10px] text-white text-left leading-relaxed">That would be amazing! Are you free this week for a quick call?</p>
                                         <div className="flex items-center justify-end gap-1 mt-1">
-                                            <p className="text-[7px] text-blue-200">2:32 PM</p>
-                                            <CheckCheck className="h-2.5 w-2.5 text-blue-200" />
+                                            <p className="text-[7px] text-white/50">2:32 PM</p>
+                                            <CheckCheck className="h-2.5 w-2.5 text-blue-400" />
                                         </div>
                                     </div>
                                 </div>
                                 {/* Received */}
                                 <div className="flex justify-start">
-                                    <div className="bg-white rounded-2xl rounded-bl-md px-3 py-2 max-w-[78%] shadow-sm border border-gray-100">
-                                        <p className="text-[10px] text-gray-800 text-left leading-relaxed">Absolutely! Here&rsquo;s my calendar link:</p>
+                                    <div className="bg-gray-100 text-gray-900 rounded-2xl rounded-tl-none px-3 py-2 max-w-[78%] border border-gray-200/40">
+                                        <p className="text-[10px] text-left leading-relaxed">Absolutely! Here&rsquo;s my calendar link:</p>
                                         <p className="text-[10px] text-blue-500 text-left underline">calendly.com/sarachen</p>
                                         <p className="text-[7px] text-gray-400 mt-1 text-right">2:33 PM</p>
                                     </div>
                                 </div>
-                                {/* Typing indicator */}
+                                {/* Typing indicator — matches muted bg, rounded-2xl */}
                                 <div className="flex justify-start">
-                                    <div className="bg-white rounded-2xl rounded-bl-md px-3 py-2.5 shadow-sm border border-gray-100">
+                                    <div className="bg-gray-100 rounded-2xl px-3 py-2.5 border border-gray-200/40">
                                         <div className="flex gap-1">
                                             <div className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "0ms" }} />
                                             <div className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -381,13 +433,17 @@ const slides: Slide[] = [
                                 </div>
                             </div>
 
-                            {/* Input bar */}
-                            <div className="px-3 py-2 border-t border-gray-100 bg-white flex items-center gap-2">
-                                <Paperclip className="h-3.5 w-3.5 text-gray-400" />
-                                <div className="flex-1 bg-gray-100 rounded-full px-3 py-1.5">
-                                    <span className="text-[9px] text-gray-400">Type a message...</span>
+                            {/* Input bar — matches actual: paperclip, rounded-xl input, secondary send button */}
+                            <div className="px-3 py-2 border-t border-gray-200/50 bg-white flex items-center gap-2">
+                                <div className="h-8 w-8 rounded-xl flex items-center justify-center hover:bg-gray-100">
+                                    <Paperclip className="h-3.5 w-3.5 text-gray-400" />
                                 </div>
-                                <Send className="h-3.5 w-3.5 text-blue-500" />
+                                <div className="flex-1 bg-gray-100 rounded-xl px-3 py-2">
+                                    <span className="text-[9px] text-gray-400">Type your message...</span>
+                                </div>
+                                <div className="h-8 w-8 rounded-xl bg-gray-900 flex items-center justify-center shadow-sm">
+                                    <Send className="h-3 w-3 text-white" />
+                                </div>
                             </div>
                         </div>
                     </PhoneMock>
@@ -396,7 +452,7 @@ const slides: Slide[] = [
         ),
     },
 
-    // 8 — Profile + demo
+    // 8 — Profile + demo (matches actual /profile page)
     {
         id: "profile",
         bg: "bg-gradient-to-b from-indigo-50 to-white",
@@ -408,60 +464,77 @@ const slides: Slide[] = [
                         Stand out.<br />Get found.
                     </h2>
 
-                    {/* Mini mockup: profile page */}
+                    {/* Mini mockup: profile page (matches /profile — bg-[#f4f2ee], white card, rounded-2xl) */}
                     <PhoneMock>
-                        <div>
-                            {/* Cover */}
-                            <div className="h-20 bg-gradient-to-r from-blue-400 to-indigo-500 relative">
-                                <div className="absolute -bottom-5 left-1/2 -translate-x-1/2">
-                                    <div className="h-12 w-12 rounded-full border-[3px] border-white bg-gradient-to-br from-indigo-100 to-purple-200 flex items-center justify-center shadow-md">
-                                        <span className="text-sm font-black text-indigo-600">M</span>
+                        <div className="bg-[#f4f2ee] min-h-[360px]">
+                            {/* White profile card */}
+                            <div className="bg-white rounded-b-2xl overflow-hidden">
+                                {/* Cover — gradient banner like actual profile */}
+                                <div className="h-20 bg-gradient-to-r from-blue-100 to-cyan-100 relative">
+                                    {/* Avatar — matches: border-6, shadow-md, -mt offset */}
+                                    <div className="absolute -bottom-5 left-1/2 -translate-x-1/2">
+                                        <div className="h-14 w-14 rounded-full border-[3px] border-white bg-gradient-to-br from-indigo-100 to-purple-200 flex items-center justify-center shadow-md">
+                                            <span className="text-sm font-black text-indigo-600">MJ</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-8 px-4 pb-4 text-center space-y-1.5">
+                                    {/* Name + verified badge */}
+                                    <div className="flex items-center justify-center gap-1">
+                                        <p className="text-[13px] font-bold text-gray-900">Marcus Johnson</p>
+                                        <ShieldCheck className="h-3.5 w-3.5 text-blue-500" />
+                                    </div>
+                                    {/* Headline — matches: role @ company or sport @ school */}
+                                    <p className="text-[9px] text-gray-500 font-medium">
+                                        Tennis Student-Athlete @ Duke University
+                                    </p>
+                                    {/* Industry badge — matches: secondary/10 bg, uppercase, tracking-tight */}
+                                    <span className="inline-block text-[7px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-tight">
+                                        Consulting
+                                    </span>
+                                    {/* Location + connections — matches actual layout */}
+                                    <div className="flex items-center justify-center gap-1.5 text-[8px] text-gray-400">
+                                        <MapPin className="h-2.5 w-2.5" />
+                                        <span>Durham, NC</span>
+                                        <span>&middot;</span>
+                                        <span className="font-semibold text-gray-700">12 Connections</span>
+                                    </div>
+
+                                    {/* Action buttons — matches: rounded-full, primary CTA, secondary booking */}
+                                    <div className="flex flex-wrap justify-center gap-1.5 pt-2">
+                                        <button className="bg-gray-900 text-white text-[8px] font-bold px-4 py-2 rounded-full flex items-center gap-1 shadow-md">
+                                            <MessageCircle className="h-2.5 w-2.5" />
+                                            Message
+                                        </button>
+                                        <button className="bg-gray-100 text-gray-700 text-[8px] font-bold px-4 py-2 rounded-full flex items-center gap-1 border border-gray-200">
+                                            <Calendar className="h-2.5 w-2.5" />
+                                            Book a Meeting
+                                        </button>
+                                    </div>
+                                    {/* Resume + LinkedIn row — matches actual outline buttons */}
+                                    <div className="flex justify-center gap-1.5 pt-1">
+                                        <button className="text-[7px] text-gray-500 border border-gray-200 px-2.5 py-1 rounded-full flex items-center gap-0.5 font-medium">
+                                            <FileText className="h-2 w-2" />
+                                            Resume
+                                        </button>
+                                        <button className="h-5 w-5 rounded-full border border-gray-200 flex items-center justify-center">
+                                            <Linkedin className="h-2.5 w-2.5 text-blue-600" />
+                                        </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="pt-7 px-4 pb-3 text-center space-y-1.5">
-                                <div className="flex items-center justify-center gap-1">
-                                    <p className="text-[12px] font-black text-gray-900">Marcus Johnson</p>
-                                    <ShieldCheck className="h-3 w-3 text-blue-500" />
-                                </div>
-                                <p className="text-[9px] text-gray-500 font-medium flex items-center justify-center gap-1">
-                                    <Trophy className="h-2.5 w-2.5" />
-                                    Tennis &middot; Duke University
-                                </p>
-                                <p className="text-[9px] text-indigo-600 font-bold">
-                                    Interested in Consulting
-                                </p>
-                                <div className="flex items-center justify-center gap-1 text-[8px] text-gray-400">
-                                    <MapPin className="h-2 w-2" />
-                                    Durham, NC &middot; <span className="font-semibold text-indigo-500">12 Connections</span>
-                                </div>
-
-                                {/* Action buttons */}
-                                <div className="flex gap-1.5 pt-2">
-                                    <div className="flex-1 bg-blue-500 text-white text-[8px] font-bold py-2 rounded-lg text-center flex items-center justify-center gap-1">
-                                        <MessageCircle className="h-2.5 w-2.5" />
-                                        Message
+                            {/* Experience card — matches: white bg, rounded-2xl on beige bg */}
+                            <div className="mx-3 mt-3 bg-white rounded-xl p-3">
+                                <p className="text-[9px] font-bold text-gray-900 mb-2">Experience</p>
+                                <div className="flex items-start gap-2">
+                                    <div className="h-6 w-6 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                                        <Star className="h-3 w-3 text-gray-400" />
                                     </div>
-                                    <div className="flex-1 bg-indigo-500 text-white text-[8px] font-bold py-2 rounded-lg text-center flex items-center justify-center gap-1">
-                                        <Calendar className="h-2.5 w-2.5" />
-                                        Book Meeting
-                                    </div>
-                                </div>
-
-                                {/* Quick info */}
-                                <div className="grid grid-cols-3 gap-1.5 pt-2">
-                                    <div className="bg-gray-50 rounded-lg p-1.5 text-center">
-                                        <FileText className="h-3 w-3 text-gray-400 mx-auto" />
-                                        <p className="text-[7px] text-gray-500 mt-0.5">Resume</p>
-                                    </div>
-                                    <div className="bg-gray-50 rounded-lg p-1.5 text-center">
-                                        <Linkedin className="h-3 w-3 text-blue-600 mx-auto" />
-                                        <p className="text-[7px] text-gray-500 mt-0.5">LinkedIn</p>
-                                    </div>
-                                    <div className="bg-gray-50 rounded-lg p-1.5 text-center">
-                                        <Calendar className="h-3 w-3 text-indigo-500 mx-auto" />
-                                        <p className="text-[7px] text-gray-500 mt-0.5">Schedule</p>
+                                    <div>
+                                        <p className="text-[8px] font-bold text-gray-800">Summer Analyst</p>
+                                        <p className="text-[7px] text-gray-400">Deloitte &middot; Summer 2025</p>
                                     </div>
                                 </div>
                             </div>

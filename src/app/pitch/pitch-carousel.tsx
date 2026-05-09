@@ -125,12 +125,15 @@ const slides: Slide[] = [
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-blue-400/10 blur-3xl pointer-events-none" />
 
                 <div className="relative z-10 flex flex-col items-center text-center space-y-8">
-                    {/* Logo icon with glow */}
+                    {/* Logo — crisp, no blur near the image */}
                     <div className="relative">
-                        <div className="absolute inset-0 bg-white/30 rounded-3xl blur-xl scale-150 pointer-events-none" />
-                        <div className="relative h-20 w-20 rounded-3xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-2xl">
-                            <img src="/relay-logo.png" alt="Relay" className="h-10 w-auto brightness-0 invert" />
-                        </div>
+                        <div className="absolute -inset-6 bg-white/20 rounded-full blur-2xl pointer-events-none" />
+                        <img
+                            src="/relay-logo.png"
+                            alt="Relay"
+                            className="relative h-14 w-auto brightness-0 invert drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+                            style={{ imageRendering: "auto" }}
+                        />
                     </div>
                     <h2 className="text-5xl font-black text-white leading-tight drop-shadow-lg">
                         Meet Relay.

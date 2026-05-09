@@ -78,10 +78,10 @@ const slides: Slide[] = [
                         {/* Quote */}
                         <div className="space-y-4">
                             <p className=”text-2xl sm:text-3xl font-bold text-white/90 leading-snug italic max-w-md”>
-                                {““”}I gave four years to my sport. Graduation came and I had no network, no plan, nothing.{“””}
+                                {“””}I train 20+ hours a week. I have no time to network and I feel years behind my peers.{“””}
                             </p>
-                            <p className="text-sm text-white/40 font-medium tracking-wide">
-                                {"—"} D1 Student-Athlete, Class of 2024
+                            <p className=”text-sm text-white/40 font-medium tracking-wide”>
+                                {“—“} D1 Student-Athlete
                             </p>
                         </div>
 

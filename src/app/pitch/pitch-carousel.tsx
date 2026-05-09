@@ -55,65 +55,55 @@ function PhoneMock({ children }: { children: React.ReactNode }) {
 // ---------------------------------------------------------------------------
 
 const slides: Slide[] = [
-    // 1 — Title
-    {
-        id: "title",
-        bg: "bg-primary",
-        content: (
-            <SlideWrapper>
-                <WaveBackground className="absolute inset-0 text-primary-foreground pointer-events-none" />
-                <div className="relative z-10 flex flex-col items-center text-center space-y-8">
-                    <img src="/relay-logo.png" alt="Relay" className="h-16 w-auto brightness-0 invert" />
-                    <div className="space-y-4">
-                        <h1 className="text-5xl font-black tracking-tight text-white leading-[1.1]">
-                            Your Network<br />is Your<br />Net Worth.
-                        </h1>
-                        <p className="text-xl text-white/60 max-w-xs mx-auto leading-relaxed font-medium">
-                            The professional networking platform built exclusively for student-athletes.
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-5 py-2.5 rounded-full border border-white/20">
-                        <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                        <span className="text-white/80 text-sm font-semibold">Now in Beta</span>
-                    </div>
-                </div>
-            </SlideWrapper>
-        ),
-    },
-
-    // 2 — The Problem
+    // 1 — The Problem (hook slide)
     {
         id: "problem",
         bg: "bg-[#0a0a0a]",
         content: (
             <SlideWrapper>
-                <div className="flex flex-col items-center text-center space-y-10">
-                    <span className="text-sm font-bold uppercase tracking-widest text-red-400">The Problem</span>
-                    <h2 className="text-4xl font-black text-white leading-tight">
-                        Student-athletes are<br />
-                        <span className="text-red-400">underconnected</span><br />
-                        professionally.
-                    </h2>
-                    <div className="space-y-5 w-full max-w-sm">
+                {/* Subtle dark gradient texture */}
+                <div className="absolute inset-0 bg-gradient-to-b from-red-950/20 via-transparent to-transparent pointer-events-none" />
+
+                <div className="relative z-10 flex flex-col items-center text-center space-y-10">
+                    {/* Big stat hook */}
+                    <div className="space-y-4">
+                        <span className="text-6xl sm:text-8xl font-black text-white leading-none">98%</span>
+                        <p className="text-xl sm:text-2xl text-white/50 font-medium max-w-sm leading-snug">
+                            of student-athletes will <span className="text-red-400 font-bold">never go pro.</span>
+                        </p>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="w-16 h-px bg-white/20" />
+
+                    {/* Pain points */}
+                    <div className="space-y-4 w-full max-w-sm">
+                        <p className="text-lg text-white/80 font-semibold">
+                            So where do they go next?
+                        </p>
                         {[
-                            "No easy way to find alumni in your sport",
-                            "LinkedIn doesn't understand athlete networks",
-                            "Career resources aren't tailored to athletes",
+                            "No alumni network built around their sport",
+                            "LinkedIn ignores the athlete experience",
+                            "Career resources are generic, not built for athletes",
                         ].map((text, i) => (
-                            <div key={i} className="flex items-start gap-4 text-left">
-                                <div className="h-8 w-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                                    <Target className="h-4 w-4 text-red-400" />
+                            <div key={i} className="flex items-start gap-3 text-left">
+                                <div className="h-6 w-6 rounded-full bg-red-500/15 flex items-center justify-center shrink-0 mt-0.5">
+                                    <Target className="h-3 w-3 text-red-400" />
                                 </div>
-                                <p className="text-white/70 text-lg font-medium leading-snug">{text}</p>
+                                <p className="text-white/50 text-base font-medium leading-snug">{text}</p>
                             </div>
                         ))}
                     </div>
+
+                    <p className="text-2xl sm:text-3xl font-black text-white pt-4">
+                        They deserve a better network.
+                    </p>
                 </div>
             </SlideWrapper>
         ),
     },
 
-    // 3 — Solution intro (vibrant gradient)
+    // 2 — Introducing Relay
     {
         id: "solution",
         bg: "bg-gradient-to-br from-violet-600 via-blue-600 to-cyan-500",
@@ -125,7 +115,7 @@ const slides: Slide[] = [
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-blue-400/10 blur-3xl pointer-events-none" />
 
                 <div className="relative z-10 flex flex-col items-center text-center space-y-8">
-                    {/* Logo — crisp, no blur near the image */}
+                    {/* Logo */}
                     <div className="relative">
                         <div className="absolute -inset-6 bg-white/20 rounded-full blur-2xl pointer-events-none" />
                         <img
@@ -135,11 +125,14 @@ const slides: Slide[] = [
                             style={{ imageRendering: "auto" }}
                         />
                     </div>
-                    <h2 className="text-5xl font-black text-white leading-tight drop-shadow-lg">
-                        Meet Relay.
-                    </h2>
+                    <div className="space-y-3">
+                        <p className="text-sm font-bold uppercase tracking-widest text-white/50">Introducing</p>
+                        <h2 className="text-5xl sm:text-6xl font-black text-white leading-tight drop-shadow-lg">
+                            Relay
+                        </h2>
+                    </div>
                     <p className="text-xl text-white/80 max-w-sm leading-relaxed font-medium">
-                        A verified, athlete-only platform that makes professional networking effortless.
+                        The professional networking platform built exclusively for student-athletes and alumni.
                     </p>
                     <div className="grid grid-cols-2 gap-4 w-full max-w-sm pt-4">
                         {[

@@ -55,49 +55,56 @@ function PhoneMock({ children }: { children: React.ReactNode }) {
 // ---------------------------------------------------------------------------
 
 const slides: Slide[] = [
-    // 1 — The Problem (hook slide)
+    // 1 — The Problem (emotional hook with athlete imagery)
     {
         id: "problem",
-        bg: "bg-[#0a0a0a]",
+        bg: "bg-black",
         content: (
-            <SlideWrapper>
-                {/* Subtle dark gradient texture */}
-                <div className="absolute inset-0 bg-gradient-to-b from-red-950/20 via-transparent to-transparent pointer-events-none" />
+            <SlideWrapper className="!p-0">
+                {/* Full-bleed athlete image */}
+                <div
+                    className="absolute inset-0 bg-[url(/hero-sports.png)] bg-cover bg-center"
+                    style={{
+                        filter: "brightness(0.45) saturate(0.7)",
+                    }}
+                />
+                {/* Gradient overlays for text readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent pointer-events-none" />
 
-                <div className="relative z-10 flex flex-col items-center text-center space-y-10">
-                    {/* Big stat hook */}
-                    <div className="space-y-4">
-                        <span className="text-6xl sm:text-8xl font-black text-white leading-none">98%</span>
-                        <p className="text-xl sm:text-2xl text-white/50 font-medium max-w-sm leading-snug">
-                            of student-athletes will <span className="text-red-400 font-bold">never go pro.</span>
-                        </p>
+                <div className="relative z-10 flex flex-col items-center justify-end text-center h-full px-8 pb-20 pt-16">
+                    {/* Top: stat hook */}
+                    <div className="flex-1 flex flex-col items-center justify-center space-y-6 max-w-lg">
+                        {/* Quote */}
+                        <div className="space-y-4">
+                            <p className="text-2xl sm:text-3xl font-bold text-white/90 leading-snug italic max-w-md">
+                                {"“"}I gave everything to my sport for four years. Then graduation hit and I realized I had no network, no connections, and no idea what came next.{"”"}
+                            </p>
+                            <p className="text-sm text-white/40 font-medium tracking-wide">
+                                {"—"} D1 Student-Athlete, Class of 2024
+                            </p>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="w-12 h-px bg-white/20" />
+
+                        {/* Stat */}
+                        <div className="space-y-2">
+                            <p className="text-5xl sm:text-7xl font-black text-white leading-none">
+                                98<span className="text-red-400">%</span>
+                            </p>
+                            <p className="text-base sm:text-lg text-white/50 font-medium max-w-xs leading-snug">
+                                of student-athletes never go pro.<br />
+                                <span className="text-white/80 font-bold">Most have no plan for what comes after.</span>
+                            </p>
+                        </div>
                     </div>
 
-                    {/* Divider */}
-                    <div className="w-16 h-px bg-white/20" />
-
-                    {/* Pain points */}
-                    <div className="space-y-4 w-full max-w-sm">
-                        <p className="text-lg text-white/80 font-semibold">
-                            So where do they go next?
-                        </p>
-                        {[
-                            "No alumni network built around their sport",
-                            "LinkedIn ignores the athlete experience",
-                            "Career resources are generic, not built for athletes",
-                        ].map((text, i) => (
-                            <div key={i} className="flex items-start gap-3 text-left">
-                                <div className="h-6 w-6 rounded-full bg-red-500/15 flex items-center justify-center shrink-0 mt-0.5">
-                                    <Target className="h-3 w-3 text-red-400" />
-                                </div>
-                                <p className="text-white/50 text-base font-medium leading-snug">{text}</p>
-                            </div>
-                        ))}
+                    {/* Bottom: swipe hint */}
+                    <div className="flex items-center gap-2 mt-8 opacity-60">
+                        <ChevronRight className="h-4 w-4 text-white animate-pulse" />
+                        <span className="text-xs text-white/60 font-medium uppercase tracking-widest">Swipe</span>
                     </div>
-
-                    <p className="text-2xl sm:text-3xl font-black text-white pt-4">
-                        They deserve a better network.
-                    </p>
                 </div>
             </SlideWrapper>
         ),

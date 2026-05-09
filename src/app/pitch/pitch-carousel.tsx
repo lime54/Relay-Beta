@@ -77,8 +77,8 @@ const slides: Slide[] = [
                     <div className="flex-1 flex flex-col items-center justify-center space-y-6 max-w-lg">
                         {/* Quote */}
                         <div className="space-y-4">
-                            <p className="text-2xl sm:text-3xl font-bold text-white/90 leading-snug italic max-w-md">
-                                {"“"}I gave everything to my sport for four years. Then graduation hit and I realized I had no network, no connections, and no idea what came next.{"”"}
+                            <p className=”text-2xl sm:text-3xl font-bold text-white/90 leading-snug italic max-w-md”>
+                                {““”}I gave four years to my sport. Graduation came and I had no network, no plan, nothing.{“””}
                             </p>
                             <p className="text-sm text-white/40 font-medium tracking-wide">
                                 {"—"} D1 Student-Athlete, Class of 2024

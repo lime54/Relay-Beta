@@ -89,7 +89,7 @@ function EducationForm({
     )
 }
 
-export function EducationSection({ initialEducations }: { initialEducations: Education[] }) {
+export function EducationSection({ initialEducations, isOwnProfile = true }: { initialEducations: Education[], isOwnProfile?: boolean }) {
     const [isAddOpen, setIsAddOpen] = useState(false)
     const [isAdding, setIsAdding] = useState(false)
     const [editingEdu, setEditingEdu] = useState<Education | null>(null)
@@ -144,21 +144,23 @@ export function EducationSection({ initialEducations }: { initialEducations: Edu
                     <GraduationCap className="h-5 w-5 text-primary" />
                     Education
                 </h2>
-                <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                    <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="gap-2 rounded-full border-dashed">
-                            <Plus className="h-4 w-4" />
-                            Add Education
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Add Education</DialogTitle>
-                            <DialogDescription>Add your schools and degrees.</DialogDescription>
-                        </DialogHeader>
-                        <EducationForm onSubmit={handleAdd} isSaving={isAdding} />
-                    </DialogContent>
-                </Dialog>
+                {isOwnProfile && (
+                    <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="gap-2 rounded-full border-dashed">
+                                <Plus className="h-4 w-4" />
+                                Add Education
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Add Education</DialogTitle>
+                                <DialogDescription>Add your schools and degrees.</DialogDescription>
+                            </DialogHeader>
+                            <EducationForm onSubmit={handleAdd} isSaving={isAdding} />
+                        </DialogContent>
+                    </Dialog>
+                )}
             </div>
 
             {/* Edit dialog — controlled outside of the card list */}
@@ -187,11 +189,13 @@ export function EducationSection({ initialEducations }: { initialEducations: Edu
                             <GraduationCap className="h-6 w-6 text-muted-foreground" />
                         </div>
                         <p className="text-muted-foreground max-w-sm mb-4 text-sm">
-                            Add your education history.
+                            {isOwnProfile ? 'Add your education history.' : 'This user has not added any education yet.'}
                         </p>
-                        <Button variant="outline" size="sm" onClick={() => setIsAddOpen(true)}>
-                            Add School
-                        </Button>
+                        {isOwnProfile && (
+                            <Button variant="outline" size="sm" onClick={() => setIsAddOpen(true)}>
+                                Add School
+                            </Button>
+                        )}
                     </CardContent>
                 </Card>
             ) : (
@@ -217,26 +221,28 @@ export function EducationSection({ initialEducations }: { initialEducations: Edu
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-1 shrink-0">
-                                        <Button
-                                            type="button"
-                                            size="icon"
-                                            variant="ghost"
-                                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                            onClick={() => setEditingEdu(edu)}
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            size="icon"
-                                            variant="ghost"
-                                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                            onClick={() => handleDelete(edu.id)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                    {isOwnProfile && (
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            <Button
+                                                type="button"
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                onClick={() => setEditingEdu(edu)}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                onClick={() => handleDelete(edu.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                                 {edu.description && (
                                     <div className="mt-4 text-sm text-muted-foreground pl-[4rem]">

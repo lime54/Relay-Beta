@@ -89,7 +89,7 @@ function ExperienceForm({
     )
 }
 
-export function ExperienceList({ initialExperiences }: { initialExperiences: Experience[] }) {
+export function ExperienceList({ initialExperiences, isOwnProfile = true }: { initialExperiences: Experience[], isOwnProfile?: boolean }) {
     const [isAddOpen, setIsAddOpen] = useState(false)
     const [isAdding, setIsAdding] = useState(false)
     const [editingExp, setEditingExp] = useState<Experience | null>(null)
@@ -144,21 +144,23 @@ export function ExperienceList({ initialExperiences }: { initialExperiences: Exp
                     <Briefcase className="h-5 w-5 text-primary" />
                     Work Experience
                 </h2>
-                <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                    <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="gap-2 rounded-full border-dashed">
-                            <Plus className="h-4 w-4" />
-                            Add Role
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Add Experience</DialogTitle>
-                            <DialogDescription>Add your professional experience manually.</DialogDescription>
-                        </DialogHeader>
-                        <ExperienceForm onSubmit={handleAdd} isSaving={isAdding} />
-                    </DialogContent>
-                </Dialog>
+                {isOwnProfile && (
+                    <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="gap-2 rounded-full border-dashed">
+                                <Plus className="h-4 w-4" />
+                                Add Role
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Add Experience</DialogTitle>
+                                <DialogDescription>Add your professional experience manually.</DialogDescription>
+                            </DialogHeader>
+                            <ExperienceForm onSubmit={handleAdd} isSaving={isAdding} />
+                        </DialogContent>
+                    </Dialog>
+                )}
             </div>
 
             {/* Edit dialog — controlled outside of the card list */}
@@ -188,11 +190,13 @@ export function ExperienceList({ initialExperiences }: { initialExperiences: Exp
                         </div>
                         <h3 className="font-semibold text-lg">No experience added</h3>
                         <p className="text-muted-foreground max-w-sm mt-1 mb-4">
-                            Your profile is looking a bit empty. Add your internships or jobs to stand out to recruiters.
+                            {isOwnProfile ? 'Your profile is looking a bit empty. Add your internships or jobs to stand out to recruiters.' : 'This user has not added any experience yet.'}
                         </p>
-                        <Button variant="outline" size="sm" onClick={() => setIsAddOpen(true)}>
-                            Add your first role
-                        </Button>
+                        {isOwnProfile && (
+                            <Button variant="outline" size="sm" onClick={() => setIsAddOpen(true)}>
+                                Add your first role
+                            </Button>
+                        )}
                     </CardContent>
                 </Card>
             ) : (
@@ -213,26 +217,28 @@ export function ExperienceList({ initialExperiences }: { initialExperiences: Exp
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-1 shrink-0">
-                                        <Button
-                                            type="button"
-                                            size="icon"
-                                            variant="ghost"
-                                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                            onClick={() => setEditingExp(exp)}
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            size="icon"
-                                            variant="ghost"
-                                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                            onClick={() => handleDelete(exp.id)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                    {isOwnProfile && (
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            <Button
+                                                type="button"
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                onClick={() => setEditingExp(exp)}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                onClick={() => handleDelete(exp.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                                 {exp.description && (
                                     <div className="mt-4 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap pl-4 border-l-2 bg-muted/10 p-3 rounded-r-md">

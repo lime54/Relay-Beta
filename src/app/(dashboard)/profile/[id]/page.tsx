@@ -50,10 +50,10 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                         <ProfileHeader profile={profile} isOwnProfile={false} currentExperience={experiences?.find(e => e.is_current)} />
 
                         {/* Experience Section */}
-                        <ExperienceList initialExperiences={experiences || []} />
+                        <ExperienceList initialExperiences={experiences || []} isOwnProfile={false} />
 
                         {/* Education Section */}
-                        <EducationSection initialEducations={educations || []} />
+                        <EducationSection initialEducations={educations || []} isOwnProfile={false} />
                     </main>
 
                     {/* Right Sidebar Column */}

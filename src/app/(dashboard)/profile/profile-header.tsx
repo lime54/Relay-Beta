@@ -479,7 +479,15 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                         {currentExperience ? (
                              <span className="font-bold text-primary">{currentExperience.role} at {currentExperience.company}</span>
                         ) : (
-                             <span>{profile?.athlete_profiles?.sport ? `${profile.athlete_profiles.sport} Student-Athlete` : 'Student-Athlete'} at {profile?.athlete_profiles?.school || 'University'}</span>
+                             <span>{(() => {
+                                 const isAlum = (profile as any)?.role === 'alum'
+                                 const sport = profile?.athlete_profiles?.sport
+                                 const school = profile?.athlete_profiles?.school || 'University'
+                                 if (isAlum) {
+                                     return sport ? `${sport} Alum from ${school}` : `Alum from ${school}`
+                                 }
+                                 return sport ? `${sport} Student-Athlete at ${school}` : `Student-Athlete at ${school}`
+                             })()}</span>
                         )}
                         {primaryIndustry && (
                             <span className="text-xs bg-secondary/10 text-secondary px-2.5 py-0.5 rounded-full ring-1 ring-secondary/20 uppercase tracking-tight font-bold">
@@ -749,7 +757,7 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                                         name: profile.name || '',
                                         sport: (profile.athlete_profiles?.sport || 'Squash') as any,
                                         school: profile.athlete_profiles?.school || '',
-                                        role: profile.athlete_profiles?.sport ? 'Student-Athlete' : 'Alumni',
+                                        role: (profile as any)?.role === 'alum' ? 'Alumni' : 'Student-Athlete',
                                         imageUrl: profile.athlete_profiles?.avatar_url || profile.avatar_url
                                     }}
                                     onSuccess={() => setIsDialogOpen(false)}

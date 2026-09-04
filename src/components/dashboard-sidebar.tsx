@@ -100,7 +100,6 @@ export function DashboardSidebar({ className }: { className?: string }) {
             <div className="p-6">
                 <Link href="/" className="flex items-center gap-2">
                     <img src="/relay-logo.png" alt="Relay" className="h-8 w-auto" />
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 bg-muted/50 px-1.5 py-0.5 rounded-md self-end mb-0.5">beta</span>
                 </Link>
             </div>
 
@@ -199,7 +198,7 @@ export function DashboardSidebar({ className }: { className?: string }) {
                     onClick={handleVersionTap}
                     className="text-[10px] text-muted-foreground/40 text-center mt-3 cursor-default select-none"
                 >
-                    v0.1.0-beta
+                    v0.1.0
                 </p>
             </div>
         </div>

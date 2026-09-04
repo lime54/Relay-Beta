@@ -257,7 +257,7 @@ export default function NetworkClient({
                             variant="outline"
                             className="border-secondary/30 bg-secondary/10 text-secondary backdrop-blur-sm px-4 py-1"
                         >
-                            Marketplace Beta
+                            Marketplace
                         </Badge>
                         <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
                             The Athlete Network

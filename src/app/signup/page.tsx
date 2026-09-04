@@ -7,9 +7,8 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
 
     return (
         <AuthShell>
-            <div className="flex items-center justify-center gap-2.5 mb-5">
+            <div className="flex items-center justify-center mb-5">
                 <img src="/relay-logo.png" alt="Relay" className="h-8 w-auto brightness-0 invert" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-white/50 bg-white/10 px-1.5 py-0.5 rounded-md self-end mb-1">beta</span>
             </div>
 
             <div className="text-center mb-6">

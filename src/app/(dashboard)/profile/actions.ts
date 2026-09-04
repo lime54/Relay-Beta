@@ -361,6 +361,92 @@ export async function checkConnection(targetUserId: string) {
     return { connected: true }
 }
 
+// ─── AI Resume Parsing (Groq) ───────────────────────────────────────────────
+
+interface ParsedExperience {
+    company: string
+    role: string
+    start_date: string
+    end_date: string
+    is_current: boolean
+    description: string
+}
+
+interface ParsedEducation {
+    school: string
+    degree: string
+    start_date: string
+    end_date: string
+    is_current: boolean
+}
+
+const RESUME_PARSE_SYSTEM_PROMPT = `You extract structured work experience and education history from raw resume text. Resumes come in many layouts (columns, tables, varied section headers like "Work & Leadership Experience" or "Employment History"), so read for meaning, not fixed patterns.
+
+Return ONLY a JSON object with this exact shape, nothing else:
+{
+  "experiences": [
+    { "company": string, "role": string, "start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD" or "", "is_current": boolean, "description": string }
+  ],
+  "educations": [
+    { "school": string, "degree": string, "start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD" or "", "is_current": boolean }
+  ]
+}
+
+Rules:
+- Include every job, internship, and leadership role from the resume's work/experience/leadership section(s), in the order they appear.
+- Include every school from the education section.
+- Normalize dates to YYYY-MM-DD, using "01" for unknown day and month. If only a year is given, use "01-01".
+- Set is_current to true and end_date to "" for roles/schools marked "Present", "Current", or with no end date.
+- description should be a short newline-separated summary of the bullet points for that role (omit for education).
+- degree should capture degree + field of study if present (e.g. "B.S. Computer Science"); use "" if not stated.
+- Do not invent information that isn't in the text. If a field is unclear, use your best reasonable inference from context, never a placeholder like "Unknown".`
+
+export async function parseResumeWithAI(resumeText: string): Promise<
+    | { success: true; experiences: ParsedExperience[]; educations: ParsedEducation[] }
+    | { success: false; error: string }
+> {
+    const apiKey = process.env.GROQ_API_KEY
+    if (!apiKey) {
+        return { success: false, error: 'AI resume parsing is not configured' }
+    }
+
+    try {
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: 'llama-3.3-70b-versatile',
+                messages: [
+                    { role: 'system', content: RESUME_PARSE_SYSTEM_PROMPT },
+                    { role: 'user', content: `Resume text:\n"""\n${resumeText.slice(0, 12000)}\n"""` },
+                ],
+                response_format: { type: 'json_object' },
+                temperature: 0,
+            }),
+        })
+
+        if (!res.ok) {
+            return { success: false, error: `Groq request failed (${res.status})` }
+        }
+
+        const data = await res.json()
+        const content = data.choices?.[0]?.message?.content
+        if (!content) return { success: false, error: 'Empty response from AI' }
+
+        const parsed = JSON.parse(content)
+        const experiences: ParsedExperience[] = Array.isArray(parsed.experiences) ? parsed.experiences : []
+        const educations: ParsedEducation[] = Array.isArray(parsed.educations) ? parsed.educations : []
+
+        return { success: true, experiences, educations }
+    } catch (err) {
+        console.error('AI resume parsing error:', err)
+        return { success: false, error: err instanceof Error ? err.message : 'Unexpected error parsing resume' }
+    }
+}
+
 export async function updateIndustry(industry: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

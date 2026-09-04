@@ -15,6 +15,7 @@ import {
 import {
     addEducation,
     addExperience,
+    parseResumeWithAI,
     uploadResume,
 } from "@/app/(dashboard)/profile/actions";
 import { toast } from "sonner";
@@ -449,7 +450,12 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
 
             try {
                 const text = await extractTextFromPdf(file);
-                const sections = parseResumeText(text);
+
+                const aiResult = await parseResumeWithAI(text);
+                const sections = aiResult.success
+                    ? { experiences: aiResult.experiences, educations: aiResult.educations }
+                    : parseResumeText(text); // fall back to heuristic parsing if AI is unavailable
+
                 if (sections.experiences.length === 0 && sections.educations.length === 0) {
                     handleClose(false);
                     return;

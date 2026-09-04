@@ -14,7 +14,7 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
     return (
         <Button
             type="submit"
-            className="w-full h-12 rounded-xl font-bold text-sm"
+            className="w-full h-12 rounded-xl font-bold text-sm bg-secondary hover:bg-secondary/90 text-white shadow-lg shadow-secondary/30"
             disabled={disabled || pending}
         >
             {pending ? (
@@ -35,30 +35,30 @@ export default function LoginForm() {
     return (
         <form action={login} className="space-y-5">
             <div className="space-y-1.5">
-                <label htmlFor="email" className="text-sm font-semibold">Email</label>
+                <label htmlFor="email" className="text-sm font-semibold text-white/90">Email</label>
                 <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/45" />
                     <Input
                         id="email"
                         name="email"
                         type="email"
                         required
                         placeholder="you@university.edu"
-                        className="h-12 pl-10 rounded-xl border-border/60 bg-muted/30 focus:bg-background transition-colors"
+                        className="h-12 pl-10 rounded-xl bg-white/10 border-white/20 text-white placeholder:text-white/45 focus-visible:ring-white/40 transition-colors"
                     />
                 </div>
             </div>
             <div className="space-y-1.5">
-                <label htmlFor="password" className="text-sm font-semibold">Password</label>
+                <label htmlFor="password" className="text-sm font-semibold text-white/90">Password</label>
                 <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/45" />
                     <Input
                         id="password"
                         name="password"
                         type="password"
                         required
                         placeholder="••••••••"
-                        className="h-12 pl-10 rounded-xl border-border/60 bg-muted/30 focus:bg-background transition-colors"
+                        className="h-12 pl-10 rounded-xl bg-white/10 border-white/20 text-white placeholder:text-white/45 focus-visible:ring-white/40 transition-colors"
                     />
                 </div>
             </div>

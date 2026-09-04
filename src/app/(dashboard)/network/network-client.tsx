@@ -151,6 +151,7 @@ export default function NetworkClient({
 
     const [sportFilter, setSportFilter] = useState(initialSport || "All");
     const [industryFilter, setIndustryFilter] = useState(initialIndustry || "All");
+    const [roleFilter, setRoleFilter] = useState<"All" | "Student-Athlete" | "Alumni">("All");
     const [searchQuery, setSearchQuery] = useState("");
     const [connected, setConnected] = useState<Set<string>>(new Set());
     const [selectedPerson, setSelectedPerson] = useState<NetworkPerson | null>(null);
@@ -172,9 +173,10 @@ export default function NetworkClient({
         [searchParams, router, pathname]
     );
 
-    // All filtering happens client-side for instant results across
-    // name, school, sport, and industry.
-    const filteredPeople = useMemo(() => {
+    // Filtering happens client-side for instant results. Sport, industry, and
+    // search apply first (baseFiltered), so the role tab counts reflect those
+    // filters; the role tab then narrows the visible set further.
+    const baseFiltered = useMemo(() => {
         return realUsers.filter((person) => {
             const sportMatch =
                 sportFilter === "All" ||
@@ -190,6 +192,20 @@ export default function NetworkClient({
         });
     }, [realUsers, sportFilter, industryFilter, searchQuery]);
 
+    const studentCount = useMemo(
+        () => baseFiltered.filter((p) => p.role === "Student-Athlete").length,
+        [baseFiltered]
+    );
+    const alumniCount = useMemo(
+        () => baseFiltered.filter((p) => p.role === "Alumni").length,
+        [baseFiltered]
+    );
+
+    const filteredPeople = useMemo(() => {
+        if (roleFilter === "All") return baseFiltered;
+        return baseFiltered.filter((p) => p.role === roleFilter);
+    }, [baseFiltered, roleFilter]);
+
     const handleSportChange = (value: string) => {
         setSportFilter(value);
         updateParams({ sport: value });
@@ -204,12 +220,13 @@ export default function NetworkClient({
     const clearAllFilters = () => {
         setSportFilter("All");
         setIndustryFilter("All");
+        setRoleFilter("All");
         setSearchQuery("");
         router.push(pathname);
     };
 
     const hasActiveFilters =
-        sportFilter !== "All" || industryFilter !== "All" || searchQuery !== "";
+        sportFilter !== "All" || industryFilter !== "All" || roleFilter !== "All" || searchQuery !== "";
 
     const handleConnectClick = (person: NetworkPerson) => {
         if (connected.has(person.id)) return;
@@ -306,15 +323,42 @@ export default function NetworkClient({
                 </div>
             </div>
 
-            {/* Results bar */}
+            {/* Role filter — segmented All / Student-Athletes / Alumni with live counts */}
             <div className="flex flex-wrap items-center justify-between gap-4 px-4">
-                <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold text-primary">
-                        {filteredPeople.length}
-                    </span>
-                    <span className="text-sm text-muted-foreground font-medium">
-                        {filteredPeople.length === 1 ? "profile" : "profiles"} found
-                    </span>
+                <div className="inline-flex items-center gap-1 p-1 bg-muted rounded-2xl">
+                    {([
+                        { id: "All", label: "All", count: baseFiltered.length },
+                        { id: "Student-Athlete", label: "Student-Athletes", count: studentCount },
+                        { id: "Alumni", label: "Alumni", count: alumniCount },
+                    ] as const).map((opt) => {
+                        const isActive = roleFilter === opt.id;
+                        return (
+                            <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => setRoleFilter(opt.id)}
+                                aria-pressed={isActive}
+                                className={cn(
+                                    "flex items-center gap-2 py-2 px-4 rounded-xl text-sm font-bold transition-all",
+                                    isActive
+                                        ? "bg-background text-foreground shadow-sm"
+                                        : "text-muted-foreground hover:text-foreground"
+                                )}
+                            >
+                                {opt.label}
+                                <span
+                                    className={cn(
+                                        "text-[11px] px-2 py-0.5 rounded-full font-bold tabular-nums",
+                                        isActive
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-muted-foreground/15 text-muted-foreground"
+                                    )}
+                                >
+                                    {opt.count}
+                                </span>
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {hasActiveFilters && (

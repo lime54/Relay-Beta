@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { refineRequestDraft } from "./actions";
 import { submitRequest } from "../actions";
-import { Wand2, Send, Clock, Sparkles, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
+import { Wand2, Send, Clock, Sparkles, Loader2, CheckCircle, AlertTriangle, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -35,11 +34,11 @@ export function RequestForm({
     onSuccess?: () => void;
 }) {
     const [context, setContext] = useState("");
-    const [offer, setOffer] = useState("");
     const [isRefining, setIsRefining] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [isVerified, setIsVerified] = useState(true); // Default to true while loading
+    const [isStudentAthlete, setIsStudentAthlete] = useState(false);
     const supabase = createClient();
 
     useEffect(() => {
@@ -49,28 +48,28 @@ export function RequestForm({
 
             const { data: profile } = await supabase
                 .from('athlete_profiles')
-                .select('verification_status')
+                .select('verification_status, status')
                 .eq('user_id', user.id)
                 .single();
 
             if (profile) {
                 setIsVerified(profile.verification_status === true);
+                setIsStudentAthlete(profile.status === 'current');
             }
         }
         checkVerification();
     }, [supabase]);
 
     const handleRefine = async () => {
-        if (!context && !offer) {
+        if (!context) {
             toast.error("Please add some context first so I can help you refine it!");
             return;
         }
 
         setIsRefining(true);
         try {
-            const result = await refineRequestDraft(context, offer);
+            const result = await refineRequestDraft(context);
             setContext(result.refinedContext);
-            setOffer(result.refinedOffer);
             toast.success("Draft refined!", {
                 description: "Your message is now more professional and clear."
             });
@@ -166,6 +165,18 @@ export function RequestForm({
                 </div>
             )}
 
+            {isStudentAthlete && (
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-secondary/5 border border-secondary/15">
+                    <Heart className="h-4 w-4 shrink-0 mt-0.5 text-secondary" />
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                        Quick thought before you send this: try not to reach out only when you need
+                        something. The best connections here start as real ones — stay in touch, get to
+                        know people, and keep an eye out for ways you can help them too, not just what
+                        you&apos;re after right now.
+                    </p>
+                </div>
+            )}
+
             <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                     <label className="text-sm font-bold flex items-center gap-2">
@@ -174,6 +185,8 @@ export function RequestForm({
                     </label>
                     <Select name="type" required className="rounded-2xl h-12 bg-muted/20 border-border/50">
                         <option value="">Select type...</option>
+                        <option value="chat">Just want to chat</option>
+                        <option value="profile_interest">Interested in your profile</option>
                         <option value="advice">Career Advice</option>
                         <option value="internship">Internship Inquiry</option>
                         <option value="referral">Job Referral</option>
@@ -186,8 +199,9 @@ export function RequestForm({
                         <Clock className="h-4 w-4 text-secondary" />
                         Time Commitment
                     </label>
-                    <Select name="time_commitment" required className="rounded-2xl h-12 bg-muted/20 border-border/50">
-                        <option value="">Select duration...</option>
+                    <Select name="time_commitment" className="rounded-2xl h-12 bg-muted/20 border-border/50">
+                        <option value="">No preference</option>
+                        <option value="flexible">Flexible / just connecting</option>
                         <option value="15min">15 min Coffee Chat</option>
                         <option value="30min_call">30 min Call</option>
                         <option value="30min_coffee">30 min Coffee Chat</option>
@@ -217,21 +231,6 @@ export function RequestForm({
                     maxLength={500}
                     required
                 />
-            </div>
-
-            <div className="space-y-3">
-                <label className="text-sm font-bold">What You Offer in Return</label>
-                <Input
-                    name="offer"
-                    value={offer}
-                    className="h-12 rounded-2xl bg-muted/20 border-border/50 px-6 focus-visible:ring-secondary/50 font-medium text-sm"
-                    onChange={(e) => setOffer(e.target.value)}
-                    placeholder="e.g. I'll share my current network, provide campus insights..."
-                    required
-                />
-                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest pl-1">
-                    Reciprocity builds long-term mentorship
-                </p>
             </div>
 
             <div className="flex flex-col md:flex-row gap-4 pt-4">

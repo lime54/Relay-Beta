@@ -339,7 +339,22 @@ export async function getSimilarityScore(targetUserId: string) {
 
     if (!p1 || !p2) return { score: 0 }
 
-    const score = calculateSimilarityScore(p1 as ProfileSnippet, p2 as ProfileSnippet)
+    // Fetch all experiences (current + past) for both users so the score can
+    // reward overlap in previous employers / roles.
+    const { data: exps } = await supabase
+        .from('experiences')
+        .select('user_id, company, role')
+        .in('user_id', [currentUser.id, targetUserId])
+
+    const expByUser: Record<string, { company: string; role: string }[]> = {}
+    ;(exps || []).forEach(e => {
+        ;(expByUser[e.user_id] ||= []).push({ company: e.company, role: e.role })
+    })
+
+    const score = calculateSimilarityScore(
+        { ...p1, experiences: expByUser[currentUser.id] || [] } as ProfileSnippet,
+        { ...p2, experiences: expByUser[targetUserId] || [] } as ProfileSnippet
+    )
     return { score }
 }
 

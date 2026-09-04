@@ -140,23 +140,33 @@ export default async function NetworkPage({
     }
 
     const userIds = users?.map(u => u.id) || []
+    // Current role per user — used for the card headline.
     let experiencesMap: Record<string, {company: string, role: string}> = {}
+    // ALL roles (current + past) per user — used for similarity's experience-overlap bonus.
+    const allExperiencesMap: Record<string, { company: string; role: string }[]> = {}
 
-    if (userIds.length > 0) {
+    // Include the current user so their own experience can be compared against candidates.
+    const scoringIds = [user.id, ...userIds]
+    if (scoringIds.length > 0) {
         const { data: expData, error: expError } = await supabase
             .from('experiences')
             .select('user_id, company, role, is_current')
-            .in('user_id', userIds)
-            .eq('is_current', true)
+            .in('user_id', scoringIds)
 
         if (!expError && expData) {
             expData.forEach(exp => {
-                if (!experiencesMap[exp.user_id]) {
+                ;(allExperiencesMap[exp.user_id] ||= []).push({ company: exp.company, role: exp.role })
+                if (exp.is_current && !experiencesMap[exp.user_id]) {
                     experiencesMap[exp.user_id] = { company: exp.company, role: exp.role }
                 }
             })
         }
     }
+
+    // Attach the current user's own experiences for scoring.
+    const currentProfileForScoring = currentProfile
+        ? { ...currentProfile, experiences: allExperiencesMap[user.id] || [] }
+        : currentProfile
 
     const realUsers: any[] = (users || [])
         .filter((u: any) => {
@@ -171,10 +181,10 @@ export default async function NetworkPage({
             const displaySport = profile?.sport || 'Athlete'
 
             let similarityScore = 0
-            if (currentProfile && profile) {
+            if (currentProfileForScoring && profile) {
                 similarityScore = calculateSimilarityScore(
-                    currentProfile as ProfileSnippet,
-                    profile as ProfileSnippet
+                    currentProfileForScoring as ProfileSnippet,
+                    { ...profile, experiences: allExperiencesMap[u.id] || [] } as ProfileSnippet
                 )
             }
 

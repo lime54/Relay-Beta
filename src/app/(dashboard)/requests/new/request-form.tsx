@@ -7,7 +7,7 @@ import { Select } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { refineRequestDraft } from "./actions";
 import { submitRequest } from "../actions";
-import { Wand2, Send, Clock, Sparkles, Loader2, CheckCircle, AlertTriangle, Heart } from "lucide-react";
+import { Lightbulb, Send, Clock, Sparkles, Loader2, CheckCircle, AlertTriangle, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,7 @@ export function RequestForm({
     onSuccess?: () => void;
 }) {
     const [context, setContext] = useState("");
+    const [suggestions, setSuggestions] = useState<string[]>([]);
     const [isRefining, setIsRefining] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -61,18 +62,27 @@ export function RequestForm({
     }, [supabase]);
 
     const handleRefine = async () => {
-        if (!context) {
-            toast.error("Please add some context first so I can help you refine it!");
+        if (!context.trim()) {
+            toast.error("Write a bit of your message first, then I can give you feedback.");
             return;
         }
 
         setIsRefining(true);
+        setSuggestions([]);
         try {
-            const result = await refineRequestDraft(context);
-            setContext(result.refinedContext);
-            toast.success("Draft refined!", {
-                description: "Your message is now more professional and clear."
-            });
+            const recipientInfo = recipient
+                ? [recipient.name, recipient.role, recipient.industry, recipient.company && `at ${recipient.company}`, `${recipient.sport} · ${recipient.school}`]
+                    .filter(Boolean)
+                    .join(", ")
+                : undefined;
+            const result = await refineRequestDraft(context, recipientInfo);
+            if (result.error) {
+                toast.error(result.error);
+                return;
+            }
+            setSuggestions(result.suggestions);
+        } catch {
+            toast.error("Could not get suggestions right now. Please try again.");
         } finally {
             setIsRefining(false);
         }
@@ -233,6 +243,26 @@ export function RequestForm({
                 />
             </div>
 
+            {suggestions.length > 0 && (
+                <div className="rounded-3xl border border-secondary/15 bg-secondary/5 p-5 space-y-3 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="flex items-center gap-2">
+                        <Lightbulb className="h-4 w-4 text-secondary" />
+                        <p className="text-sm font-bold">A few ways to make it land</p>
+                    </div>
+                    <ul className="space-y-2">
+                        {suggestions.map((s, i) => (
+                            <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground leading-relaxed">
+                                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-secondary/60" />
+                                {s}
+                            </li>
+                        ))}
+                    </ul>
+                    <p className="text-[10px] text-muted-foreground/70 uppercase font-bold tracking-widest pt-1">
+                        Your words, your call — edit above as you like
+                    </p>
+                </div>
+            )}
+
             <div className="flex flex-col md:flex-row gap-4 pt-4">
                 <Button
                     variant="outline"
@@ -241,8 +271,8 @@ export function RequestForm({
                     onClick={handleRefine}
                     disabled={isRefining}
                 >
-                    <Wand2 className={cn("h-5 w-5", isRefining && "animate-spin")} />
-                    {isRefining ? "AI Writing..." : "AI Refine Draft"}
+                    <Lightbulb className={cn("h-5 w-5", isRefining && "animate-pulse")} />
+                    {isRefining ? "Reviewing..." : "Review my draft"}
                 </Button>
 
                 <Button

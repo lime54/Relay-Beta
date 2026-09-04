@@ -141,7 +141,7 @@ const slides: Slide[] = [
                             { num: "100%", label: "Verified Athletes", emoji: "✓" },
                             { num: ".edu", label: "Email Required", emoji: "🎓" },
                             { num: "24+", label: "Sports Supported", emoji: "⚡" },
-                            { num: "Free", label: "During Beta", emoji: "🚀" },
+                            { num: "Free", label: "Early Access", emoji: "🚀" },
                         ].map((stat, i) => (
                             <div key={i} className="bg-white/15 backdrop-blur-md rounded-2xl p-5 border border-white/20 hover:bg-white/20 transition-colors shadow-lg">
                                 <div className="flex items-center gap-2 mb-1">
@@ -583,7 +583,7 @@ const slides: Slide[] = [
                         Ready to build<br />your legacy?
                     </h2>
                     <p className="text-xl text-white/60 max-w-xs leading-relaxed font-medium">
-                        Join the beta. It&rsquo;s free, it&rsquo;s verified, and it&rsquo;s built for athletes like you.
+                        Join Relay. It&rsquo;s free, it&rsquo;s verified, and it&rsquo;s built for athletes like you.
                     </p>
                     <div className="flex flex-col items-center gap-4 pt-4">
                         <a

@@ -195,8 +195,9 @@ export function RequestForm({
                     </label>
                     <Select name="type" required className="rounded-2xl h-12 bg-muted/20 border-border/50">
                         <option value="">Select type...</option>
+                        <option value="network">Just to network</option>
+                        <option value="background_interest">Found your background interesting</option>
                         <option value="chat">Just want to chat</option>
-                        <option value="profile_interest">Interested in your profile</option>
                         <option value="advice">Career Advice</option>
                         <option value="internship">Internship Inquiry</option>
                         <option value="referral">Job Referral</option>

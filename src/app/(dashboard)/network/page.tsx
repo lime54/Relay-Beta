@@ -221,6 +221,7 @@ export default async function NetworkPage({
                 realUsers={finalUsers}
                 initialSport={sport || 'All'}
                 initialIndustry={industry || 'All'}
+                viewerIsStudentAthlete={currentProfile?.status === 'current'}
             />
 
             {/* Diagnostic info (hidden unless empty) */}

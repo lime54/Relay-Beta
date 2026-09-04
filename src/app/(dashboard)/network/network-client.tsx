@@ -117,6 +117,7 @@ interface NetworkClientProps {
     realUsers: NetworkPerson[];
     initialSport: string;
     initialIndustry: string;
+    viewerIsStudentAthlete?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -144,6 +145,7 @@ export default function NetworkClient({
     realUsers,
     initialSport,
     initialIndustry,
+    viewerIsStudentAthlete = false,
 }: NetworkClientProps) {
     const router = useRouter();
     const pathname = usePathname();
@@ -205,6 +207,24 @@ export default function NetworkClient({
         if (roleFilter === "All") return baseFiltered;
         return baseFiltered.filter((p) => p.role === roleFilter);
     }, [baseFiltered, roleFilter]);
+
+    // Top people to reach out to "just to connect" — shown to student-athletes on
+    // the default view (no active filters/search) to encourage non-transactional
+    // networking. Ranked by the similarity score already computed server-side.
+    const suggestedPeople = useMemo(() => {
+        return [...realUsers]
+            .filter((p) => (p.similarityScore ?? 0) > 0 && !connected.has(p.id))
+            .sort((a, b) => (b.similarityScore ?? 0) - (a.similarityScore ?? 0))
+            .slice(0, 3);
+    }, [realUsers, connected]);
+
+    const showSuggestions =
+        viewerIsStudentAthlete &&
+        suggestedPeople.length > 0 &&
+        roleFilter === "All" &&
+        sportFilter === "All" &&
+        industryFilter === "All" &&
+        !searchQuery;
 
     const handleSportChange = (value: string) => {
         setSportFilter(value);
@@ -322,6 +342,54 @@ export default function NetworkClient({
                     </div>
                 </div>
             </div>
+
+            {/* Suggested for you — encourages student-athletes to reach out just to connect */}
+            {showSuggestions && (
+                <div className="px-4">
+                    <div className="rounded-3xl border border-secondary/15 bg-secondary/5 p-5 md:p-6">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Sparkles className="h-4 w-4 text-secondary" />
+                            <h2 className="text-base font-bold text-primary">People you might click with</h2>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            You&apos;ve got a lot in common with these members. No agenda needed — reach out just to connect.
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {suggestedPeople.map((person) => (
+                                <div
+                                    key={person.id}
+                                    className="flex items-center gap-3 rounded-2xl bg-background border border-border/50 p-3"
+                                >
+                                    <Link href={`/profile/${person.id}`} className="shrink-0">
+                                        <Avatar className="h-11 w-11">
+                                            <AvatarImage src={person.imageUrl} alt={person.name} />
+                                            <AvatarFallback className="text-sm bg-gradient-to-br from-muted to-border">
+                                                {person.name.split(" ").map((n) => n[0]).join("")}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </Link>
+                                    <div className="min-w-0 flex-1">
+                                        <Link href={`/profile/${person.id}`} className="hover:underline">
+                                            <p className="text-sm font-bold text-primary truncate">{person.name}</p>
+                                        </Link>
+                                        <p className="text-xs text-muted-foreground truncate">
+                                            {person.sport} · {person.school}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="shrink-0 rounded-full h-8 px-3 text-xs font-bold border-secondary/30 text-secondary hover:bg-secondary/10"
+                                        onClick={() => handleConnectClick(person)}
+                                    >
+                                        Connect
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Role filter — segmented All / Student-Athletes / Alumni with live counts */}
             <div className="flex flex-wrap items-center justify-between gap-4 px-4">

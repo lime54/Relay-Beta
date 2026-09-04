@@ -6,7 +6,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Users, CheckCircle, MessageSquare, TrendingUp, ChevronDown } from "lucide-react";
 
-const features = [
+type Feature = {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  image: string;
+  fit?: "contain" | "cover";
+};
+
+const features: Feature[] = [
   {
     id: "feature-1",
     title: "Shared athlete experience",
@@ -20,6 +29,7 @@ const features = [
     description: "Every member is a verified NCAA student-athlete or alumni (D1, D2, D3). No strangers, no spam. Only a shared athletic background.",
     icon: <CheckCircle className="h-5 w-5" />,
     image: "/verified_athlete_community_png_1777133649233.png",
+    fit: "contain" as const,
   },
   {
     id: "feature-3",
@@ -114,13 +124,21 @@ export function FeatureAccordion() {
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="absolute inset-0 flex items-center justify-center p-4 lg:p-8"
           >
-            <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl shadow-primary/10">
+            <div className={cn(
+              "relative w-full h-full rounded-2xl overflow-hidden shadow-2xl shadow-primary/10",
+              activeFeature.fit === "contain" && "bg-[#f7f8fa]"
+            )}>
               <img
                 src={activeFeature.image}
                 alt={activeFeature.title}
-                className="w-full h-full object-cover"
+                className={cn(
+                  "w-full h-full",
+                  activeFeature.fit === "contain" ? "object-contain" : "object-cover"
+                )}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent" />
+              {activeFeature.fit !== "contain" && (
+                <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent" />
+              )}
             </div>
           </motion.div>
         </AnimatePresence>

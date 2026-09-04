@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import {
     Search,
     Send,
+    ArrowLeft,
     MessageCircle,
     ChevronRight,
     FileText,
@@ -697,8 +698,11 @@ export default function MessagesClient({
 
     return (
         <div className="flex h-[calc(100vh-8rem)] gap-4 animate-fade-in">
-            {/* Sidebar: Connections List */}
-            <div className="w-80 flex flex-col gap-4">
+            {/* Sidebar: Connections List — full width on mobile, hidden there once a chat is open */}
+            <div className={cn(
+                "w-full md:w-80 flex-col gap-4",
+                selectedId ? "hidden md:flex" : "flex"
+            )}>
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -756,8 +760,11 @@ export default function MessagesClient({
                 </ScrollArea>
             </div>
 
-            {/* Main: Chat Window */}
-            <div className="flex-1 flex flex-col rounded-3xl border border-border/50 bg-card shadow-xl overflow-hidden relative">
+            {/* Main: Chat Window — full screen on mobile once a chat is open, hidden there otherwise */}
+            <div className={cn(
+                "flex-1 flex-col rounded-3xl border border-border/50 bg-card shadow-xl overflow-hidden relative",
+                selectedId ? "flex" : "hidden md:flex"
+            )}>
                 {!selectedId ? (
                     <div className="flex flex-col items-center justify-center h-full text-center p-12">
                         <div className="h-20 w-20 bg-secondary/5 text-secondary rounded-full flex items-center justify-center mb-6">
@@ -772,7 +779,15 @@ export default function MessagesClient({
                 ) : (
                     <>
                         {/* Chat header */}
-                        <div className="p-4 border-b border-border/50 flex items-center gap-4 bg-muted/20">
+                        <div className="p-4 border-b border-border/50 flex items-center gap-3 sm:gap-4 bg-muted/20">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedId(null)}
+                                className="md:hidden -ml-1 p-1.5 rounded-lg hover:bg-muted text-muted-foreground shrink-0"
+                                aria-label="Back to conversations"
+                            >
+                                <ArrowLeft className="h-5 w-5" />
+                            </button>
                             <Avatar className="h-10 w-10 border-border/50 border">
                                 <AvatarImage
                                     src={otherPerson?.athlete_profiles?.avatar_url}

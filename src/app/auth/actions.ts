@@ -116,19 +116,61 @@ export async function signup(formData: FormData) {
     const { error: emailError } = await resend.emails.send({
         from,
         to: email.trim(),
-        subject: 'Confirm your Relay account',
+        subject: `You're almost in, ${firstName} — confirm your Relay account`,
         html: `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #1a1a1a;">
-                <h1 style="font-size: 24px; margin-bottom: 16px;">Welcome to Relay, ${firstName}!</h1>
-                <p style="font-size: 16px; line-height: 1.5; color: #4a4a4a;">Thanks for signing up. Click the button below to confirm your email and finish creating your account.</p>
-                <p style="margin: 32px 0;">
-                    <a href="${linkData.properties.action_link}" style="background:#000;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600;">Confirm your account</a>
-                </p>
-                <p style="font-size: 14px; color: #6a6a6a;">If the button doesn't work, copy and paste this link into your browser:<br/>
-                    <a href="${linkData.properties.action_link}" style="color:#0066cc;word-break:break-all;">${linkData.properties.action_link}</a>
-                </p>
-                <p style="font-size: 13px; color: #9a9a9a; margin-top: 32px;">If you didn't sign up for Relay, you can safely ignore this email.</p>
-            </div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb;margin:0;padding:32px 12px;">
+          <tr>
+            <td align="center">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #e6eaf2;">
+                <!-- Brand header -->
+                <tr>
+                  <td style="background:#ffffff;padding:26px 32px 22px;border-bottom:1px solid #eef1f7;" align="left">
+                    <img src="https://relaynetwork.co/relay-logo.png" alt="Relay" height="30" style="height:30px;width:auto;display:block;" />
+                  </td>
+                </tr>
+                <!-- Body -->
+                <tr>
+                  <td style="padding:36px 32px 8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                    <h1 style="font-size:23px;line-height:1.25;margin:0 0 14px;color:#10193f;">Welcome to Relay, ${firstName} 👋</h1>
+                    <p style="font-size:16px;line-height:1.55;color:#48506a;margin:0 0 8px;">
+                      You're one click away from joining a private network of student-athletes and alumni who get where you're coming from. Confirm your email to finish setting up your account.
+                    </p>
+                  </td>
+                </tr>
+                <!-- Button -->
+                <tr>
+                  <td style="padding:20px 32px 8px;" align="center">
+                    <table role="presentation" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="border-radius:12px;background:#2a5fd0;">
+                          <a href="${linkData.properties.action_link}" style="display:inline-block;padding:15px 34px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px;">
+                            Confirm my account
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <!-- Fallback link -->
+                <tr>
+                  <td style="padding:18px 32px 4px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                    <p style="font-size:13px;line-height:1.5;color:#8a90a6;margin:0;">
+                      Button not working? Paste this link into your browser:<br/>
+                      <a href="${linkData.properties.action_link}" style="color:#2a5fd0;word-break:break-all;">${linkData.properties.action_link}</a>
+                    </p>
+                  </td>
+                </tr>
+                <!-- Footer -->
+                <tr>
+                  <td style="padding:24px 32px 30px;border-top:1px solid #eef1f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                    <p style="font-size:12px;line-height:1.5;color:#a4a9bd;margin:0 0 4px;">Built for athletes, by athletes.</p>
+                    <p style="font-size:12px;line-height:1.5;color:#a4a9bd;margin:0;">If you didn't sign up for Relay, you can safely ignore this email.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
         `
     })
 

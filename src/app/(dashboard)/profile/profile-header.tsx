@@ -29,7 +29,6 @@ import { useEffect } from "react"
 import { EditIndustryDialog } from "@/components/profile/edit-industry-dialog"
 import { EditLinkedInDialog } from "@/components/profile/edit-linkedin-dialog"
 import { PROFILE_EDIT_PARAM, type ProfileEditTarget } from "@/lib/profile-edit-targets"
-import { AvailabilityPicker } from "@/components/scheduling/availability-picker"
 
 interface AthleteProfile {
     school?: string
@@ -91,7 +90,6 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
     const moreMenuRef = useRef<HTMLDivElement>(null)
     const [isEditIndustryOpen, setIsEditIndustryOpen] = useState(false)
     const [isEditLinkedInOpen, setIsEditLinkedInOpen] = useState(false)
-    const [isBookingOpen, setIsBookingOpen] = useState(false)
     const [isConnected, setIsConnected] = useState<boolean | null>(null)
     const [connectionCount, setConnectionCount] = useState<number>(0)
     
@@ -126,9 +124,13 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
     // Runs once on mount when the param exists, then strips it from the URL so refreshes don't re-trigger.
     const searchParams = useSearchParams()
     useEffect(() => {
-        // Booking deep-link works on anyone's profile (not just our own).
+        // Booking deep-link works on anyone's profile (not just our own):
+        // open the member's external scheduling link in a new tab if they have one.
         if (!isOwnProfile && searchParams?.get('book')) {
-            setIsBookingOpen(true)
+            const url = profile?.athlete_profiles?.scheduling_url
+            if (url) {
+                window.open(url.startsWith('http') ? url : `https://${url}`, '_blank')
+            }
             const params = new URLSearchParams(searchParams.toString())
             params.delete('book')
             const qs = params.toString()
@@ -536,7 +538,7 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                             </Button>
                         )}
                         
-                        {(!isOwnProfile || profile?.athlete_profiles?.scheduling_url) && (
+                        {(isOwnProfile || profile?.athlete_profiles?.scheduling_url) && (
                              <Button
                                 variant={isOwnProfile ? "ghost" : "default"}
                                 className={cn(
@@ -544,19 +546,19 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                                     !isOwnProfile && "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
                                 )}
                                 onClick={() => {
-                                    if (isOwnProfile) {
-                                        const url = profile?.athlete_profiles?.scheduling_url;
-                                        if (url) {
-                                            const fullUrl = url.startsWith('http') ? url : `https://${url}`;
-                                            window.open(fullUrl, '_blank');
-                                        }
-                                    } else {
-                                        setIsBookingOpen(true);
+                                    const url = profile?.athlete_profiles?.scheduling_url;
+                                    if (url) {
+                                        const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+                                        window.open(fullUrl, '_blank');
+                                    } else if (isOwnProfile) {
+                                        router.push('/settings/calendar');
                                     }
                                 }}
                              >
                                 <Calendar className="h-4 w-4" />
-                                {isOwnProfile ? "Preview Booking Link" : "Book a Meeting"}
+                                {isOwnProfile
+                                    ? (profile?.athlete_profiles?.scheduling_url ? "Preview Booking Link" : "Add Booking Link")
+                                    : "Book a Meeting"}
                              </Button>
                         )}
 
@@ -774,15 +776,6 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                 onOpenChange={setIsResumeUploadOpen}
                 currentResumeUrl={profile?.athlete_profiles?.resume_url}
             />
-
-            {/* Booking Dialog */}
-            <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
-                <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-[2.5rem] border-none shadow-2xl bg-transparent">
-                    {profile && (
-                        <AvailabilityPicker recipientId={profile.id} recipientName={profile.name || "User"} />
-                    )}
-                </DialogContent>
-            </Dialog>
 
             <ImageCropper
                 image={imageToCrop}

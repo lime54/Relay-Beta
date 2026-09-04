@@ -42,11 +42,29 @@ export default async function MessagesPage() {
         }
 
         // Stitch the data together to match the expected Connection interface
-        activeConnections = rawConnections.map(req => ({
+        const stitched = rawConnections.map(req => ({
             ...req,
             requester: userMap[req.requester_id] || { name: 'Unknown', athlete_profiles: null },
             recipient: userMap[req.recipient_id] || { name: 'Unknown', athlete_profiles: null }
         }))
+
+        // One conversation per person: multiple accepted requests with the same
+        // person are merged into a single thread. The most recent request is the
+        // representative; all_request_ids carries every thread so the client can
+        // load messages across all of them.
+        const groups = new Map<string, { rep: any; ids: string[] }>()
+        for (const conn of stitched) {
+            const otherId = conn.requester_id === user.id ? conn.recipient_id : conn.requester_id
+            if (!otherId) continue
+            const g = groups.get(otherId)
+            if (!g) {
+                groups.set(otherId, { rep: conn, ids: [conn.id] })
+            } else {
+                g.ids.push(conn.id)
+                if (new Date(conn.created_at || 0) > new Date(g.rep.created_at || 0)) g.rep = conn
+            }
+        }
+        activeConnections = Array.from(groups.values()).map(g => ({ ...g.rep, all_request_ids: g.ids }))
     }
 
     return (

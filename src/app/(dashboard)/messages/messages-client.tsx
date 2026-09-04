@@ -476,19 +476,24 @@ export default function MessagesClient({
 
         let cancelled = false;
 
+        // A conversation may span multiple accepted requests with the same
+        // person; load and watch messages across all of them.
+        const conn = initialConnections.find((c) => c.id === selectedId);
+        const threadIds: string[] = (conn?.all_request_ids as string[] | undefined) ?? [selectedId];
+
         async function fetchMessages() {
             const { data } = await supabase
                 .from("messages")
                 .select("*")
-                .eq("request_id", selectedId)
+                .in("request_id", threadIds)
                 .order("created_at", { ascending: true });
 
             if (!cancelled && data) {
                 setMessages(data);
 
-                // Mark unread incoming messages as seen
+                // Mark unread incoming messages as seen (per thread in this group)
                 if (data.some((m) => m.receiver_id === userId && !m.is_read)) {
-                    await markMessagesSeen(selectedId!);
+                    for (const id of threadIds) await markMessagesSeen(id);
                 }
             }
         }
@@ -503,10 +508,10 @@ export default function MessagesClient({
                     event: "INSERT",
                     schema: "public",
                     table: "messages",
-                    filter: `request_id=eq.${selectedId}`,
                 },
                 async (payload) => {
                     const newMsg = payload.new as Message;
+                    if (!threadIds.includes(newMsg.request_id)) return;
                     setMessages((prev) => {
                         if (prev.some((m) => m.id === newMsg.id)) return prev;
                         return [...prev, newMsg];
@@ -514,7 +519,7 @@ export default function MessagesClient({
 
                     // Auto-mark as read if the chat is open and the message is for us
                     if (newMsg.receiver_id === userId) {
-                        await markMessagesSeen(selectedId!);
+                        await markMessagesSeen(newMsg.request_id);
                     }
                 }
             )
@@ -524,10 +529,10 @@ export default function MessagesClient({
                     event: "UPDATE",
                     schema: "public",
                     table: "messages",
-                    filter: `request_id=eq.${selectedId}`,
                 },
                 (payload) => {
                     const updated = payload.new as Message;
+                    if (!threadIds.includes(updated.request_id)) return;
                     setMessages((prev) =>
                         prev.map((m) => (m.id === updated.id ? updated : m))
                     );
@@ -539,7 +544,7 @@ export default function MessagesClient({
             cancelled = true;
             supabase.removeChannel(channel);
         };
-    }, [selectedId, supabase, userId, markMessagesSeen]);
+    }, [selectedId, supabase, userId, markMessagesSeen, initialConnections]);
 
     // -----------------------------------------------------------------------
     // Typing indicator (broadcast channel)

@@ -268,7 +268,7 @@ export default function NetworkClient({
     return (
         <div className="space-y-8 max-w-7xl mx-auto pb-20">
             {/* Hero / Search Section */}
-            <div className="relative overflow-hidden p-8 md:p-12 bg-primary rounded-[2.5rem] text-primary-foreground shadow-2xl">
+            <div className="relative overflow-hidden p-6 md:p-12 bg-primary rounded-3xl md:rounded-[2.5rem] text-primary-foreground shadow-2xl">
                 <div className="absolute top-0 right-0 opacity-10 blur-2xl bg-secondary rounded-full -mr-20 -mt-20 w-80 h-80 animate-pulse" />
 
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
@@ -288,7 +288,7 @@ export default function NetworkClient({
                         </p>
                     </div>
 
-                    <div className="w-full md:w-auto bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/10 shadow-xl min-w-[300px]">
+                    <div className="w-full md:w-auto md:min-w-[300px] bg-white/10 backdrop-blur-md p-5 md:p-6 rounded-3xl border border-white/10 shadow-xl">
                         <div className="flex items-center gap-3 mb-4">
                             <Search className="h-5 w-5 text-secondary" />
                             <span className="font-semibold text-sm">
@@ -393,7 +393,7 @@ export default function NetworkClient({
 
             {/* Role filter — segmented All / Student-Athletes / Alumni with live counts */}
             <div className="flex flex-wrap items-center justify-between gap-4 px-4">
-                <div className="inline-flex items-center gap-1 p-1 bg-muted rounded-2xl">
+                <div className="flex items-center gap-1 p-1 bg-muted rounded-2xl max-w-full overflow-x-auto">
                     {([
                         { id: "All", label: "All", count: baseFiltered.length },
                         { id: "Student-Athlete", label: "Student-Athletes", count: studentCount },
@@ -407,7 +407,7 @@ export default function NetworkClient({
                                 onClick={() => setRoleFilter(opt.id)}
                                 aria-pressed={isActive}
                                 className={cn(
-                                    "flex items-center gap-2 py-2 px-4 rounded-xl text-sm font-bold transition-all",
+                                    "flex items-center gap-2 py-2 px-4 rounded-xl text-sm font-bold transition-all shrink-0 whitespace-nowrap",
                                     isActive
                                         ? "bg-background text-foreground shadow-sm"
                                         : "text-muted-foreground hover:text-foreground"

@@ -457,50 +457,88 @@ Rules:
 - degree should capture degree + field of study if present (e.g. "B.S. Computer Science"); use "" if not stated.
 - Do not invent information that isn't in the text. If a field is unclear, use your best reasonable inference from context, never a placeholder like "Unknown".`
 
+// Models tried in order, so a decommissioned/unavailable primary model falls
+// back automatically instead of silently failing the whole import.
+const RESUME_PARSE_MODELS = [
+    process.env.GROQ_RESUME_MODEL,
+    'llama-3.3-70b-versatile',
+    'llama-3.1-8b-instant',
+].filter(Boolean) as string[]
+
 export async function parseResumeWithAI(resumeText: string): Promise<
     | { success: true; experiences: ParsedExperience[]; educations: ParsedEducation[] }
     | { success: false; error: string }
 > {
     const apiKey = process.env.GROQ_API_KEY
     if (!apiKey) {
-        return { success: false, error: 'AI resume parsing is not configured' }
+        console.error('[resume-parse] GROQ_API_KEY is not set in this environment')
+        return { success: false, error: 'AI resume parsing is not configured (missing GROQ_API_KEY).' }
     }
 
-    try {
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile',
-                messages: [
-                    { role: 'system', content: RESUME_PARSE_SYSTEM_PROMPT },
-                    { role: 'user', content: `Resume text:\n"""\n${resumeText.slice(0, 12000)}\n"""` },
-                ],
-                response_format: { type: 'json_object' },
-                temperature: 0,
-            }),
-        })
+    const text = (resumeText || '').trim()
+    if (text.length < 20) {
+        return { success: false, error: 'No readable text found in this resume.' }
+    }
 
-        if (!res.ok) {
-            return { success: false, error: `Groq request failed (${res.status})` }
+    console.log(`[resume-parse] extracted ${text.length} chars; trying models: ${RESUME_PARSE_MODELS.join(', ')}`)
+
+    let lastError = 'Unknown error'
+
+    for (const model of RESUME_PARSE_MODELS) {
+        try {
+            const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model,
+                    messages: [
+                        { role: 'system', content: RESUME_PARSE_SYSTEM_PROMPT },
+                        { role: 'user', content: `Resume text:\n"""\n${text.slice(0, 12000)}\n"""` },
+                    ],
+                    response_format: { type: 'json_object' },
+                    temperature: 0,
+                }),
+            })
+
+            if (!res.ok) {
+                // Surface Groq's real error (invalid key, decommissioned model, rate limit, …).
+                const body = await res.text().catch(() => '')
+                let detail = body.slice(0, 300)
+                try { detail = JSON.parse(body)?.error?.message || detail } catch { /* keep raw */ }
+                lastError = `Groq ${res.status}: ${detail}`
+                console.error(`[resume-parse] model ${model} failed — ${lastError}`)
+                // 401/403 = auth problem, won't improve with another model — stop early.
+                if (res.status === 401 || res.status === 403) break
+                continue
+            }
+
+            const data = await res.json()
+            const content: string = data.choices?.[0]?.message?.content || ''
+            if (!content) { lastError = 'Empty response from AI'; continue }
+
+            let parsed: any
+            try {
+                parsed = JSON.parse(content)
+            } catch {
+                const m = content.match(/\{[\s\S]*\}/)
+                if (m) { try { parsed = JSON.parse(m[0]) } catch { /* ignore */ } }
+            }
+            if (!parsed) { lastError = 'AI returned unparseable output'; continue }
+
+            const experiences: ParsedExperience[] = Array.isArray(parsed.experiences) ? parsed.experiences : []
+            const educations: ParsedEducation[] = Array.isArray(parsed.educations) ? parsed.educations : []
+            console.log(`[resume-parse] model ${model} OK — ${experiences.length} experiences, ${educations.length} educations`)
+            return { success: true, experiences, educations }
+        } catch (err) {
+            lastError = err instanceof Error ? err.message : 'Network error contacting Groq'
+            console.error(`[resume-parse] model ${model} threw — ${lastError}`)
         }
-
-        const data = await res.json()
-        const content = data.choices?.[0]?.message?.content
-        if (!content) return { success: false, error: 'Empty response from AI' }
-
-        const parsed = JSON.parse(content)
-        const experiences: ParsedExperience[] = Array.isArray(parsed.experiences) ? parsed.experiences : []
-        const educations: ParsedEducation[] = Array.isArray(parsed.educations) ? parsed.educations : []
-
-        return { success: true, experiences, educations }
-    } catch (err) {
-        console.error('AI resume parsing error:', err)
-        return { success: false, error: err instanceof Error ? err.message : 'Unexpected error parsing resume' }
     }
+
+    return { success: false, error: lastError }
 }
 
 export async function updateIndustry(industry: string) {

@@ -452,18 +452,37 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
                 const text = await extractTextFromPdf(file);
 
                 const aiResult = await parseResumeWithAI(text);
-                const sections = aiResult.success
-                    ? { experiences: aiResult.experiences, educations: aiResult.educations }
-                    : parseResumeText(text); // fall back to heuristic parsing if AI is unavailable
+
+                let sections: { experiences: ParsedExperience[]; educations: ParsedEducation[] };
+                if (aiResult.success) {
+                    sections = { experiences: aiResult.experiences, educations: aiResult.educations };
+                } else {
+                    // AI failed — try the heuristic parser as a last resort, but do NOT
+                    // fail silently: tell the user why the smart import didn't run.
+                    sections = parseResumeText(text);
+                    if (sections.experiences.length === 0 && sections.educations.length === 0) {
+                        toast.error("Couldn't auto-read your resume.", {
+                            description: aiResult.error || 'Please add your experience manually.',
+                        });
+                        handleClose(false);
+                        return;
+                    }
+                    toast.info('Imported with basic parsing.', {
+                        description: 'Review the details below — the smart importer was unavailable.',
+                    });
+                }
 
                 if (sections.experiences.length === 0 && sections.educations.length === 0) {
+                    toast.error("We couldn't find any work experience or education in this file.");
                     handleClose(false);
                     return;
                 }
                 setParsed(sections);
                 setStep('review');
-            } catch {
-                toast.error('Could not parse your PDF. Your resume was still saved.');
+            } catch (parseErr: any) {
+                toast.error('Could not read your PDF.', {
+                    description: parseErr?.message || 'Your resume was still saved to your profile.',
+                });
                 handleClose(false);
             }
         } catch (err: any) {
@@ -478,6 +497,7 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
         setIsImporting(true);
         try {
             let count = 0;
+            let firstError: string | null = null;
             for (const exp of parsed.experiences) {
                 const fd = new FormData();
                 fd.append('company', exp.company);
@@ -486,8 +506,9 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
                 if (!exp.is_current) fd.append('end_date', exp.end_date);
                 if (exp.is_current) fd.append('is_current', 'on');
                 fd.append('description', exp.description);
-                await addExperience(fd);
-                count++;
+                const res = await addExperience(fd);
+                if (res && 'error' in res && res.error) { firstError = firstError || res.error; }
+                else count++;
             }
             for (const edu of parsed.educations) {
                 const fd = new FormData();
@@ -497,14 +518,22 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
                 if (!edu.is_current) fd.append('end_date', edu.end_date);
                 if (edu.is_current) fd.append('is_current', 'on');
                 fd.append('description', '');
-                await addEducation(fd);
-                count++;
+                const res = await addEducation(fd);
+                if (res && 'error' in res && res.error) { firstError = firstError || res.error; }
+                else count++;
             }
-            toast.success(`Imported ${count} item${count !== 1 ? 's' : ''} to your profile.`);
-            router.refresh();
-            handleClose(false);
-        } catch {
-            toast.error('Failed to save some items.');
+
+            if (count > 0) {
+                toast.success(`Imported ${count} item${count !== 1 ? 's' : ''} to your profile.`);
+                router.refresh();
+                handleClose(false);
+            } else {
+                toast.error("Couldn't save your imported items.", {
+                    description: firstError || 'Please try adding them manually.',
+                });
+            }
+        } catch (importErr: any) {
+            toast.error('Failed to save some items.', { description: importErr?.message });
         } finally {
             setIsImporting(false);
         }

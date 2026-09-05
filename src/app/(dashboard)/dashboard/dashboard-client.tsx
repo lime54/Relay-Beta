@@ -270,7 +270,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                                     </Link>
                                 </div>
                             ) : (
-                                data.recentRequests.map((req) => {
+                                data.recentRequests.slice(0, 3).map((req) => {
                                     const person = req.otherPerson;
                                     const profile = Array.isArray(person?.athlete_profiles)
                                         ? person?.athlete_profiles?.[0]

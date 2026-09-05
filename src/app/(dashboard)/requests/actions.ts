@@ -21,6 +21,25 @@ export async function submitRequest(formData: FormData) {
         return { success: false, error: 'Request type and context are required' }
     }
 
+    // Anti-spam: at most one request to the same person every 30 days.
+    if (recipientId) {
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+        const { data: recent } = await supabase
+            .from('requests')
+            .select('created_at')
+            .eq('requester_id', user.id)
+            .eq('recipient_id', recipientId)
+            .gte('created_at', thirtyDaysAgo.toISOString())
+            .limit(1)
+        if (recent && recent.length > 0) {
+            return {
+                success: false,
+                error: "You've already reached out to this person in the last 30 days. Give them some time — you can send another request once 30 days have passed.",
+            }
+        }
+    }
+
     // Requests auto-expire 7 days from now (per PRD)
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7)

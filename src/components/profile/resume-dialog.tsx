@@ -356,6 +356,7 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
     const [isDragging, setIsDragging] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [parsed, setParsed] = useState<{ experiences: ParsedExperience[]; educations: ParsedEducation[] } | null>(null);
+    const [aiError, setAiError] = useState<string | null>(null);
     const [isImporting, setIsImporting] = useState(false);
     const [editingExpIdx, setEditingExpIdx] = useState<number | null>(null);
     const [expDraft, setExpDraft] = useState<ParsedExperience | null>(null);
@@ -369,6 +370,7 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
         setIsDragging(false);
         setIsProcessing(false);
         setParsed(null);
+        setAiError(null);
         setIsImporting(false);
         setEditingExpIdx(null);
         setExpDraft(null);
@@ -467,9 +469,11 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
                         handleClose(false);
                         return;
                     }
-                    toast.info('Imported with basic parsing.', {
-                        description: 'Review the details below — the smart importer was unavailable.',
+                    toast.error('Smart import failed — showing rough guesses.', {
+                        description: `Reason: ${aiResult.error || 'AI parser unavailable.'}`,
+                        duration: 20000,
                     });
+                    setAiError(aiResult.error || 'AI parser unavailable.');
                 }
 
                 if (sections.experiences.length === 0 && sections.educations.length === 0) {
@@ -654,12 +658,22 @@ export function ResumeDialog({ open, onOpenChange, currentResumeUrl }: ResumeDia
 
                 {step === 'review' && parsed && (
                     <div className="space-y-5 py-2 animate-in fade-in slide-in-from-bottom-4">
-                        <div className="rounded-xl bg-secondary/5 border border-secondary/15 p-3 flex items-start gap-2">
-                            <Sparkles className="h-4 w-4 text-secondary shrink-0 mt-0.5" />
-                            <p className="text-xs text-muted-foreground">
-                                Your resume was saved. Review and edit the detected items before importing, or skip.
-                            </p>
-                        </div>
+                        {aiError ? (
+                            <div className="rounded-xl bg-red-50 border border-red-200 p-3 flex items-start gap-2">
+                                <X className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                                <p className="text-xs text-red-700">
+                                    <span className="font-bold">Smart AI import didn&apos;t run</span>, so these are rough guesses.
+                                    <span className="block mt-0.5 font-mono opacity-80 break-words">{aiError}</span>
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="rounded-xl bg-secondary/5 border border-secondary/15 p-3 flex items-start gap-2">
+                                <Sparkles className="h-4 w-4 text-secondary shrink-0 mt-0.5" />
+                                <p className="text-xs text-muted-foreground">
+                                    Your resume was saved. Review and edit the detected items before importing, or skip.
+                                </p>
+                            </div>
+                        )}
 
                         <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                             {/* Experiences */}

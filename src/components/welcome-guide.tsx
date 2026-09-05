@@ -8,87 +8,50 @@ import {
     ShieldCheck,
     FileText,
     SlidersHorizontal,
-    CalendarClock,
     Sparkles,
+    MapPin,
     ArrowRight,
     ArrowLeft,
 } from "lucide-react";
 
-const SEEN_KEY = "relay_welcome_seen_v1";
+const SEEN_KEY = "relay_welcome_seen_v2";
 
 type Step = {
     icon: React.ReactNode;
     title: string;
-    body: React.ReactNode;
+    line: string;
+    where?: string;
 };
 
 const STEPS: Step[] = [
     {
-        icon: <Sparkles className="h-7 w-7" />,
-        title: "Welcome to Relay 👋",
-        body: (
-            <>
-                You&apos;re now part of a private network built for student-athletes and alumni who
-                get where you&apos;re coming from. Here&apos;s a 60-second tour of what you can do.
-            </>
-        ),
+        icon: <Sparkles className="h-6 w-6" />,
+        title: "Welcome to Relay",
+        line: "Your private network of verified student-athletes and alumni. Here's what you can do in 30 seconds.",
     },
     {
-        icon: <Users className="h-7 w-7" />,
-        title: "Connect with people who get it",
-        body: (
-            <>
-                Reach out to <strong>alumni</strong> for advice, or to <strong>fellow student-athletes</strong> just
-                to network. When you send a request you choose <em>why</em> you&apos;re reaching out — from
-                <span className="whitespace-nowrap"> &ldquo;Just to network&rdquo;</span> and
-                <span className="whitespace-nowrap"> &ldquo;Found your background interesting&rdquo;</span> to
-                career advice, referrals, or mentorship. No pressure to be transactional.
-            </>
-        ),
+        icon: <Users className="h-6 w-6" />,
+        title: "Connect with anyone",
+        line: "Reach out to alumni for advice or fellow athletes just to network — you pick the reason.",
+        where: "Network → Send Personal Request",
     },
     {
-        icon: <ShieldCheck className="h-7 w-7" />,
+        icon: <ShieldCheck className="h-6 w-6" />,
         title: "Get verified",
-        body: (
-            <>
-                Tap <strong>Verify Now</strong> on your profile. We check your official team roster
-                automatically to confirm you&apos;re a real athlete — verified members get noticeably more
-                responses. If we can&apos;t auto-confirm it, our team reviews it by hand.
-            </>
-        ),
+        line: "We confirm you're a real athlete from your team roster. Verified members get more replies.",
+        where: "Sidebar → Verify Now",
     },
     {
-        icon: <FileText className="h-7 w-7" />,
-        title: "Build your profile in seconds",
-        body: (
-            <>
-                Hit <strong>Update Resume</strong> and upload a PDF — we auto-fill your experience and
-                education for you. Add your <strong>LinkedIn</strong> so people can learn more, and set a
-                custom title under your name.
-            </>
-        ),
+        icon: <FileText className="h-6 w-6" />,
+        title: "Set up your profile fast",
+        line: "Upload your resume and we auto-fill your experience. Add your LinkedIn too.",
+        where: "Profile → Update Resume",
     },
     {
-        icon: <SlidersHorizontal className="h-7 w-7" />,
-        title: "Find the right people",
-        body: (
-            <>
-                On the <strong>Network</strong> page, filter by <strong>sport</strong>, <strong>industry</strong>,
-                and <strong>student-athlete vs. alumni</strong>. We even suggest people you&apos;ll click with
-                based on what you have in common — so you always know who to reach out to.
-            </>
-        ),
-    },
-    {
-        icon: <CalendarClock className="h-7 w-7" />,
-        title: "Message & book meetings",
-        body: (
-            <>
-                Once you connect, <strong>message</strong> each other directly. Add your
-                <strong> booking link</strong> (Calendly, Cal.com, anything) under Settings → Scheduling, and
-                people can grab a time with you in one tap — no back-and-forth texting.
-            </>
-        ),
+        icon: <SlidersHorizontal className="h-6 w-6" />,
+        title: "Find people & meet up",
+        line: "Filter by sport & industry, message your connections, and share a booking link.",
+        where: "Network → Filters · Settings → Scheduling",
     },
 ];
 
@@ -117,32 +80,35 @@ export function WelcomeGuide() {
 
     return (
         <Dialog open={open} onOpenChange={(o) => { if (!o) finish(); }}>
-            <DialogContent className="sm:max-w-[460px] p-0 overflow-hidden rounded-3xl border-none">
+            <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden rounded-3xl border border-border/60">
                 <DialogTitle className="sr-only">{current.title}</DialogTitle>
 
-                {/* Branded header */}
-                <div className="bg-gradient-to-br from-[#10193f] to-[#223a86] px-7 pt-7 pb-8 text-white">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-2">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src="/relay-logo.png" alt="Relay" className="h-6 w-auto brightness-0 invert" />
-                        </div>
-                        <button onClick={finish} className="text-[11px] font-semibold uppercase tracking-wider text-white/50 hover:text-white/80 transition-colors">
-                            Skip
-                        </button>
-                    </div>
-                    <div className="h-14 w-14 rounded-2xl bg-white/10 ring-1 ring-white/20 flex items-center justify-center text-white">
-                        {current.icon}
-                    </div>
-                    <h2 className="text-2xl font-bold mt-4 leading-tight">{current.title}</h2>
+                {/* Header with the real Relay logo */}
+                <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border/50">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/relay-logo.png" alt="Relay" className="h-7 w-auto" />
+                    <button onClick={finish} className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 hover:text-foreground transition-colors">
+                        Skip
+                    </button>
                 </div>
 
-                {/* Body */}
-                <div className="px-7 py-6">
-                    <p className="text-[15px] leading-relaxed text-muted-foreground">{current.body}</p>
+                {/* Step */}
+                <div className="px-6 py-7 text-center">
+                    <div className="mx-auto h-14 w-14 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center mb-4">
+                        {current.icon}
+                    </div>
+                    <h2 className="text-xl font-bold text-primary">{current.title}</h2>
+                    <p className="text-sm text-muted-foreground leading-relaxed mt-2 max-w-[320px] mx-auto">{current.line}</p>
+
+                    {current.where && (
+                        <div className="inline-flex items-center gap-1.5 mt-4 rounded-full bg-muted px-3 py-1.5 text-[11px] font-semibold text-foreground/70">
+                            <MapPin className="h-3.5 w-3.5 text-secondary" />
+                            {current.where}
+                        </div>
+                    )}
 
                     {/* Progress dots */}
-                    <div className="flex items-center gap-1.5 mt-7">
+                    <div className="flex items-center justify-center gap-1.5 mt-7">
                         {STEPS.map((_, i) => (
                             <button
                                 key={i}
@@ -152,27 +118,27 @@ export function WelcomeGuide() {
                             />
                         ))}
                     </div>
+                </div>
 
-                    {/* Nav */}
-                    <div className="flex items-center justify-between mt-5">
-                        <Button
-                            variant="ghost"
-                            className="gap-1.5 text-muted-foreground disabled:opacity-0"
-                            onClick={() => setStep((s) => Math.max(0, s - 1))}
-                            disabled={step === 0}
-                        >
-                            <ArrowLeft className="h-4 w-4" /> Back
+                {/* Nav */}
+                <div className="flex items-center justify-between px-6 pb-6">
+                    <Button
+                        variant="ghost"
+                        className="gap-1.5 text-muted-foreground disabled:opacity-0"
+                        onClick={() => setStep((s) => Math.max(0, s - 1))}
+                        disabled={step === 0}
+                    >
+                        <ArrowLeft className="h-4 w-4" /> Back
+                    </Button>
+                    {isLast ? (
+                        <Button onClick={finish} className="rounded-xl px-6 gap-1.5 bg-secondary hover:bg-secondary/90 text-white">
+                            Get started <Sparkles className="h-4 w-4" />
                         </Button>
-                        {isLast ? (
-                            <Button onClick={finish} className="rounded-xl px-6 gap-1.5 bg-secondary hover:bg-secondary/90 text-white">
-                                Get started <Sparkles className="h-4 w-4" />
-                            </Button>
-                        ) : (
-                            <Button onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))} className="rounded-xl px-6 gap-1.5">
-                                Next <ArrowRight className="h-4 w-4" />
-                            </Button>
-                        )}
-                    </div>
+                    ) : (
+                        <Button onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))} className="rounded-xl px-6 gap-1.5">
+                            Next <ArrowRight className="h-4 w-4" />
+                        </Button>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>

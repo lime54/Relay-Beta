@@ -97,7 +97,7 @@ export default async function DashboardPage() {
         .select('id, request_type, status, created_at, context, requester_id, recipient_id')
         .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
-        .limit(5)
+        .limit(30)
 
     // Collect the "other person" user IDs and bulk-fetch their profiles
     const otherPersonIds = (rawRecentRequests || []).map((r: any) =>
@@ -141,6 +141,17 @@ export default async function DashboardPage() {
         }
     })
 
+    // Show at most one request per person (the most recent), so someone who
+    // sent several requests doesn't clutter the list. Already sorted newest-first.
+    const seenPeople = new Set<string>()
+    const dedupedRecentRequests = recentRequests.filter((r: any) => {
+        const pid = r.otherPerson?.id
+        if (!pid) return true
+        if (seenPeople.has(pid)) return false
+        seenPeople.add(pid)
+        return true
+    })
+
     // Fetch Upcoming Meetings
     const { data: upcomingMeetingsData } = await supabase
         .from('bookings')
@@ -172,7 +183,7 @@ export default async function DashboardPage() {
                 receivedCount: receivedCount || 0,
                 acceptedCount: acceptedCount || 0,
                 pendingCount: pendingCount || 0,
-                recentRequests: recentRequests || [],
+                recentRequests: dedupedRecentRequests || [],
                 upcomingMeetings: upcomingMeetingsData || []
             }}
         />

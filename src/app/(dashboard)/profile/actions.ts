@@ -457,13 +457,35 @@ Rules:
 - degree should capture degree + field of study if present (e.g. "B.S. Computer Science"); use "" if not stated.
 - Do not invent information that isn't in the text. If a field is unclear, use your best reasonable inference from context, never a placeholder like "Unknown".`
 
-// Models tried in order, so a decommissioned/unavailable primary model falls
-// back automatically instead of silently failing the whole import.
-const RESUME_PARSE_MODELS = [
+// Preferred models, best-for-JSON first. We only actually use ones this Groq
+// account has access to (discovered at runtime) — hardcoded IDs get deprecated,
+// which is exactly what broke this before.
+const RESUME_MODEL_PREFERENCES = [
     process.env.GROQ_RESUME_MODEL,
     'llama-3.3-70b-versatile',
+    'openai/gpt-oss-120b',
+    'openai/gpt-oss-20b',
+    'moonshotai/kimi-k2-instruct',
+    'qwen/qwen3-32b',
     'llama-3.1-8b-instant',
+    'groq/compound',
 ].filter(Boolean) as string[]
+
+// Non-chat models we must never try for text parsing.
+const NON_CHAT_MODEL = /(whisper|tts|guard|embedding|distil)/i
+
+async function listGroqModels(apiKey: string): Promise<string[]> {
+    try {
+        const r = await fetch('https://api.groq.com/openai/v1/models', {
+            headers: { Authorization: `Bearer ${apiKey}` },
+        })
+        if (!r.ok) return []
+        const d = await r.json()
+        return Array.isArray(d?.data) ? d.data.map((m: any) => m.id).filter(Boolean) : []
+    } catch {
+        return []
+    }
+}
 
 export async function parseResumeWithAI(resumeText: string): Promise<
     | { success: true; experiences: ParsedExperience[]; educations: ParsedEducation[] }
@@ -480,38 +502,55 @@ export async function parseResumeWithAI(resumeText: string): Promise<
         return { success: false, error: 'No readable text found in this resume.' }
     }
 
-    console.log(`[resume-parse] extracted ${text.length} chars; trying models: ${RESUME_PARSE_MODELS.join(', ')}`)
+    // Discover which models this account can actually use, then order them by
+    // preference. Falls back to blind attempts only if the list call fails.
+    const available = await listGroqModels(apiKey)
+    let models: string[]
+    if (available.length) {
+        const chat = available.filter((id) => !NON_CHAT_MODEL.test(id))
+        const preferred = RESUME_MODEL_PREFERENCES.filter((m) => chat.includes(m))
+        const rest = chat.filter((m) => !preferred.includes(m))
+        models = [...preferred, ...rest].slice(0, 4)
+        console.log(`[resume-parse] ${text.length} chars; ${available.length} models available; will try: ${models.join(', ')}`)
+    } else {
+        models = RESUME_MODEL_PREFERENCES.slice(0, 4)
+        console.log(`[resume-parse] ${text.length} chars; model list unavailable, blind-trying: ${models.join(', ')}`)
+    }
+
+    if (!models.length) {
+        return { success: false, error: 'No usable Groq chat models are available on this account.' }
+    }
 
     let lastError = 'Unknown error'
 
-    for (const model of RESUME_PARSE_MODELS) {
+    for (const model of models) {
         try {
+            const payload: Record<string, unknown> = {
+                model,
+                messages: [
+                    { role: 'system', content: RESUME_PARSE_SYSTEM_PROMPT },
+                    { role: 'user', content: `Resume text:\n"""\n${text.slice(0, 12000)}\n"""` },
+                ],
+                temperature: 0,
+            }
+            // Compound (web-search) models don't accept response_format; others do.
+            if (!model.includes('compound')) {
+                payload.response_format = { type: 'json_object' }
+            }
+
             const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    model,
-                    messages: [
-                        { role: 'system', content: RESUME_PARSE_SYSTEM_PROMPT },
-                        { role: 'user', content: `Resume text:\n"""\n${text.slice(0, 12000)}\n"""` },
-                    ],
-                    response_format: { type: 'json_object' },
-                    temperature: 0,
-                }),
+                headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
             })
 
             if (!res.ok) {
-                // Surface Groq's real error (invalid key, decommissioned model, rate limit, …).
                 const body = await res.text().catch(() => '')
                 let detail = body.slice(0, 300)
                 try { detail = JSON.parse(body)?.error?.message || detail } catch { /* keep raw */ }
                 lastError = `Groq ${res.status}: ${detail}`
                 console.error(`[resume-parse] model ${model} failed — ${lastError}`)
-                // 401/403 = auth problem, won't improve with another model — stop early.
-                if (res.status === 401 || res.status === 403) break
+                if (res.status === 401 || res.status === 403) break // auth issue, won't improve
                 continue
             }
 

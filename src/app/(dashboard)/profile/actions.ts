@@ -323,6 +323,27 @@ export async function updateLinkedInUrl(url: string) {
 // Accepts any scheduling link (Calendly, Cal.com, SavvyCal, Google Appointment
 // Schedule, etc.). We normalize a missing protocol to https:// and do a light
 // sanity check rather than locking users to a single provider.
+// Custom profile headline (the title shown under the name). Empty clears it,
+// falling back to the current role automatically.
+export async function updateHeadline(headline: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: 'Not authenticated' }
+
+    const trimmed = (headline ?? '').trim().slice(0, 120)
+
+    const { error } = await supabase
+        .from('athlete_profiles')
+        .update({ headline: trimmed || null })
+        .eq('user_id', user.id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/profile')
+    return { success: true }
+}
+
 export async function updateSchedulingUrl(url: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

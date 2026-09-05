@@ -27,6 +27,7 @@ import { Linkedin, FileText, Lock, Upload, Calendar, Share2, Link as LinkIcon, E
 import { checkConnection } from "./actions"
 import { useEffect } from "react"
 import { EditIndustryDialog } from "@/components/profile/edit-industry-dialog"
+import { EditHeadlineDialog } from "@/components/profile/edit-headline-dialog"
 import { EditLinkedInDialog } from "@/components/profile/edit-linkedin-dialog"
 import { PROFILE_EDIT_PARAM, type ProfileEditTarget } from "@/lib/profile-edit-targets"
 
@@ -90,6 +91,7 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
     const moreMenuRef = useRef<HTMLDivElement>(null)
     const [isEditIndustryOpen, setIsEditIndustryOpen] = useState(false)
     const [isEditLinkedInOpen, setIsEditLinkedInOpen] = useState(false)
+    const [isEditHeadlineOpen, setIsEditHeadlineOpen] = useState(false)
     const [isConnected, setIsConnected] = useState<boolean | null>(null)
     const [connectionCount, setConnectionCount] = useState<number>(0)
     
@@ -108,12 +110,19 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
             if (!targetId) return
             const { createClient } = await import('@/lib/supabase/client')
             const supabase = createClient()
-            const { count } = await supabase
+            // Count DISTINCT connected people — not accepted request rows. Two
+            // accepted requests with the same person is still one connection.
+            const { data } = await supabase
                 .from('requests')
-                .select('*', { count: 'exact', head: true })
+                .select('requester_id, recipient_id')
                 .eq('status', 'accepted')
                 .or(`requester_id.eq.${targetId},recipient_id.eq.${targetId}`)
-            setConnectionCount(count || 0)
+            const others = new Set<string>()
+            ;(data || []).forEach((r: { requester_id: string; recipient_id: string }) => {
+                const other = r.requester_id === targetId ? r.recipient_id : r.requester_id
+                if (other && other !== targetId) others.add(other)
+            })
+            setConnectionCount(others.size)
         }
         fetchConnectionCount()
     }, [isOwnProfile, profile?.id])
@@ -477,19 +486,23 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                         )}
                     </div>
 
-                    <p className="text-lg font-medium text-foreground/80 flex items-center justify-center gap-2">
-                        {currentExperience ? (
-                             <span className="font-bold text-primary">{currentExperience.role} at {currentExperience.company}</span>
-                        ) : (
-                             <span>{(() => {
-                                 const isAlum = (profile as any)?.role === 'alum'
-                                 const sport = profile?.athlete_profiles?.sport
-                                 const school = profile?.athlete_profiles?.school || 'University'
-                                 if (isAlum) {
-                                     return sport ? `${sport} Alum from ${school}` : `Alum from ${school}`
-                                 }
-                                 return sport ? `${sport} Student-Athlete at ${school}` : `Student-Athlete at ${school}`
-                             })()}</span>
+                    <p className="text-lg font-medium text-foreground/80 flex items-center justify-center gap-2 flex-wrap">
+                        {(() => {
+                            const custom = (profile?.athlete_profiles as any)?.headline as string | undefined
+                            if (custom) return <span className="font-bold text-primary">{custom}</span>
+                            if (currentExperience) return <span className="font-bold text-primary">{currentExperience.role} at {currentExperience.company}</span>
+                            const isAlum = (profile as any)?.role === 'alum'
+                            const sport = profile?.athlete_profiles?.sport
+                            const school = profile?.athlete_profiles?.school || 'University'
+                            const txt = isAlum
+                                ? (sport ? `${sport} Alum from ${school}` : `Alum from ${school}`)
+                                : (sport ? `${sport} Student-Athlete at ${school}` : `Student-Athlete at ${school}`)
+                            return <span>{txt}</span>
+                        })()}
+                        {isOwnProfile && (
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-secondary rounded-full" onClick={() => setIsEditHeadlineOpen(true)} title="Edit your title">
+                                <Pencil className="h-3.5 w-3.5" />
+                            </Button>
                         )}
                         {primaryIndustry && (
                             <span className="text-xs bg-secondary/10 text-secondary px-2.5 py-0.5 rounded-full ring-1 ring-secondary/20 uppercase tracking-tight font-bold">
@@ -497,7 +510,7 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                             </span>
                         )}
                         {isOwnProfile && (
-                            <Button variant="ghost" size="icon" className="h-6 w-6 ml-1 text-muted-foreground hover:text-secondary rounded-full" onClick={() => setIsEditIndustryOpen(true)}>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-secondary rounded-full" onClick={() => setIsEditIndustryOpen(true)} title="Edit industry">
                                 <Pencil className="h-3.5 w-3.5" />
                             </Button>
                         )}
@@ -796,6 +809,13 @@ export function ProfileHeader({ profile, isOwnProfile, currentExperience }: Prof
                 isOpen={isEditLinkedInOpen}
                 onOpenChange={setIsEditLinkedInOpen}
                 currentUrl={profile?.athlete_profiles?.linkedin_url || null}
+            />
+
+            <EditHeadlineDialog
+                isOpen={isEditHeadlineOpen}
+                onOpenChange={setIsEditHeadlineOpen}
+                currentHeadline={(profile?.athlete_profiles as any)?.headline || null}
+                fallback={currentExperience ? `${currentExperience.role} at ${currentExperience.company}` : ""}
             />
         </Card>
     )

@@ -5,6 +5,7 @@ import { DashboardHeader } from "@/components/dashboard-header";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { NotificationProvider } from "@/contexts/notification-context";
+import { WelcomeGuide } from "@/components/welcome-guide";
 
 export default function DashboardLayout({
     children,
@@ -15,6 +16,7 @@ export default function DashboardLayout({
 
     return (
         <NotificationProvider>
+            <WelcomeGuide />
             <div className="flex h-screen bg-background text-foreground overflow-hidden">
             <DashboardSidebar />
             <div className="flex-1 flex flex-col min-w-0">

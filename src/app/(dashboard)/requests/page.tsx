@@ -275,16 +275,6 @@ export default async function RequestsPage({
                     </Card>
                 )}
             </div>
-
-            {/* Pro Tip */}
-            {allCount > 0 && (
-                <div className="mt-8 bg-blue-50 rounded-2xl p-5 border border-blue-100">
-                    <h4 className="font-semibold text-blue-900 text-sm mb-1">💡 Pro Tip</h4>
-                    <p className="text-xs text-blue-800 leading-relaxed">
-                        Athletes are 3x more likely to respond if you mention your shared sport in the first sentence.
-                    </p>
-                </div>
-            )}
         </div>
     )
 }

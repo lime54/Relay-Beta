@@ -80,13 +80,15 @@ export default async function RequestsPage({
         }
     }
 
-    // Stitch recipient data into sent requests
-    const allSentRequests = (rawSentRequests || []).map((req: any) => ({
-        ...req,
-        recipient: req.recipient_id
-            ? { ...(recipientMap[req.recipient_id] || {}), id: req.recipient_id }
-            : null
-    }))
+    // Stitch recipient data into sent requests, dropping any whose recipient
+    // no longer exists (deleted/orphaned) — those render as an unidentifiable
+    // "Someone" card and aren't actionable.
+    const allSentRequests = (rawSentRequests || [])
+        .filter((req: any) => req.recipient_id && recipientMap[req.recipient_id])
+        .map((req: any) => ({
+            ...req,
+            recipient: { ...(recipientMap[req.recipient_id] || {}), id: req.recipient_id }
+        }))
 
     // Split by archive state. When the column is missing (pre-migration),
     // everything counts as active so the UI keeps working.
@@ -113,8 +115,11 @@ export default async function RequestsPage({
         console.error('[RequestsPage] receivedRequests error:', receivedError)
     }
 
+    // Drop received requests whose sender no longer exists (unidentifiable).
+    const resolvedReceived = (receivedRequests || []).filter((r: any) => r.users)
+
     const sentCount = activeSent.length
-    const receivedCount = receivedRequests?.length || 0
+    const receivedCount = resolvedReceived.length
     const allCount = sentCount + receivedCount
     const archivedCount = archivedSent.length
 
@@ -176,7 +181,7 @@ export default async function RequestsPage({
                 {/* Inbox Section (show when tab is 'all' or 'inbox') */}
                 {(activeTab === 'all' || activeTab === 'inbox') && (
                     <InboxList
-                        initialRequests={(receivedRequests || []) as any}
+                        initialRequests={resolvedReceived as any}
                         currentUserProfile={currentUserProfile || undefined}
                         showHeader={receivedCount > 0}
                         showEmptyState={activeTab === 'inbox'}

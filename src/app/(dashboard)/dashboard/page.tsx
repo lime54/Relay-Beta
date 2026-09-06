@@ -146,7 +146,7 @@ export default async function DashboardPage() {
     const seenPeople = new Set<string>()
     const dedupedRecentRequests = recentRequests.filter((r: any) => {
         const pid = r.otherPerson?.id
-        if (!pid) return true
+        if (!pid) return false // drop orphaned requests (deleted counterpart -> "Unknown")
         if (seenPeople.has(pid)) return false
         seenPeople.add(pid)
         return true

@@ -57,38 +57,33 @@ export default async function DashboardPage() {
         });
     }
 
-    // Count sent requests (My Plays)
-    const { count: sentCount } = await supabase
+    // Sent-request stats, excluding any whose recipient no longer exists
+    // (orphaned/deleted) so they don't inflate the counts.
+    const { data: sentRows } = await supabase
         .from('requests')
-        .select('*', { count: 'exact', head: true })
+        .select('recipient_id, status')
         .eq('requester_id', user.id)
 
-    // Count incoming pending requests (Team Huddle)
-    // A request is incoming if the recipient is the current user (this is inferred from lack of recipient_id column if it's a global pool, 
-    // but in this app architecture, it seems requests are directed. 
-    // Actually, looking at network page, we send requests to specific IDs.
-    // So Team Huddle should be requests WHERE recipient_id = user.id (which is currently stored in Metadata or separate table?)
-    // Let me check requests table schema mentally or via tool. 
-    // Fix: Team Huddle should be requests where requester_id != user.id AND status = 'pending' (simplified for now if global pool, 
-    // but ideally filtered by recipient_id).
+    const sentRecipientIds = [...new Set((sentRows || []).map((r: any) => r.recipient_id).filter(Boolean))]
+    let existingRecipients = new Set<string>()
+    if (sentRecipientIds.length > 0) {
+        const { data: existing } = await supabase
+            .from('users')
+            .select('id')
+            .in('id', sentRecipientIds as string[])
+        existingRecipients = new Set((existing || []).map((u: any) => u.id))
+    }
+    const validSent = (sentRows || []).filter((r: any) => r.recipient_id && existingRecipients.has(r.recipient_id))
+
+    const sentCount = validSent.length
+    const acceptedCount = validSent.filter((r: any) => r.status === 'accepted').length
+    const pendingCount = validSent.filter((r: any) => r.status === 'pending').length
+
+    // Count incoming pending requests
     const { count: receivedCount } = await supabase
         .from('requests')
         .select('*', { count: 'exact', head: true })
         .eq('recipient_id', user.id)
-        .eq('status', 'pending')
-
-    // Count accepted requests (Successful Connections)
-    const { count: acceptedCount } = await supabase
-        .from('requests')
-        .select('*', { count: 'exact', head: true })
-        .eq('requester_id', user.id)
-        .eq('status', 'accepted')
-
-    // Count pending outgoing requests
-    const { count: pendingCount } = await supabase
-        .from('requests')
-        .select('*', { count: 'exact', head: true })
-        .eq('requester_id', user.id)
         .eq('status', 'pending')
 
     // Fetch recent requests (last 5) — both sent AND received
